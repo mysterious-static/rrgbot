@@ -232,18 +232,30 @@ client.on('interactionCreate', async (interaction) => {
                     }
                     const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterMovementSelector').setMinValues(1).setMaxValues(1);
                     var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                    var message = await interaction.reply({ content: '', components: [locationSelectRow, characterSelectRow] , ephemeral: true});
+                    var message = await interaction.reply({ content: '', components: [locationSelectRow, characterSelectRow], ephemeral: true });
                     const collector = message.createMessageComponentCollector({ time: 35000 });
                     var locationSelected;
                     var characterSelected;
                     collector.on('collect', async (interaction_second) => {
                         console.log(interaction_second);
-                        if (interaction_second.values[0] && interaction_second.values[1]) {
-                            await connection.promise.query('update characters set location_id = ? where id = ?', [interaction_second.values[0], interaction_second.values[1]]);
-                            await message.edit({ content: 'Successfully moved character.', components: [] });
+                        if (interaction_second.values[0]) {
+                            if (interaction_second.customId == 'LocationMovementSelector') {
+                                locationSelected = interaction_second.values[0];
+                            } else {
+                                characterSelected = interaction_second.values[0];
+                            }
+                            if (locationSelected && characterSelected) {
+                                await connection.promise.query('update characters set location_id = ? where id = ?', [interaction_second.values[0], interaction_second.values[1]]);
+                                await message.edit({ content: 'Successfully moved character.', components: [] });
+                            } else {
+                                await interaction_second.deferUpdate();
+                            }
                         } else {
                             await interaction_second.deferUpdate();
                         }
+                    });
+                    collector.on('end', async (collected) => {
+                        console.log(collected);
                     });
                 } else {
                     interaction.reply({ content: 'You haven\'t created any characters yet. Try creating a character first.', ephemeral: true });
