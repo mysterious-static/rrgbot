@@ -207,7 +207,7 @@ client.on('interactionCreate', async (interaction) => {
             } else {
                 var inserted_player = await connection.promise().query('insert into players (user_id, guild_id, name) values (?, ?, ?)', [user.id, interaction.guildId, playerName]);
                 var inserted_character = await connection.promise().query('insert into characters (name) values (?)', [playerName]); // This table also has "location", because all characters are in a location.
-                await connection.promise().query('insert into players_characters (player_id, character_id, active) values (?, ?)', [inserted_player[0].insertId, inserted_character[0].insertId, 1]); // Futureproofing for "multiple players can own a character".
+                await connection.promise().query('insert into players_characters (player_id, character_id, active) values (?, ?, ?)', [inserted_player[0].insertId, inserted_character[0].insertId, 1]); // Futureproofing for "multiple players can own a character".
                 interaction.reply({ content: 'Added the player and character!', ephemeral: true });
 
             }
