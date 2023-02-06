@@ -218,7 +218,7 @@ client.on('interactionCreate', async (interaction) => {
             if (locations[0].length > 0) {
                 var locationsKeyValues = [{label: 'Select a location', value: '0'}];
                 for (const location of locations[0]) {
-                    var thisLocationKeyValue = { label: location.friendly_name, value: location.id };
+                    var thisLocationKeyValue = { label: location.friendly_name, value: location.id.toString() };
                     locationsKeyValues.push(thisLocationKeyValue);
                 }
                 const locationSelectComponent = new StringSelectMenuBuilder().setOptions(locationsKeyValues).setCustomId('CharacterMovementSelector').setMinValues(1).setMaxValues(1);
@@ -227,7 +227,7 @@ client.on('interactionCreate', async (interaction) => {
                 if (characters[0].length > 0) {
                     var charactersKeyValues = [{label: 'Select a character', value: '0'}];
                     for (const character of characters[0]) {
-                        var thisCharacterKeyValue = { label: character.name, value: character.id };
+                        var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
                         charactersKeyValues.push(thisCharacterKeyValue);
                     }
                     const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterMovementSelector').setMinValues(1).setMaxValues(1);
