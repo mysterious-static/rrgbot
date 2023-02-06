@@ -21,13 +21,13 @@ client.login(process.env.app_token);
 /* COMNMAND STRUCTURE */
 var allowmovement = new SlashCommandBuilder().setName('allowmovement')
     .setDescription('Lock or unlock movement globally or from a single location.')
-    .addChannelOption(option =>
-        option.setName('channel')
-            .setDescription('The channel you wish to lock or unlock')
-    ).addBooleanOption(option =>
+    .addBooleanOption(option =>
         option.setName('enabled')
         .setDescription('Enabled or disabled.')
         .setRequired(true)
+    ).addChannelOption(option =>
+        option.setName('channel')
+            .setDescription('The channel you wish to lock or unlock')
     ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 var addlocation = new SlashCommandBuilder().setName('addlocation')
