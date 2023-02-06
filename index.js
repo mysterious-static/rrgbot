@@ -244,7 +244,39 @@ client.on('interactionCreate', async (interaction) => {
                                 characterSelected = interaction_second.values[0];
                             }
                             if (locationSelected && characterSelected) {
-                                await connection.promise().query('update characters set location_id = ? where id = ?', [interaction_second.values[0], interaction_second.values[1]]);
+                                var character = await connection.promise().query('select * from characters where id = ?', [characterSelected]);
+                                var locations = await connection.promise().query('select * from locations where id in (?, ?)', [character[0].location, locationSelected]);
+                                await connection.promise().query('update characters set location_id = ? where id = ?', [locationSelected, characterSelected]);
+                                var new_announcements;
+                                var new_name;
+                                var old_announcements;
+                                var old_name;
+                                var character_name = character[0].name;
+                                for (const location of locations[0]) {
+                                    var channel = await client.channels.cache.get(location.channel_id);
+                                    if (location.id == locationSelected) {
+                                        await channel.permissionOverwrites.edit(interaction.member, { VIEW_CHANNEL: true, SEND_MESSAGES: true });
+                                        if (location.announcements_id) {
+                                            new_announcements = await client.channels.cache.get(location.announcements_id);
+                                            new_name = location.friendly_name;
+                                        }
+                                    } else {
+                                        if (location.global_read == 0) {
+                                            await channel.permissionOverwrites.edit(interaction.member, { VIEW_CHANNEL: false });
+                                        }
+                                        await channel.permissionOverwrites.edit(interaction.member, { SEND_MESSAGES: false });
+                                        if (location.announcements_id) {
+                                            old_announcements = await client.channels.cache.get(location.announcements_id);
+                                            old_name = location.friendly_name;
+                                        }
+                                    }
+                                }
+                                if (old_announcements) {
+                                    await old_announcements.send('*' + character_name + ' moves to ' + new_name + '.*');
+                                }
+                                if (new_announcements) {
+                                    await new_announcements.send('*' + character_name + ' arrives from ' + old_name + '.*');
+                                }
                                 await interaction_second.update({ content: 'Successfully moved character.', components: [] });
                             } else {
                                 await interaction_second.deferUpdate();
@@ -255,6 +287,7 @@ client.on('interactionCreate', async (interaction) => {
                     });
                     collector.on('end', async (collected) => {
                         console.log(collected);
+                        // How do we clean the message up?
                     });
                 } else {
                     interaction.reply({ content: 'You haven\'t created any characters yet. Try creating a character first.', ephemeral: true });
