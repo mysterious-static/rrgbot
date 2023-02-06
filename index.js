@@ -21,49 +21,49 @@ client.login(process.env.app_token);
 /* COMNMAND STRUCTURE */
 var allowmovement = new SlashCommandBuilder().setName('allowmovement')
     .setDescription('Lock or unlock movement globally or from a single location.')
-    .addChannelOption(option => {
+    .addChannelOption(option => 
         option.setName('channel')
             .setDescription('The channel you wish to lock or unlock')
-    }).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+    ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 var addlocation = new SlashCommandBuilder().setName('addlocation')
     .setDescription('Allow movement to and from a location.')
-    .addChannelOption(option => {
+    .addChannelOption(option => 
         option.setName('channel')
             .setDescription('The channel you wish to designate as movement-enabled/-disabled. New locations default this to ON.')
             .setRequired(true)
-    }).addStringOption(option => {
+    ).addStringOption(option => 
         option.setName('friendly_name')
             .setDescription('What you\'d like this location to be called in announcements (if you set an announcements channel).')
             .setRequired(true)
-    }).addBooleanOption(option => {
+    ).addBooleanOption(option => 
         option.setName('enabled')
             .setDescription('Simple true/false toggle')
             .setRequired(true)
-    }).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+    ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 var locationannouncements = new SlashCommandBuilder().setName('locationannouncements')
     .setDescription('Enable an announcements channel for a location.')
-    .addChannelOption(option => {
+    .addChannelOption(option => 
         option.setName('location_channel')
             .setDescription('The location channel.')
             .setRequired(true)
-    }).addChannelOption(option => {
+    ).addChannelOption(option => 
         option.setName('announcements_channel')
             .setDescription('The announcements channel for this location. It can be the same channel if the location channel is a text channel. Leave unset to remove announcements.')
-    }).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+    ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 var movementvisibility = new SlashCommandBuilder().setName('locationvisibility')
     .setDescription('Enable or disable the ability for players to view a location after they leave ("global read" mode)')
-    .addChannelOption(option => {
+    .addChannelOption(option => 
         option.setName('location')
             .setDescription('Channel to designate as "visible when not present / global read". New locations default this to OFF.')
             .setRequired(true)
-    }).addBooleanOption(option => {
+    ).addBooleanOption(option => 
         option.setName('enabled')
             .setDescription('Simple true/false toggle')
             .setRequired(true)
-    }).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+    ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 var resetlocationvis = new SlashCommandBuilder().setName('resetlocationvis')
     .setDescription('Re-run location visibility permissions for all locations for all players.')
@@ -72,14 +72,14 @@ var resetlocationvis = new SlashCommandBuilder().setName('resetlocationvis')
 //Create Players
 var playercreate = new SlashCommandBuilder().setName('playercreate')
     .setDescription('Create a player based on a mentioned user.')
-    .addUserOption(option => {
+    .addUserOption(option => 
         option.setName('user')
             .setDescription('The user to associate')
-    })
-    .addStringOption(option => {
+    )
+    .addStringOption(option => 
         option.setName('player_name')
             .setDescription('The player name.')
-    })
+    )
     .setDefaultMemberPermissions(PermissionsFlagsBits.Administrator);
 
 // Characters Per Player (switching system // bot echoes) - TODO
@@ -88,10 +88,10 @@ var playercreate = new SlashCommandBuilder().setName('playercreate')
 
 var rps = new SlashCommandBuilder().setName('rps')
     .setDescription('Enter battle, either against another player or versus the robot.')
-    .addUserOption(option => {
+    .addUserOption(option => 
         option.setName('challengee')
             .setDescription('The player you wish to challenge (optional)')
-    });
+    );
 
 var move = new SlashCommandBuilder().setName('move')
     .setDescription('Move to a new location.');
