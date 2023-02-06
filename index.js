@@ -221,7 +221,7 @@ client.on('interactionCreate', async (interaction) => {
                     var thisLocationKeyValue = { label: location.friendly_name, value: location.id.toString() };
                     locationsKeyValues.push(thisLocationKeyValue);
                 }
-                const locationSelectComponent = new StringSelectMenuBuilder().setOptions(locationsKeyValues).setCustomId('CharacterMovementSelector').setMinValues(1).setMaxValues(1);
+                const locationSelectComponent = new StringSelectMenuBuilder().setOptions(locationsKeyValues).setCustomId('LocationMovementSelector').setMinValues(1).setMaxValues(1);
                 var locationSelectRow = new ActionRowBuilder().addComponents(locationSelectComponent);
                 var characters = await connection.promise().query('select distinct c.* from characters c join players_characters pc on pc.character_id = c.id join players p on pc.player_id = p.id where p.guild_id = ? and pc.active = 1', [interaction.guildId]);
                 if (characters[0].length > 0) {
