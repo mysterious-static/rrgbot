@@ -67,7 +67,7 @@ var movementvisibility = new SlashCommandBuilder().setName('locationvisibility')
 
 var resetlocationvis = new SlashCommandBuilder().setName('resetlocationvis')
     .setDescription('Re-run location visibility permissions for all locations for all players.')
-    .setDefaultMemberPermissions(PermissionsFlagsBits.Administrator);
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 //Create Players
 var playercreate = new SlashCommandBuilder().setName('playercreate')
@@ -80,7 +80,7 @@ var playercreate = new SlashCommandBuilder().setName('playercreate')
         option.setName('player_name')
             .setDescription('The player name.')
     )
-    .setDefaultMemberPermissions(PermissionsFlagsBits.Administrator);
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 // Characters Per Player (switching system // bot echoes) - TODO
 // For now, playercreate should create a default character automatically in a separate table with the specified player_name.
