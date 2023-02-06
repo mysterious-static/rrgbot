@@ -232,7 +232,7 @@ client.on('interactionCreate', async (interaction) => {
                     }
                     const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterMovementSelector').setMinValues(1).setMaxValues(1);
                     var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                    var message = interaction.reply({content: '', components: [locationSelectRow, characterSelectRow]})
+                    var message = await interaction.reply({content: '', components: [locationSelectRow, characterSelectRow]})
                     const collector = message.createMessageComponentCollector({time: 3500});
 
                     collector.on('collect', async (interaction_second) => {
