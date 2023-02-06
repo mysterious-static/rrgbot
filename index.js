@@ -23,8 +23,8 @@ var allowmovement = new SlashCommandBuilder().setName('allowmovement')
     .setDescription('Lock or unlock movement globally or from a single location.')
     .addBooleanOption(option =>
         option.setName('enabled')
-        .setDescription('Enabled or disabled.')
-        .setRequired(true)
+            .setDescription('Enabled or disabled.')
+            .setRequired(true)
     ).addChannelOption(option =>
         option.setName('channel')
             .setDescription('The channel you wish to lock or unlock')
@@ -86,6 +86,10 @@ var playercreate = new SlashCommandBuilder().setName('playercreate')
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
+var characterlocation = new SlashCommandBuilder().setName('characterlocation')
+    .setDescription('Move a character to a specific location.')
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
 // Characters Per Player (switching system // bot echoes) - TODO
 // For now, playercreate should create a default character automatically in a separate table with the specified player_name.
 
@@ -118,7 +122,7 @@ async function isPlayer(userid, guildid) {
 
 
 client.on('ready', async () => {
-    await client.application.commands.set([allowmovement.toJSON(), locationannouncements.toJSON(), addlocation.toJSON(), movementvisibility.toJSON(), resetlocationvis.toJSON(), playercreate.toJSON(), rps.toJSON(), move.toJSON(), me.toJSON()]);
+    await client.application.commands.set([allowmovement.toJSON(), locationannouncements.toJSON(), addlocation.toJSON(), movementvisibility.toJSON(), resetlocationvis.toJSON(), playercreate.toJSON(), characterlocation.toJSON(), rps.toJSON(), move.toJSON(), me.toJSON()]);
     client.user.setActivity("Infinite Magic Glories: Revolutionary Redux");
 });
 
@@ -206,6 +210,44 @@ client.on('interactionCreate', async (interaction) => {
                 await connection.promise().query('insert into players_characters (player_id, character_id, active) values (?, ?)', [inserted_player[0].insertId, inserted_character[0].insertId, 1]); // Futureproofing for "multiple players can own a character".
                 interaction.reply({ content: 'Added the player and character!', ephemeral: true });
 
+            }
+        } else if (interaction.commandName == 'characterlocation') {
+            // Two dropdowns! Ah, ah, ah!
+
+            var locations = await connection.promise().query('select * from movement_locations where guild_id = ?', [interaction.guildId]);
+            if (locations[0].length > 0) {
+                var locationsKeyValues = [{label: 'Select a location', value: 0}];
+                for (const location of locations[0]) {
+                    var thisLocationKeyValue = { label: location.friendly_name, value: location.id };
+                    locationsKeyValues.push(thisLocationKeyValue);
+                }
+                const locationSelectComponent = new SelectMenuBuilder().setOptions(locationsKeyValues).setCustomId('CharacterMovementSelector').setMinValues(1).setMaxValues(1);
+                var locationSelectRow = new ActionRowBuilder().addComponents(locationSelectComponent);
+                var characters = await connection.promise().query('select distinct c.* from characters c join players_characters pc on pc.character_id = c.id join players p on pc.player_id = p.id where p.guild_id = ? and pc.active = 1', [interaction.guildId]);
+                if (characters[0].length > 0) {
+                    var charactersKeyValues = [{label: 'Select a character', value: 0}];
+                    for (const character of characters[0]) {
+                        var thisCharacterKeyValue = { label: character.name, value: character.id };
+                        charactersKeyValues.push(thisCharacterKeyValue);
+                    }
+                    const characterSelectComponent = new SelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterMovementSelector').setMinValues(1).setMaxValues(1);
+                    var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                    var message = interaction.reply({content: '', components: [locationSelectRow, characterSelectRow]})
+                    const collector = message.createMessageComponentCollector({time: 3500});
+
+                    collector.on('collect', async (interaction_second) => {
+                        if (interaction_second.values[0] > 0 && interaction_second.values[1] > 0) {
+                            await connection.promise.query('update characters set location_id = ? where id = ?', [interaction_second.values[0], interaction_second.values[1]]);
+                            await message.edit({content: 'Successfully moved character.', components: []});
+                        } else {
+                            await interaction_second.deferUpdate();
+                        }
+                    });
+                } else {
+                    interaction.reply({ content: 'You haven\'t created any characters yet. Try creating a character first.', ephemeral: true });
+                }
+            } else {
+                interaction.reply({ content: 'You haven\'t created any locations yet. Try creating a location first.', ephemeral: true });
             }
         }
 
