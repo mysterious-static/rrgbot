@@ -216,16 +216,16 @@ client.on('interactionCreate', async (interaction) => {
 
             var locations = await connection.promise().query('select * from movement_locations where guild_id = ?', [interaction.guildId]);
             if (locations[0].length > 0) {
-                var locationsKeyValues = [{label: 'Select a location', value: 0}];
+                var locationsKeyValues = [{label: 'Select a location', value: '0'}];
                 for (const location of locations[0]) {
                     var thisLocationKeyValue = { label: location.friendly_name, value: location.id };
                     locationsKeyValues.push(thisLocationKeyValue);
                 }
-                const locationSelectComponent = new SelectMenuBuilder().setOptions(locationsKeyValues).setCustomId('CharacterMovementSelector').setMinValues(1).setMaxValues(1);
+                const locationSelectComponent = new StringSelectMenuBuilder().setOptions(locationsKeyValues).setCustomId('CharacterMovementSelector').setMinValues(1).setMaxValues(1);
                 var locationSelectRow = new ActionRowBuilder().addComponents(locationSelectComponent);
                 var characters = await connection.promise().query('select distinct c.* from characters c join players_characters pc on pc.character_id = c.id join players p on pc.player_id = p.id where p.guild_id = ? and pc.active = 1', [interaction.guildId]);
                 if (characters[0].length > 0) {
-                    var charactersKeyValues = [{label: 'Select a character', value: 0}];
+                    var charactersKeyValues = [{label: 'Select a character', value: '0'}];
                     for (const character of characters[0]) {
                         var thisCharacterKeyValue = { label: character.name, value: character.id };
                         charactersKeyValues.push(thisCharacterKeyValue);
@@ -236,7 +236,7 @@ client.on('interactionCreate', async (interaction) => {
                     const collector = message.createMessageComponentCollector({time: 3500});
 
                     collector.on('collect', async (interaction_second) => {
-                        if (interaction_second.values[0] > 0 && interaction_second.values[1] > 0) {
+                        if (interaction_second.values[0].toString != '0' && interaction_second.values[1].toString != '0') {
                             await connection.promise.query('update characters set location_id = ? where id = ?', [interaction_second.values[0], interaction_second.values[1]]);
                             await message.edit({content: 'Successfully moved character.', components: []});
                         } else {
