@@ -1,6 +1,6 @@
 /*jslint es6*/
 const Discord = require('discord.js');
-const { Permissions, ActionRowBuilder, ButtonBuilder, TextInputComponent, SelectMenuBuilder, TextInputStyle, Modal, PermissionFlagsBits, GatewayIntentBits, SlashCommandBuilder } = require('discord.js')
+const { Permissions, ActionRowBuilder, ButtonBuilder, TextInputComponent, StringSelectMenuBuilder, TextInputStyle, Modal, PermissionFlagsBits, GatewayIntentBits, SlashCommandBuilder } = require('discord.js')
 const client = new Discord.Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildWebhooks, GatewayIntentBits.GuildMessageReactions, GatewayIntentBits.GuildEmojisAndStickers, GatewayIntentBits.GuildMembers] });
 var mysql = require('mysql2');
 var connection = mysql.createConnection({
@@ -230,7 +230,7 @@ client.on('interactionCreate', async (interaction) => {
                         var thisCharacterKeyValue = { label: character.name, value: character.id };
                         charactersKeyValues.push(thisCharacterKeyValue);
                     }
-                    const characterSelectComponent = new SelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterMovementSelector').setMinValues(1).setMaxValues(1);
+                    const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterMovementSelector').setMinValues(1).setMaxValues(1);
                     var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
                     var message = interaction.reply({content: '', components: [locationSelectRow, characterSelectRow]})
                     const collector = message.createMessageComponentCollector({time: 3500});
@@ -266,7 +266,7 @@ client.on('interactionCreate', async (interaction) => {
                             var thisLocationKeyValue = { label: location.friendly_name, value: location.id };
                             locationsKeyValues.push(thisLocationKeyValue);
                         }
-                        const locationSelectComponent = new SelectMenuBuilder().setOptions(locationsKeyValues).setCustomId('LocationMovementSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
+                        const locationSelectComponent = new StringSelectMenuBuilder().setOptions(locationsKeyValues).setCustomId('LocationMovementSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
                         var locationSelectRow = new ActionRowBuilder().addComponents(locationSelectComponent);
                         interaction.reply({ content: 'Select a location to move to:', components: [locationSelectRow], ephemeral: true });
                     } else {
