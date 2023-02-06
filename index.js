@@ -156,7 +156,7 @@ client.on('interactionCreate', async (interaction) => {
             if (channelexists[0].length > 0) {
                 if (interaction.options.getChannel('announcements_channel')) {
                     var announcements_channel = interaction.options.getChannel('announcements_channel');
-                    await connection.promise.query('update movement_locations set announcements_channel = ? where channel_id = ?', [announcements_channel.id, thisChannel.id]);
+                    await connection.promise().query('update movement_locations set announcements_channel = ? where channel_id = ?', [announcements_channel.id, thisChannel.id]);
                 } else {
                     await connection.promise().query('update movement_locations set announcements_channel = NULL where channel_id = ?', [thisChannel.id]);
                 }
