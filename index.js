@@ -237,7 +237,6 @@ client.on('interactionCreate', async (interaction) => {
                     var locationSelected;
                     var characterSelected;
                     collector.on('collect', async (interaction_second) => {
-                        console.log(interaction_second);
                         if (interaction_second.values[0]) {
                             if (interaction_second.customId == 'LocationMovementSelector') {
                                 locationSelected = interaction_second.values[0];
@@ -245,7 +244,7 @@ client.on('interactionCreate', async (interaction) => {
                                 characterSelected = interaction_second.values[0];
                             }
                             if (locationSelected && characterSelected) {
-                                await connection.promise.query('update characters set location_id = ? where id = ?', [interaction_second.values[0], interaction_second.values[1]]);
+                                await connection.promise().query('update characters set location_id = ? where id = ?', [interaction_second.values[0], interaction_second.values[1]]);
                                 await message.edit({ content: 'Successfully moved character.', components: [] });
                             } else {
                                 await interaction_second.deferUpdate();
