@@ -245,7 +245,7 @@ client.on('interactionCreate', async (interaction) => {
                             }
                             if (locationSelected && characterSelected) {
                                 await connection.promise().query('update characters set location_id = ? where id = ?', [interaction_second.values[0], interaction_second.values[1]]);
-                                await interaction.update({ content: 'Successfully moved character.', components: [] });
+                                await interaction_second.update({ content: 'Successfully moved character.', components: [] });
                             } else {
                                 await interaction_second.deferUpdate();
                             }
