@@ -236,9 +236,7 @@ client.on('interactionCreate', async (interaction) => {
                     const collector = message.createMessageComponentCollector({ time: 35000 });
 
                     collector.on('collect', async (interaction_second) => {
-                        console.log(interaction_second.values);
-                        console.log(characterSelectComponent);
-                        console.log(locationSelectComponent);
+                        console.log(interaction_second);
                         if (interaction_second.values[0] && interaction_second.values[1]) {
                             await connection.promise.query('update characters set location_id = ? where id = ?', [interaction_second.values[0], interaction_second.values[1]]);
                             await message.edit({ content: 'Successfully moved character.', components: [] });
