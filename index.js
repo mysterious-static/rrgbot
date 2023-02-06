@@ -170,7 +170,7 @@ client.on('interactionCreate', async (interaction) => {
                 var channelexists = await connection.promise().query('select * from movement_locations where guild_id = ? and channel_id = ?', [interaction.guildId, thisChannel.id]);
                 if (channelexists[0].length > 0) {
                     var enabled = interaction.options.getBoolean('enabled');
-                    await connection.promise().query('update movement_locations where channel_id = ? set movement_allowed = ?', [thisChannel.id, enabled]);
+                    await connection.promise().query('update movement_locations set movement_allowed = ? where channel_id = ?', [enabled, thisChannel.id]);
                     interaction.reply({ content: 'Should be all set! (changed movement allowed value of ' + thisChannel.toString() + ' to ' + enabled + ')', ephemeral: true });
                 } else {
                     interaction.reply({ content: 'Looks like this channel isn\'t a valid location. Try adding it via `/addlocation`. :revolving_hearts:', ephemeral: true });
