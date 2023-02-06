@@ -96,7 +96,7 @@ var rps = new SlashCommandBuilder().setName('rps')
 var move = new SlashCommandBuilder().setName('move')
     .setDescription('Move to a new location.');
 
-var me = new SlashCommandBuilds().setName('me')
+var me = new SlashCommandBuilder().setName('me')
     .setDescription('Show your character sheet.')
 
 
