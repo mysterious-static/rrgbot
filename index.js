@@ -21,22 +21,22 @@ client.login(process.env.app_token);
 /* COMNMAND STRUCTURE */
 var allowmovement = new SlashCommandBuilder().setName('allowmovement')
     .setDescription('Lock or unlock movement globally or from a single location.')
-    .addChannelOption(option => 
+    .addChannelOption(option =>
         option.setName('channel')
             .setDescription('The channel you wish to lock or unlock')
     ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 var addlocation = new SlashCommandBuilder().setName('addlocation')
     .setDescription('Allow movement to and from a location.')
-    .addChannelOption(option => 
+    .addChannelOption(option =>
         option.setName('channel')
             .setDescription('The channel you wish to designate as movement-enabled/-disabled. New locations default this to ON.')
             .setRequired(true)
-    ).addStringOption(option => 
+    ).addStringOption(option =>
         option.setName('friendly_name')
             .setDescription('What you\'d like this location to be called in announcements (if you set an announcements channel).')
             .setRequired(true)
-    ).addBooleanOption(option => 
+    ).addBooleanOption(option =>
         option.setName('enabled')
             .setDescription('Simple true/false toggle')
             .setRequired(true)
@@ -44,22 +44,22 @@ var addlocation = new SlashCommandBuilder().setName('addlocation')
 
 var locationannouncements = new SlashCommandBuilder().setName('locationannouncements')
     .setDescription('Enable an announcements channel for a location.')
-    .addChannelOption(option => 
+    .addChannelOption(option =>
         option.setName('location_channel')
             .setDescription('The location channel.')
             .setRequired(true)
-    ).addChannelOption(option => 
+    ).addChannelOption(option =>
         option.setName('announcements_channel')
             .setDescription('The announcements channel. Leave unset to remove. Can be set to location channel.')
     ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 var movementvisibility = new SlashCommandBuilder().setName('locationvisibility')
     .setDescription('Enable or disable the ability for players to view a location after they leave ("global read" mode)')
-    .addChannelOption(option => 
+    .addChannelOption(option =>
         option.setName('location')
             .setDescription('Channel to designate as "visible when not present / global read". New locations default this to OFF.')
             .setRequired(true)
-    ).addBooleanOption(option => 
+    ).addBooleanOption(option =>
         option.setName('enabled')
             .setDescription('Simple true/false toggle')
             .setRequired(true)
@@ -72,11 +72,11 @@ var resetlocationvis = new SlashCommandBuilder().setName('resetlocationvis')
 //Create Players
 var playercreate = new SlashCommandBuilder().setName('playercreate')
     .setDescription('Create a player based on a mentioned user.')
-    .addUserOption(option => 
+    .addUserOption(option =>
         option.setName('user')
             .setDescription('The user to associate')
     )
-    .addStringOption(option => 
+    .addStringOption(option =>
         option.setName('player_name')
             .setDescription('The player name.')
     )
@@ -88,7 +88,7 @@ var playercreate = new SlashCommandBuilder().setName('playercreate')
 
 var rps = new SlashCommandBuilder().setName('rps')
     .setDescription('Enter battle, either against another player or versus the robot.')
-    .addUserOption(option => 
+    .addUserOption(option =>
         option.setName('challengee')
             .setDescription('The player you wish to challenge (optional)')
     );
@@ -153,7 +153,7 @@ client.on('interactionCreate', async (interaction) => {
             // Channel 1 must be a location, channel 2 can be any channel not a category. This is where the movement announcements will happen for that location. If channel 2 is unset then unset it in DB.
             var thisChannel = interaction.options.getChannel('location_channel');
             var channelexists = await connection.promise().query('select * from movement_locations where guild_id = ? and channel_id = ?', [interaction.guildId, thisChannel.id]);
-            if(channelexists[0].length > 0) {
+            if (channelexists[0].length > 0) {
                 if (interaction.options.getChannel('announcements_channel')) {
                     var announcements_channel = interaction.options.getChannel('announcements_channel');
                     await connection.promise.query('update movement_locations set announcements_channel = ? where channel_id = ?', [announcements_channel.id, thisChannel.id]);
@@ -162,17 +162,23 @@ client.on('interactionCreate', async (interaction) => {
                 }
                 interaction.reply({ message: 'Should be all set! (changed announcements channel value of ' + thisChannel.toString() + ' to ' + announcements_channel.toString() + ')', ephemeral: true });
             } else {
-                interaction.reply({message: 'Looks like this channel isn\'t a valid location. Try adding it via `/addlocation`. :revolving_hearts:', ephemeral: true });
+                interaction.reply({ message: 'Looks like this channel isn\'t a valid location. Try adding it via `/addlocation`. :revolving_hearts:', ephemeral: true });
             }
         } else if (interaction.commandName == 'allowmovement') {
-            var thisChannel = interaction.options.getChannel('channel');
-            var channelexists = await connection.promise().query('select * from movement_locations where guild_id = ? and channel_id = ?', [interaction.guildId, thisChannel.id]);
-            if (channelexists[0].length > 0) {
-                var enabled = interaction.options.getBoolean('enabled');
-                await connection.promise().query('update movement_locations where channel_id = ? set movement_allowed = ?', [thisChannel.id, enabled]);
-                interaction.reply({ message: 'Should be all set! (changed movement allowed value of ' + thisChannel.toString() + ' to ' + enabled + ')', ephemeral: true });
+            if (interaction.options.getChannel('channel')) {
+                var thisChannel = interaction.options.getChannel('channel');
+                var channelexists = await connection.promise().query('select * from movement_locations where guild_id = ? and channel_id = ?', [interaction.guildId, thisChannel.id]);
+                if (channelexists[0].length > 0) {
+                    var enabled = interaction.options.getBoolean('enabled');
+                    await connection.promise().query('update movement_locations where channel_id = ? set movement_allowed = ?', [thisChannel.id, enabled]);
+                    interaction.reply({ message: 'Should be all set! (changed movement allowed value of ' + thisChannel.toString() + ' to ' + enabled + ')', ephemeral: true });
+                } else {
+                    interaction.reply({ message: 'Looks like this channel isn\'t a valid location. Try adding it via `/addlocation`. :revolving_hearts:', ephemeral: true });
+                }
             } else {
-                interaction.reply({ message: 'Looks like this channel isn\'t a valid location. Try adding it via `/addlocation`. :revolving_hearts:', ephemeral: true });
+                var enabled = interaction.options.getBoolean('enabled');
+                await connection.promise().query('update movement_locations where guild_id = ? set movement_allowed = ?', [interaction.guildId, enabled]);
+                interaction.reply({ message: 'Should be all set! (changed movement allowed value of ALL locations to ' + enabled + ')', ephemeral: true });
             }
         } else if (interaction.commandName == 'movementvisibility') {
             var thisChannel = interaction.options.getChannel('channel');
