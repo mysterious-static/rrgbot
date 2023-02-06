@@ -1,0 +1,23 @@
+{
+  "name": "rrgbot",
+  "version": "0.2.0",
+  "description": "A rewrite of aletson/nightingale-robot.",
+  "author": "Alli <me@ajl.io> (https://ajl.io)",
+  "homepage": "https://github.com/aletson/rrgbot",
+  "engines": {
+    "node": "16.x"
+  },
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "discord.js": "latest",
+    "mysql2": "latest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aletson/rrgbot"
+  },
+  "license": "MIT"
+}
