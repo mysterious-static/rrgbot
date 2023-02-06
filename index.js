@@ -50,7 +50,7 @@ var locationannouncements = new SlashCommandBuilder().setName('locationannouncem
             .setRequired(true)
     ).addChannelOption(option => 
         option.setName('announcements_channel')
-            .setDescription('The announcements channel. It can be the same channel if the location is a text channel. Leave unset to remove.')
+            .setDescription('The announcements channel. Leave unset to remove. Can be set to location channel.')
     ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 var movementvisibility = new SlashCommandBuilder().setName('locationvisibility')
