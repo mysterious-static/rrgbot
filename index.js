@@ -24,6 +24,10 @@ var allowmovement = new SlashCommandBuilder().setName('allowmovement')
     .addChannelOption(option =>
         option.setName('channel')
             .setDescription('The channel you wish to lock or unlock')
+    ).addBooleanOption(option =>
+        option.setName('enabled')
+        .setDescription('Enabled or disabled.')
+        .setRequired(true)
     ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 var addlocation = new SlashCommandBuilder().setName('addlocation')
