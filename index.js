@@ -1,6 +1,6 @@
 /*jslint es6*/
 const Discord = require('discord.js');
-const { Permissions, MessageActionRow, TextInputComponent, MessageButton, MessageSelectMenu, TextInputStyle, Modal, PermissionFlagsBits, GatewayIntentBits, SlashCommandBuilder } = require('discord.js')
+const { Permissions, ActionRowBuilder, ButtonBuilder, TextInputComponent, SelectMenuBuilder, TextInputStyle, Modal, PermissionFlagsBits, GatewayIntentBits, SlashCommandBuilder } = require('discord.js')
 const client = new Discord.Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildWebhooks, GatewayIntentBits.GuildMessageReactions, GatewayIntentBits.GuildEmojisAndStickers, GatewayIntentBits.GuildMembers] });
 var mysql = require('mysql2');
 var connection = mysql.createConnection({
@@ -224,8 +224,8 @@ client.on('interactionCreate', async (interaction) => {
                             var thisLocationKeyValue = { label: location.friendly_name, value: location.id };
                             locationsKeyValues.push(thisLocationKeyValue);
                         }
-                        const locationSelectComponent = new MessageSelectMenu().setOptions(locationsKeyValues).setCustomId('LocationMovementSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
-                        var locationSelectRow = new MessageActionRow().addComponents(locationSelectComponent);
+                        const locationSelectComponent = new SelectMenuBuilder().setOptions(locationsKeyValues).setCustomId('LocationMovementSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
+                        var locationSelectRow = new ActionRowBuilder().addComponents(locationSelectComponent);
                         interaction.reply({ content: 'Select a location to move to:', components: [locationSelectRow], ephemeral: true });
                     } else {
                         interaction.reply({ content: 'Sorry, but I can\'t find any other locations for you to move to. Try again another time, or contact the Orchestrators. :purple_heart:', ephemeral: true });
@@ -258,10 +258,10 @@ client.on('interactionCreate', async (interaction) => {
                             var queryData = [interaction.user.id, challenged.id, interaction.channel.id];
                             connection.query('insert into rps (challenger, challenged, channel) values (?, ?, ?)', queryData, async function (err2, res2, fields2) {
                                 //Create buttons, tag both users.
-                                var rpsButtonR = new MessageButton().setCustomId('rpsButtonR').setLabel('Rapid').setStyle('PRIMARY'); // TODO MessageButton doesn't exist in Discord.js v14
-                                var rpsButtonP = new MessageButton().setCustomId('rpsButtonP').setLabel('Precision').setStyle('PRIMARY');
-                                var rpsButtonS = new MessageButton().setCustomId('rpsButtonS').setLabel('Sweeping').setStyle('PRIMARY');
-                                const rpsRow = new MessageActionRow().addComponents(rpsButtonR, rpsButtonP, rpsButtonS);
+                                var rpsButtonR = new ButtonBuilder().setCustomId('rpsButtonR').setLabel('Rapid').setStyle('PRIMARY'); // TODO ButtonBuilder doesn't exist in Discord.js v14
+                                var rpsButtonP = new ButtonBuilder().setCustomId('rpsButtonP').setLabel('Precision').setStyle('PRIMARY');
+                                var rpsButtonS = new ButtonBuilder().setCustomId('rpsButtonS').setLabel('Sweeping').setStyle('PRIMARY');
+                                const rpsRow = new ActionRowBuilder().addComponents(rpsButtonR, rpsButtonP, rpsButtonS);
                                 await interaction.reply({ content: '<@' + interaction.user.id + '> has challenged <@' + challenged.id + '> to a duel!', components: [rpsRow] });
                             });
                         }
@@ -277,10 +277,10 @@ client.on('interactionCreate', async (interaction) => {
                         } else {
                             var queryData = [interaction.user.id, client.user.id, interaction.channel.id];
                             connection.query('insert into rps (challenger, challenged, channel) values (?, ?, ?)', queryData, async function (err2, res2, fields2) {
-                                var rpsButtonR = new MessageButton().setCustomId('rpsButtonR').setLabel('Rapid').setStyle('PRIMARY');
-                                var rpsButtonP = new MessageButton().setCustomId('rpsButtonP').setLabel('Precision').setStyle('PRIMARY');
-                                var rpsButtonS = new MessageButton().setCustomId('rpsButtonS').setLabel('Sweeping').setStyle('PRIMARY');
-                                const rpsRow = new MessageActionRow().addComponents(rpsButtonR, rpsButtonP, rpsButtonS);
+                                var rpsButtonR = new ButtonBuilder().setCustomId('rpsButtonR').setLabel('Rapid').setStyle('PRIMARY');
+                                var rpsButtonP = new ButtonBuilder().setCustomId('rpsButtonP').setLabel('Precision').setStyle('PRIMARY');
+                                var rpsButtonS = new ButtonBuilder().setCustomId('rpsButtonS').setLabel('Sweeping').setStyle('PRIMARY');
+                                const rpsRow = new ActionRowBuilder().addComponents(rpsButtonR, rpsButtonP, rpsButtonS);
                                 await interaction.reply({ content: 'You have challenged me to a duel!', components: [rpsRow], ephemeral: true });
                             });
                         }
