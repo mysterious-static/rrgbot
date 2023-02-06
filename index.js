@@ -222,7 +222,7 @@ client.on('interactionCreate', async (interaction) => {
                     locationsKeyValues.push(thisLocationKeyValue);
                 }
                 const locationSelectComponent = new StringSelectMenuBuilder().setOptions(locationsKeyValues).setCustomId('LocationMovementSelector').setMinValues(1).setMaxValues(1);
-                // var locationSelectRow = new ActionRowBuilder().addComponents(locationSelectComponent);
+                var locationSelectRow = new ActionRowBuilder().addComponents(locationSelectComponent);
                 var characters = await connection.promise().query('select distinct c.* from characters c join players_characters pc on pc.character_id = c.id join players p on pc.player_id = p.id where p.guild_id = ? and pc.active = 1', [interaction.guildId]);
                 if (characters[0].length > 0) {
                     var charactersKeyValues = [{ label: 'Select a character', value: '0' }];
@@ -231,10 +231,11 @@ client.on('interactionCreate', async (interaction) => {
                         charactersKeyValues.push(thisCharacterKeyValue);
                     }
                     const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterMovementSelector').setMinValues(1).setMaxValues(1);
-                    var characterSelectRow = new ActionRowBuilder().addComponents(locationSelectComponent, characterSelectComponent);
-                    var message = await interaction.reply({ content: '', components: [characterSelectRow] , ephemeral: true});
+                    var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                    var message = await interaction.reply({ content: '', components: [locationSelectRow, characterSelectRow] , ephemeral: true});
                     const collector = message.createMessageComponentCollector({ time: 35000 });
-
+                    var locationSelected;
+                    var characterSelected;
                     collector.on('collect', async (interaction_second) => {
                         console.log(interaction_second);
                         if (interaction_second.values[0] && interaction_second.values[1]) {
