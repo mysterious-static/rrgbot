@@ -145,7 +145,7 @@ client.on('interactionCreate', async (interaction) => {
             if (channelexists[0].length > 0) {
                 interaction.reply({ message: 'Looks like this channel is already set up as a location. :revolving_hearts:', ephemeral: true });
             } else {
-                await connection.promise().query('insert into movement_locations (channel_id, guild_id, movement_allowed, global_read, friendly_name) values (?, ?, ?, ?)', [thisChannel.id, interaction.guildId, 1, 0, interaction.options.getString('friendly_name')]);
+                await connection.promise().query('insert into movement_locations (channel_id, guild_id, movement_allowed, global_read, friendly_name) values (?, ?, ?, ?, ?)', [thisChannel.id, interaction.guildId, 1, 0, interaction.options.getString('friendly_name')]);
                 interaction.reply({ message: 'Location added; please use `/locationannouncements` to set the announcements channel for this location.', ephemeral: true });
             }
 
@@ -254,7 +254,7 @@ client.on('interactionCreate', async (interaction) => {
                             var queryData = [interaction.user.id, challenged.id, interaction.channel.id];
                             connection.query('insert into rps (challenger, challenged, channel) values (?, ?, ?)', queryData, async function (err2, res2, fields2) {
                                 //Create buttons, tag both users.
-                                var rpsButtonR = new MessageButton().setCustomId('rpsButtonR').setLabel('Rapid').setStyle('PRIMARY');
+                                var rpsButtonR = new MessageButton().setCustomId('rpsButtonR').setLabel('Rapid').setStyle('PRIMARY'); // TODO MessageButton doesn't exist in Discord.js v14
                                 var rpsButtonP = new MessageButton().setCustomId('rpsButtonP').setLabel('Precision').setStyle('PRIMARY');
                                 var rpsButtonS = new MessageButton().setCustomId('rpsButtonS').setLabel('Sweeping').setStyle('PRIMARY');
                                 const rpsRow = new MessageActionRow().addComponents(rpsButtonR, rpsButtonP, rpsButtonS);
