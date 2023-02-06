@@ -143,10 +143,10 @@ client.on('interactionCreate', async (interaction) => {
             var thisChannel = interaction.options.getChannel('channel');
             var channelexists = await connection.promise().query('select * from movement_locations where guild_id = ? and channel_id = ?', [interaction.guildId, thisChannel.id]);
             if (channelexists[0].length > 0) {
-                interaction.reply({ message: 'Looks like this channel is already set up as a location. :revolving_hearts:', ephemeral: true });
+                interaction.reply({ content: 'Looks like this channel is already set up as a location. :revolving_hearts:', ephemeral: true });
             } else {
                 await connection.promise().query('insert into movement_locations (channel_id, guild_id, movement_allowed, global_read, friendly_name) values (?, ?, ?, ?, ?)', [thisChannel.id, interaction.guildId, 1, 0, interaction.options.getString('friendly_name')]);
-                interaction.reply({ message: 'Location added; please use `/locationannouncements` to set the announcements channel for this location.', ephemeral: true });
+                interaction.reply({ content: 'Location added; please use `/locationannouncements` to set the announcements channel for this location.', ephemeral: true });
             }
 
         } else if (interaction.commandName == 'locationannouncements') {
@@ -160,9 +160,9 @@ client.on('interactionCreate', async (interaction) => {
                 } else {
                     await connection.promise().query('update movement_locations set announcements_channel = NULL where channel_id = ?', [thisChannel.id]);
                 }
-                interaction.reply({ message: 'Should be all set! (changed announcements channel value of ' + thisChannel.toString() + ' to ' + announcements_channel.toString() + ')', ephemeral: true });
+                interaction.reply({ content: 'Should be all set! (changed announcements channel value of ' + thisChannel.toString() + ' to ' + announcements_channel.toString() + ')', ephemeral: true });
             } else {
-                interaction.reply({ message: 'Looks like this channel isn\'t a valid location. Try adding it via `/addlocation`. :revolving_hearts:', ephemeral: true });
+                interaction.reply({ content: 'Looks like this channel isn\'t a valid location. Try adding it via `/addlocation`. :revolving_hearts:', ephemeral: true });
             }
         } else if (interaction.commandName == 'allowmovement') {
             if (interaction.options.getChannel('channel')) {
@@ -171,14 +171,14 @@ client.on('interactionCreate', async (interaction) => {
                 if (channelexists[0].length > 0) {
                     var enabled = interaction.options.getBoolean('enabled');
                     await connection.promise().query('update movement_locations where channel_id = ? set movement_allowed = ?', [thisChannel.id, enabled]);
-                    interaction.reply({ message: 'Should be all set! (changed movement allowed value of ' + thisChannel.toString() + ' to ' + enabled + ')', ephemeral: true });
+                    interaction.reply({ content: 'Should be all set! (changed movement allowed value of ' + thisChannel.toString() + ' to ' + enabled + ')', ephemeral: true });
                 } else {
-                    interaction.reply({ message: 'Looks like this channel isn\'t a valid location. Try adding it via `/addlocation`. :revolving_hearts:', ephemeral: true });
+                    interaction.reply({ content: 'Looks like this channel isn\'t a valid location. Try adding it via `/addlocation`. :revolving_hearts:', ephemeral: true });
                 }
             } else {
                 var enabled = interaction.options.getBoolean('enabled');
                 await connection.promise().query('update movement_locations where guild_id = ? set movement_allowed = ?', [interaction.guildId, enabled]);
-                interaction.reply({ message: 'Should be all set! (changed movement allowed value of ALL locations to ' + enabled + ')', ephemeral: true });
+                interaction.reply({ content: 'Should be all set! (changed movement allowed value of ALL locations to ' + enabled + ')', ephemeral: true });
             }
         } else if (interaction.commandName == 'movementvisibility') {
             var thisChannel = interaction.options.getChannel('channel');
@@ -186,21 +186,21 @@ client.on('interactionCreate', async (interaction) => {
             if (channelexists[0].length > 0) {
                 var enabled = interaction.options.getBoolean('enabled');
                 await connection.promise().query('update movement_locations where channel_id = ? set global_read = ?', [thisChannel.id, enabled]);
-                interaction.reply({ message: 'Should be all set! (changed global read value of ' + thisChannel.toString() + ' to ' + enabled + ')', ephemeral: true });
+                interaction.reply({ content: 'Should be all set! (changed global read value of ' + thisChannel.toString() + ' to ' + enabled + ')', ephemeral: true });
             } else {
-                interaction.reply({ message: 'Looks like this channel isn\'t a valid location. Try adding it via `/addlocation`. :revolving_hearts:', ephemeral: true });
+                interaction.reply({ content: 'Looks like this channel isn\'t a valid location. Try adding it via `/addlocation`. :revolving_hearts:', ephemeral: true });
             }
         } else if (interaction.commandName == 'playercreate') {
             var user = interaction.options.getUser('user');
             var playerName = interaction.options.getString('player_name');
             var playerexists = await connection.promise().query('select * from players where user_id = ? and guild_id = ?', [user.id, interaction.guildId]); // Not using member id because it's a pain to get, and this way we could eventually let users look at all their characters in a web view maybe
             if (playerexists[0].length > 0) {
-                interaction.reply({ message: 'A player entry for this user/server combo already exists! Sorry about that. :purple_heart:', ephemeral: true })
+                interaction.reply({ content: 'A player entry for this user/server combo already exists! Sorry about that. :purple_heart:', ephemeral: true })
             } else {
                 var inserted_player = await connection.promise().query('insert into players (user_id, guild_id, name) values (?, ?, ?)', [user.id, interaction.guildId, playerName]);
                 var inserted_character = await connection.promise().query('insert into characters (name) values (?, ?)', [playerName]); // This table also has "location", because all characters are in a location.
                 await connection.promise().query('insert into players_characters (player_id, character_id, active) values (?, ?)', [inserted_player[0].insertId, inserted_character[0].insertId, 1]); // Futureproofing for "multiple players can own a character".
-                interaction.reply({ message: 'Added the player and character!', ephemeral: true });
+                interaction.reply({ content: 'Added the player and character!', ephemeral: true });
 
             }
         }
@@ -224,19 +224,19 @@ client.on('interactionCreate', async (interaction) => {
                         var locationSelectRow = new MessageActionRow().addComponents(locationSelectComponent);
                         interaction.reply({ content: 'Select a location to move to:', components: [locationSelectRow], ephemeral: true });
                     } else {
-                        interaction.reply({ message: 'Sorry, but I can\'t find any other locations for you to move to. Try again another time, or contact the Orchestrators. :purple_heart:', ephemeral: true });
+                        interaction.reply({ content: 'Sorry, but I can\'t find any other locations for you to move to. Try again another time, or contact the Orchestrators. :purple_heart:', ephemeral: true });
                     }
                     // retrieve any other movement-enabled locations.
                     // Create a DROPDOWN to select movement.
                 } else {
-                    interaction.reply({ message: 'Sorry, but you don\'t seem to be in a location that allows movement right now. Try again another time, or contact the Orchestrators. :purple_heart:', ephemeral: true });
+                    interaction.reply({ content: 'Sorry, but you don\'t seem to be in a location that allows movement right now. Try again another time, or contact the Orchestrators. :purple_heart:', ephemeral: true });
                 }
             } else if (interaction.commandName == 'me') {
                 var current_character = await connection.promise().query('select character_id from players_characters join players p on p.id = players_characters.player_id where p.user_id = ? and players_characters.active = 1', [interaction.user.id]);
                 if (current_character[0].length > 0) {
 
                 } else {
-                    interaction.reply({ message: 'Somehow, you don\'t have an active character! If you\'re a player, this means something has gone HORRIBLY WRONG. Please let an Orchestrator know.', ephemeral: true });
+                    interaction.reply({ content: 'Somehow, you don\'t have an active character! If you\'re a player, this means something has gone HORRIBLY WRONG. Please let an Orchestrator know.', ephemeral: true });
                 }
                 // If number of characters for player is 1, return one sheet. Otherwise, return a dropdown (not relevant for this game, thank god! So this is a Future Improvement).
                 // TODO: Separate command for administrators.
