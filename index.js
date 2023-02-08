@@ -91,7 +91,7 @@ var playercreate = new SlashCommandBuilder().setName('playercreate')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 
-var charactercreate = new SlashCommandBuilder.setName('charactercreate')
+var charactercreate = new SlashCommandBuilder().setName('charactercreate')
     .setDescription('Create a new character.')
     .addStringOption(option =>
         option.setName('name')
