@@ -124,7 +124,7 @@ var assignarchetype = new SlashCommandBuilder().setName('assignarchetype')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator); // Dropdowns.
 
 var addstat = new SlashCommandBuilder().setName('addstat')
-    .setDescription('Add a stat for view in character sheet. Stats are global across all characters but can have different values.')
+    .setDescription('Add a stat for all characters for view in character sheet.')
     .addStringOption(option =>
         option.setName('stat')
             .setDescription('The name of the stat (e.g., Strength, Intelligence, HP)')
