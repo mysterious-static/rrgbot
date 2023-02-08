@@ -458,13 +458,14 @@ client.on('interactionCreate', async (interaction) => {
                     charactersKeyValues.push({ label: character.name, value: character.id.toString() });
                 }
             }
-            const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterAssignmentSelector').setMinValues(1);
+            const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterAssignmentSelector').setMinValues(1).setMaxValues(10);
             var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
             var message = await interaction.reply({ content: 'Select a character or characters to assign to this player:', components: [characterSelectRow], ephemeral: true });
             const collector = message.createMessageComponentCollector({ time: 35000 });
             var charactersSelected;
             collector.on('collect', async (interaction_second) => {
                 console.log(interaction_second.values); // Is this an array of all selected or is it an array of arrays
+                interaction_second.deferUpdate();
             });
         }
 
@@ -632,7 +633,7 @@ client.on('interactionCreate', async (interaction) => {
         }
     }
 
-    if (interaction.isSelectMenu()) {
+    if (interaction.isStringSelectMenu()) {
         if (interaction.customId === 'LocationMovementSelector' + interaction.member.id) {
             var dest_id = interaction.values[0]
             var locations = await connection.promise().query('select ml.*, c.name as character_name from players p join players_characters pc on p.id = pc.player_id join characters c on pc.character_id = c.id join movement_locations ml on c.location_id = ml.id where ((p.user_id = ? and pc.active = 1) or c.location_id = ?) and ml.movement_allowed = 1 and ml.guild_id = ?', [interaction.user.id, dest_id, interaction.guild_id]);
