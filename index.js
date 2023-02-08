@@ -79,16 +79,122 @@ var playercreate = new SlashCommandBuilder().setName('playercreate')
     .addUserOption(option =>
         option.setName('user')
             .setDescription('The user to associate')
-    )
+            .setRequired(true))
     .addStringOption(option =>
         option.setName('player_name')
             .setDescription('The player name.')
-    )
+            .setRequired(true))
+    .addBooleanOption(option =>
+        option.setName('create_character')
+            .setDescription('Create a character? If false, be sure to assign this player a character using /assigncharacter.')
+            .setRequired(true))
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+
+var charactercreate = new SlashCommandBuilder.setName('charactercreate')
+    .setDescription('Create a new character.')
+    .addStringOption(option =>
+        option.setName('name')
+            .setDescription('The character name.')
+            .setRequired(true))
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+var assigncharacter = new SlashCommandBuilder().setName('assigncharacter')
+    .setDescription('Assign a character or characters to a player.')
+    .addUserOption(option =>
+        option.setName('user')
+            .setDescription('The user with an active player entry.')
+            .setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 var characterlocation = new SlashCommandBuilder().setName('characterlocation')
     .setDescription('Move a character to a specific location.')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+var addcharacterarchetype = new SlashCommandBuilder().setName('addcharacterarchetype')
+    .setDescription('Add a character archetype (think "class") that can be assigned to characters. Characters can have multiple archetypes.')
+    .addStringOption(option =>
+        option.setName('archetype')
+            .setDescription('The name of the archetype')
+            .setRequired(true))
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+var assignarchetype = new SlashCommandBuilder().setName('assignarchetype')
+    .setDescription('Assign an archetype to a character or characters.')
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator); // Dropdowns.
+
+var addstat = new SlashCommandBuilder().setName('addstat')
+    .setDescription('Add a stat for view in character sheet. Stats are global across all characters but can have different values.')
+    .addStringOption(option =>
+        option.setName('stat')
+            .setDescription('The name of the stat (e.g., Strength, Intelligence, HP)')
+            .setRequired(true))
+    .addIntegerOption(option =>
+        option.setName('defaultvalue')
+            .setDescription('The default value of the stat')
+            .setRequired(true))
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+var addarchetypestat = new SlashCommandBuilder().setName('addarchetypestat')
+    .setDescription('Add an archetype stat for view in character sheet. Archetype stats are global across an archetype but can have different per-character values.')
+    .addStringOption(option =>
+        option.setName('stat')
+            .setDescription('The name of the stat (e.g., Performance, Studiousness, MP)')
+            .setRequired(true))
+    .addStringOption(option =>
+        option.setName('description')
+            .setDescription('What this stat means or does.')
+            .setRequired(true))
+    .addIntegerOption(option =>
+        option.setName('defaultvalue')
+            .setDescription('The default value of the stat.')
+            .setRequired(true))
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator); // Will give you a dropdown to select the archetype or archetypes to assign to.
+
+var addskill = new SlashCommandBuilder().setName('addskill')
+    .setDescription('Add a skill for view in character sheet. Skills can be assigned to multiple characters or to archetypes.')
+    .addStringOption(option =>
+        option.setName('skillname')
+            .setDescription('The name of the skill (e.g. Vorpal Slash, 1000 Needles, Gigaton Hammer)')
+            .setRequired(true))
+    .addStringOption(option =>
+        option.setName('description')
+            .setDescription('The description or flavor text of the skill.')
+            .setRequired(true))
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+var additem = new SlashCommandBuilder().setName('additem')
+    .setDescription('Add an item for display on character sheet. Items can be assigned to one character.')
+    .addStringOption(option =>
+        option.setName('itemname')
+            .setDescription('The name of the item')
+            .setRequired(true))
+    .addStringOption(option =>
+        option.setName('description')
+            .setDescription('What this item is.')
+            .setRequired(true))
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+var addworldstat = new SlashCommandBuilder().setName('addworldstat')
+    .setDescription('Add a world stat for view in character sheet. World stats can be assigned as globally visible or visible to only some characters or archetypes.')
+    .addStringOption(option =>
+        option.setName('stat')
+            .setDescription('The name of the stat')
+            .setRequired(true))
+    .addIntegerOption(option =>
+        option.setName('value')
+            .setDescription('The value of the stat')
+            .setRequired(true))
+    .addStringOption(option =>
+        option.setName('description')
+            .setDescription('What this stat means or does.')
+            .setRequired(true))
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+// TODO: Items will be REWORKED ENTIRELY later, with a fully-functional system where instances of items can be created versus having all items unique.
+
+var addquest = new SlashCommandBuilder().setName('addquest')
+    .setDescription('NYI: Add a quest for display on character sheet. Quests have objectives that can be updated, and can be assigned to multiple characters.');
 
 // Characters Per Player (switching system // bot echoes) - TODO
 // For now, playercreate should create a default character automatically in a separate table with the specified player_name.
@@ -105,7 +211,16 @@ var move = new SlashCommandBuilder().setName('move')
     .setDescription('Move to a new location.');
 
 var me = new SlashCommandBuilder().setName('me')
-    .setDescription('Show your character sheet.')
+    .setDescription('Show your character sheet.');
+
+var skill = new SlashCommandBuilder().setName('skill')
+    .setDescription('Posts a skill in the current chat channel.');
+
+var item = new SlashCommandBuilder().setName('item')
+    .setDescription('Posts an item in the current chat channel.');
+
+var give = new SlashCommandBuilder().setName('give')
+    .setDescription('Gives an item to another character in your location.');
 
 
 
@@ -206,8 +321,10 @@ client.on('interactionCreate', async (interaction) => {
                 interaction.reply({ content: 'A player entry for this user/server combo already exists! Sorry about that. :purple_heart:', ephemeral: true })
             } else {
                 var inserted_player = await connection.promise().query('insert into players (user_id, guild_id, name) values (?, ?, ?)', [user.id, interaction.guildId, playerName]);
-                var inserted_character = await connection.promise().query('insert into characters (name) values (?)', [playerName]); // This table also has "location", because all characters are in a location.
-                await connection.promise().query('insert into players_characters (player_id, character_id, active) values (?, ?, ?)', [inserted_player[0].insertId, inserted_character[0].insertId, 1]); // Futureproofing for "multiple players can own a character".
+                if (interaction.options.getBoolean('create_character')) {
+                    var inserted_character = await connection.promise().query('insert into characters (name, guild_id) values (?, ?)', [playerName, interaction.guildId]); // This table also has "location", because all characters are in a location.
+                    await connection.promise().query('insert into players_characters (player_id, character_id, active) values (?, ?, ?)', [inserted_player[0].insertId, inserted_character[0].insertId, 1]); // Futureproofing for "multiple players can own a character".
+                }
                 interaction.reply({ content: 'Added the player and character!', ephemeral: true });
 
             }
@@ -274,7 +391,7 @@ client.on('interactionCreate', async (interaction) => {
                                 if (old_announcements) {
                                     await old_announcements.send('*' + character_name + ' moves to ' + new_name + '.*');
                                 }
-                                if (new_announcements) {
+                                if (new_announcements && old_name) {
                                     await new_announcements.send('*' + character_name + ' arrives from ' + old_name + '.*');
                                 }
                                 await interaction_second.update({ content: 'Successfully moved character.', components: [] });
@@ -295,9 +412,40 @@ client.on('interactionCreate', async (interaction) => {
             } else {
                 interaction.reply({ content: 'You haven\'t created any locations yet. Try creating a location first.', ephemeral: true });
             }
-        }
+        } else if (interaction.commandName == 'charactercreate') {
+            var characterName = interaction.options.getString('name');
+            var character = await connection.promise().query('select * from characters where name = ? and guild_id = ?', [characterName, interaction.guildId]);
+            if (character[0].length == 0) {
+                var inserted_character = await connection.promise().query('insert into characters (name, guild_id) values (?, ?)', [characterName, interaction.guildId]);
 
-        // TODO set CHARACTER LOCATION
+            } else {
+                interaction.reply({ content: 'A character with this name for this game already exists. ' })
+            }
+        } else if (interaction.commandName == 'assigncharacter') {
+            var user = interaction.options.getUser('user');
+            var owned_characters = await connection.promise().query('select distinct c.id from characters join players_characters pc on c.id = pc.character_id join players p on pc.player_id = p.id where c.guild_id = ? and p.user_id = ?', [interaction.guildId, user.id]);
+            var owned = [];
+            if (owned_characters[0].length > 0) {
+                for (const thisCharacter of owned_characters[0]) {
+                    owned.push(thisCharacter.id);
+                }
+                var characters = await connection.promise().query('select * from characters where guild_id = ? and id not in (?)', [interaction.guildId, owned]);
+                if (characters[0].length > 0) {
+                    var charactersKeyValues = [];
+                    for (const character of characters[0]) {
+                        charactersKeyValues.push({ label: character.name, value: character.id });
+                    }
+                }
+                const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterAssignmentSelector').setMinValues(1);
+                var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                var message = interaction.reply({ content: 'Select a character or characters to assign to this player:', components: [characterSelectRow], ephemeral: true });
+                const collector = message.createMessageComponentCollector({ time: 35000 });
+                var charactersSelected;
+                collector.on('collect', async (interaction_second) => {
+                    console.log(interaction_second.values); // Is this an array of all selected or is it an array of arrays
+                });
+            }
+        }
 
 
         // PLAYER COMMANDS
