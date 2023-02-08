@@ -237,7 +237,20 @@ async function isPlayer(userid, guildid) {
 
 
 client.on('ready', async () => {
-    await client.application.commands.set([allowmovement.toJSON(), locationannouncements.toJSON(), addlocation.toJSON(), movementvisibility.toJSON(), resetlocationvis.toJSON(), playercreate.toJSON(), characterlocation.toJSON(), rps.toJSON(), move.toJSON(), me.toJSON()]);
+    await client.application.commands.set([
+        allowmovement.toJSON(),
+        locationannouncements.toJSON(),
+        addlocation.toJSON(),
+        movementvisibility.toJSON(),
+        resetlocationvis.toJSON(),
+        playercreate.toJSON(),
+        characterlocation.toJSON(),
+        rps.toJSON(),
+        move.toJSON(),
+        me.toJSON(),
+        characterassign.toJSON(),
+        charactercreate.toJSON()
+    ]);
     client.user.setActivity("Infinite Magic Glories: Revolutionary Redux");
 });
 
@@ -324,8 +337,11 @@ client.on('interactionCreate', async (interaction) => {
                 if (interaction.options.getBoolean('create_character')) {
                     var inserted_character = await connection.promise().query('insert into characters (name, guild_id) values (?, ?)', [playerName, interaction.guildId]); // This table also has "location", because all characters are in a location.
                     await connection.promise().query('insert into players_characters (player_id, character_id, active) values (?, ?, ?)', [inserted_player[0].insertId, inserted_character[0].insertId, 1]); // Futureproofing for "multiple players can own a character".
+                    interaction.reply({ content: 'Added the player and character!', ephemeral: true });
+                } else {
+                    interaction.reply({ content: 'Added the player!', ephemeral: true });
                 }
-                interaction.reply({ content: 'Added the player and character!', ephemeral: true });
+
 
             }
         } else if (interaction.commandName == 'characterlocation') {
