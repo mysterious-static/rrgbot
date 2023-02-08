@@ -446,6 +446,7 @@ client.on('interactionCreate', async (interaction) => {
                     owned.push(thisCharacter.id);
                 }
                 var characters = await connection.promise().query('select * from characters where guild_id = ? and id not in (?)', [interaction.guildId, owned]);
+                console.log(characters);
                 if (characters[0].length > 0) {
                     var charactersKeyValues = [];
                     for (const character of characters[0]) {
