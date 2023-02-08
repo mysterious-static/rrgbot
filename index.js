@@ -433,9 +433,9 @@ client.on('interactionCreate', async (interaction) => {
             var character = await connection.promise().query('select * from characters where name = ? and guild_id = ?', [characterName, interaction.guildId]);
             if (character[0].length == 0) {
                 var inserted_character = await connection.promise().query('insert into characters (name, guild_id) values (?, ?)', [characterName, interaction.guildId]);
-
+                interaction.reply({content: 'Created character!', ephemeral: true})
             } else {
-                interaction.reply({ content: 'A character with this name for this game already exists. ' })
+                interaction.reply({ content: 'A character with this name for this game already exists.', ephemeral: true });
             }
         } else if (interaction.commandName == 'assigncharacter') {
             var user = interaction.options.getUser('user');
