@@ -458,14 +458,13 @@ client.on('interactionCreate', async (interaction) => {
                     charactersKeyValues.push({ label: character.name, value: character.id.toString() });
                 }
             }
-            const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterAssignmentSelector').setMinValues(1).setMaxValues(10);
+            const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterAssignmentSelector').setMinValues(1).setMaxValues(characters[0].length);
             var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
             var message = await interaction.reply({ content: 'Select a character or characters to assign to this player:', components: [characterSelectRow], ephemeral: true });
             const collector = message.createMessageComponentCollector({ time: 35000 });
             var charactersSelected;
             collector.on('collect', async (interaction_second) => {
                 console.log(interaction_second.values); // Is this an array of all selected or is it an array of arrays
-                interaction_second.deferUpdate();
             });
         }
 
