@@ -439,6 +439,8 @@ client.on('interactionCreate', async (interaction) => {
             }
         } else if (interaction.commandName == 'assigncharacter') {
             var user = interaction.options.getUser('user');
+            //IF USER IS A PLAYER, FIRST,
+            console.log(interaction.guildId);
             var owned_characters = await connection.promise().query('select distinct c.id from characters c join players_characters pc on c.id = pc.character_id join players p on pc.player_id = p.id where c.guild_id = ? and p.user_id = ?', [interaction.guildId, user.id]);
             var owned = [];
             if (owned_characters[0].length > 0) {
@@ -453,7 +455,7 @@ client.on('interactionCreate', async (interaction) => {
             if (characters[0].length > 0) {
                 var charactersKeyValues = [];
                 for (const character of characters[0]) {
-                    charactersKeyValues.push({ label: character.name, value: character.id });
+                    charactersKeyValues.push({ label: character.name, value: character.id.toString() });
                 }
             }
             const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterAssignmentSelector').setMinValues(1);
