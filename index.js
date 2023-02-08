@@ -433,7 +433,7 @@ client.on('interactionCreate', async (interaction) => {
             var character = await connection.promise().query('select * from characters where name = ? and guild_id = ?', [characterName, interaction.guildId]);
             if (character[0].length == 0) {
                 var inserted_character = await connection.promise().query('insert into characters (name, guild_id) values (?, ?)', [characterName, interaction.guildId]);
-                interaction.reply({content: 'Created character!', ephemeral: true})
+                interaction.reply({ content: 'Created character!', ephemeral: true })
             } else {
                 interaction.reply({ content: 'A character with this name for this game already exists.', ephemeral: true });
             }
@@ -446,22 +446,24 @@ client.on('interactionCreate', async (interaction) => {
                     owned.push(thisCharacter.id);
                 }
                 var characters = await connection.promise().query('select * from characters where guild_id = ? and id not in (?)', [interaction.guildId, owned]);
-                console.log(characters);
-                if (characters[0].length > 0) {
-                    var charactersKeyValues = [];
-                    for (const character of characters[0]) {
-                        charactersKeyValues.push({ label: character.name, value: character.id });
-                    }
-                }
-                const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterAssignmentSelector').setMinValues(1);
-                var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                var message = interaction.reply({ content: 'Select a character or characters to assign to this player:', components: [characterSelectRow], ephemeral: true });
-                const collector = message.createMessageComponentCollector({ time: 35000 });
-                var charactersSelected;
-                collector.on('collect', async (interaction_second) => {
-                    console.log(interaction_second.values); // Is this an array of all selected or is it an array of arrays
-                });
+            } else {
+                var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
             }
+            console.log(characters);
+            if (characters[0].length > 0) {
+                var charactersKeyValues = [];
+                for (const character of characters[0]) {
+                    charactersKeyValues.push({ label: character.name, value: character.id });
+                }
+            }
+            const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterAssignmentSelector').setMinValues(1);
+            var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+            var message = interaction.reply({ content: 'Select a character or characters to assign to this player:', components: [characterSelectRow], ephemeral: true });
+            const collector = message.createMessageComponentCollector({ time: 35000 });
+            var charactersSelected;
+            collector.on('collect', async (interaction_second) => {
+                console.log(interaction_second.values); // Is this an array of all selected or is it an array of arrays
+            });
         }
 
 
