@@ -136,7 +136,7 @@ var addstat = new SlashCommandBuilder().setName('addstat')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 var addarchetypestat = new SlashCommandBuilder().setName('addarchetypestat')
-    .setDescription('Add an archetype stat for view in character sheet. Archetype stats are global across an archetype but can have different per-character values.')
+    .setDescription('Add an archetype-specific stat for view in character sheet.')
     .addStringOption(option =>
         option.setName('stat')
             .setDescription('The name of the stat (e.g., Performance, Studiousness, MP)')
@@ -152,7 +152,7 @@ var addarchetypestat = new SlashCommandBuilder().setName('addarchetypestat')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator); // Will give you a dropdown to select the archetype or archetypes to assign to.
 
 var addskill = new SlashCommandBuilder().setName('addskill')
-    .setDescription('Add a skill for view in character sheet. Skills can be assigned to multiple characters or to archetypes.')
+    .setDescription('Add a character/archetype-assignable skill for view in character sheet.')
     .addStringOption(option =>
         option.setName('skillname')
             .setDescription('The name of the skill (e.g. Vorpal Slash, 1000 Needles, Gigaton Hammer)')
@@ -176,7 +176,7 @@ var additem = new SlashCommandBuilder().setName('additem')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 var addworldstat = new SlashCommandBuilder().setName('addworldstat')
-    .setDescription('Add a world stat for view in character sheet. World stats can be assigned as globally visible or visible to only some characters or archetypes.')
+    .setDescription('Add a world stat for view in character sheet. World stats visibility can be assigned.')
     .addStringOption(option =>
         option.setName('stat')
             .setDescription('The name of the stat')
