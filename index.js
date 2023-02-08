@@ -112,7 +112,7 @@ var characterlocation = new SlashCommandBuilder().setName('characterlocation')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 var addcharacterarchetype = new SlashCommandBuilder().setName('addcharacterarchetype')
-    .setDescription('Add a character archetype (think "class") that can be assigned to characters. Characters can have multiple archetypes.')
+    .setDescription('Add a character-assignable archetype (think "class"). Characters can have multiple archetypes.')
     .addStringOption(option =>
         option.setName('archetype')
             .setDescription('The name of the archetype')
