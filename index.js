@@ -249,7 +249,8 @@ client.on('ready', async () => {
         move.toJSON(),
         me.toJSON(),
         assigncharacter.toJSON(),
-        charactercreate.toJSON()
+        charactercreate.toJSON(),
+        addcharacterarchetype.toJSON()
     ]);
     client.user.setActivity("Infinite Magic Glories: Revolutionary Redux");
 });
@@ -472,6 +473,14 @@ client.on('interactionCreate', async (interaction) => {
                 });
             } else {
                 await interaction.reply({ content: 'The user that you selected isn\'t a valid player.', ephemeral: true });
+            }
+        } else if (interaction.commandName == 'addcharacterarchetype') {
+            var archetype = interaction.options.getString('archetype');
+            var archetypeExists = await connection.promise().query('select * from archetypes where server_id = ? and name = ?', [interaction.guildId, archetype]);
+            if (archetypeExists[0].length == 0) {
+                await connection.promise().query('insert into archetypes (name, server_id) values (?, ?)', [archetype, interaction.guildId]);
+            } else {
+                interaction.reply({content: 'Archetype already exists for this game.', ephemeral: true});
             }
         }
 
