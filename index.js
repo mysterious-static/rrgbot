@@ -194,7 +194,7 @@ var addworldstat = new SlashCommandBuilder().setName('addworldstat')
 // TODO: Items will be REWORKED ENTIRELY later, with a fully-functional system where instances of items can be created versus having all items unique.
 
 var addquest = new SlashCommandBuilder().setName('addquest')
-    .setDescription('NYI: Add a quest for display on character sheet. Quests have objectives that can be updated, and can be assigned to multiple characters.');
+    .setDescription('NYI: Add a quest for display on character sheet.');
 
 // Characters Per Player (switching system // bot echoes) - TODO
 // For now, playercreate should create a default character automatically in a separate table with the specified player_name.
