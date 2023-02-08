@@ -248,7 +248,7 @@ client.on('ready', async () => {
         rps.toJSON(),
         move.toJSON(),
         me.toJSON(),
-        characterassign.toJSON(),
+        assigncharacter.toJSON(),
         charactercreate.toJSON()
     ]);
     client.user.setActivity("Infinite Magic Glories: Revolutionary Redux");
