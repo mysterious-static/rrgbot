@@ -460,7 +460,7 @@ client.on('interactionCreate', async (interaction) => {
             }
             const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterAssignmentSelector').setMinValues(1);
             var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-            var message = interaction.reply({ content: 'Select a character or characters to assign to this player:', components: [characterSelectRow], ephemeral: true });
+            var message = await interaction.reply({ content: 'Select a character or characters to assign to this player:', components: [characterSelectRow], ephemeral: true });
             const collector = message.createMessageComponentCollector({ time: 35000 });
             var charactersSelected;
             collector.on('collect', async (interaction_second) => {
