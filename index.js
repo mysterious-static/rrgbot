@@ -480,7 +480,46 @@ client.on('interactionCreate', async (interaction) => {
             if (archetypeExists[0].length == 0) {
                 await connection.promise().query('insert into archetypes (name, server_id) values (?, ?)', [archetype, interaction.guildId]);
             } else {
-                interaction.reply({content: 'Archetype already exists for this game.', ephemeral: true});
+                interaction.reply({ content: 'Archetype already exists for this game.', ephemeral: true });
+            }
+        } else if (interaction.commandName == 'assignarchetype') {
+            var archetypes = await connection.promise().query('select * from archetypes where server_id = ?', [interaction.guildId]);
+            if (archetypes[0].length > 0) {
+                var archetypesKeyValues = [];
+                for (const archetype of archetypes[0]) {
+                    archetypesKeyValues.push({ label: archetype.name, value: archetype.id.toString() });
+                }
+                const archetypeSelectComponent = new StringSelectMenuBuilder().setOptions(archetypesKeyValues).setCustomId('ArchetypeAssignmentSelector').setMinValues(1).setMaxValues(1);
+                var archetypeSelectRow = new ActionRowBuilder().addComponents(archetypeSelectComponent);
+                var message = await interaction.reply({ content: 'Select an archetype to manage assignments:', components: [archetypeSelectRow] });
+                message.createMessageComponentCollector({ time: 35000 });
+                var selectedArchetype;
+                collector.on('collect', async (interaction_second) => {
+                    if (interaction_second.customId == 'ArchetypeAssignmentSelector') {
+                        selectedArchetype = interaction_second.values[0];
+                        var characters = await connection.promise().query('select * from characters join characters_archetypes ca on characters.id = ca.character_id where server_id = ? and ca.archetype_id <> ?', [interaction.guildId, selectedArchetype]);
+                        if (characters[0].length > 0) {
+                            var charactersKeyValues = [];
+                            for (const character of characters[0]) {
+                                charactersKeyValues.push({ label: character.name, value: character.id.toString() });
+                            }
+                            const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterAssignmentSelector').setMinValues(1).setMaxValues(characters[0].length);
+                            var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                            interaction_second.update({ content: 'Select a character or characters to assign to this archetype:', components: [characterSelectRow] });
+                        } else {
+                            interaction_second.update({ content: 'No characters are valid to assign to this archetype.', components: [] });
+                        }
+                    } else if (interaction_second.customId == 'CharacterAssignmentSelector') {
+                        for (const thisId of interaction_second.values) {
+                            await connection.promise().query('insert into characters_archetypes (character_id, archetype_id) values (?, ?)', [thisId, selectedArchetype]);
+                        }
+                        interaction_second.update({ content: 'Successfully assigned characters to archetype.', components: [] });
+                    }
+                })
+
+
+            } else {
+                interaction.reply({ content: 'No archetype exists.', ephemeral: true })
             }
         }
 
