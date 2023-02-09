@@ -479,6 +479,7 @@ client.on('interactionCreate', async (interaction) => {
             var archetypeExists = await connection.promise().query('select * from archetypes where server_id = ? and name = ?', [interaction.guildId, archetype]);
             if (archetypeExists[0].length == 0) {
                 await connection.promise().query('insert into archetypes (name, server_id) values (?, ?)', [archetype, interaction.guildId]);
+                interaction.reply({content: 'Archetype added!', ephemeral: true});
             } else {
                 interaction.reply({ content: 'Archetype already exists for this game.', ephemeral: true });
             }
