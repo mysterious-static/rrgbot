@@ -542,7 +542,7 @@ client.on('interactionCreate', async (interaction) => {
             var defaultValue = interaction.options.getInteger('defaultvalue');
             var exists = await connection.promise().query('select * from archetypestats where guild_id = ? and name = ?', [interaction.guildId, name]);
             if (exists[0].length == 0) {
-                var archetypes = connection.promise().query('select * from archetypes where guild_id = ?', [interaction.guildId]);
+                var archetypes = await connection.promise().query('select * from archetypes where guild_id = ?', [interaction.guildId]);
                 if (archetypes[0].length > 0) {
                     var addedStat = await connection.promise().query('insert into archetypestats (name, description, default_value, guild_id) values (?, ?, ?, ?)', [name, description, defaultValue, interaction.guildId]);
                     var archetypesKeyValues = [];
