@@ -251,7 +251,8 @@ client.on('ready', async () => {
         assigncharacter.toJSON(),
         charactercreate.toJSON(),
         addcharacterarchetype.toJSON(),
-        assignarchetype.toJSON()
+        assignarchetype.toJSON(),
+        addstat.toJSON()
     ]);
     client.user.setActivity("Infinite Magic Glories: Revolutionary Redux");
 });
@@ -493,7 +494,7 @@ client.on('interactionCreate', async (interaction) => {
                 }
                 const archetypeSelectComponent = new StringSelectMenuBuilder().setOptions(archetypesKeyValues).setCustomId('ArchetypeAssignmentSelector').setMinValues(1).setMaxValues(1);
                 var archetypeSelectRow = new ActionRowBuilder().addComponents(archetypeSelectComponent);
-                var message = await interaction.reply({ content: 'Select an archetype to manage assignments:', components: [archetypeSelectRow] });
+                var message = await interaction.reply({ content: 'Select an archetype to manage assignments:', components: [archetypeSelectRow], ephemeral: true });
                 var collector = message.createMessageComponentCollector({ time: 35000 });
                 var selectedArchetype;
                 collector.on('collect', async (interaction_second) => {
@@ -523,6 +524,16 @@ client.on('interactionCreate', async (interaction) => {
 
             } else {
                 interaction.reply({ content: 'No archetype exists.', ephemeral: true })
+            }
+        } else if (interaction.commandName == 'addstat') {
+            var name = interaction.options.getString('stat')
+            var defaultValue = interaction.options.getInteger('defaultvalue');
+            var exists = await connection.promise().query('select * from stats where guild_id = ? and name = ?', [interaction.guildId, name]);
+            if(exists[0].length == 0) {
+                await connection.promise().query('insert into stats (name, default_value, guild_id) values (?, ?, ?)', [name, defaultValue, interaction.guildId])
+                interaction.reply({content: 'Stat added!', ephemeral: true});
+            } else {
+                interaction.reply({content: 'Stat with this name already exists!', ephemeral: true});
             }
         }
 
