@@ -13,7 +13,6 @@ var connection = mysql.createConnection({
     multipleStatements: true
 });
 connection.connect();
-console.log(process.env.app_token);
 client.login(process.env.app_token);
 
 
