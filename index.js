@@ -477,15 +477,15 @@ client.on('interactionCreate', async (interaction) => {
             }
         } else if (interaction.commandName == 'addcharacterarchetype') {
             var archetype = interaction.options.getString('archetype');
-            var archetypeExists = await connection.promise().query('select * from archetypes where server_id = ? and name = ?', [interaction.guildId, archetype]);
+            var archetypeExists = await connection.promise().query('select * from archetypes where guild_id = ? and name = ?', [interaction.guildId, archetype]);
             if (archetypeExists[0].length == 0) {
-                await connection.promise().query('insert into archetypes (name, server_id) values (?, ?)', [archetype, interaction.guildId]);
+                await connection.promise().query('insert into archetypes (name, guild_id) values (?, ?)', [archetype, interaction.guildId]);
                 interaction.reply({content: 'Archetype added!', ephemeral: true});
             } else {
                 interaction.reply({ content: 'Archetype already exists for this game.', ephemeral: true });
             }
         } else if (interaction.commandName == 'assignarchetype') {
-            var archetypes = await connection.promise().query('select * from archetypes where server_id = ?', [interaction.guildId]);
+            var archetypes = await connection.promise().query('select * from archetypes where guild_id = ?', [interaction.guildId]);
             if (archetypes[0].length > 0) {
                 var archetypesKeyValues = [];
                 for (const archetype of archetypes[0]) {
@@ -499,7 +499,7 @@ client.on('interactionCreate', async (interaction) => {
                 collector.on('collect', async (interaction_second) => {
                     if (interaction_second.customId == 'ArchetypeAssignmentSelector') {
                         selectedArchetype = interaction_second.values[0];
-                        var characters = await connection.promise().query('select * from characters join characters_archetypes ca on characters.id = ca.character_id where server_id = ? and ca.archetype_id <> ?', [interaction.guildId, selectedArchetype]);
+                        var characters = await connection.promise().query('select * from characters join characters_archetypes ca on characters.id = ca.character_id where guild_id = ? and ca.archetype_id <> ?', [interaction.guildId, selectedArchetype]);
                         if (characters[0].length > 0) {
                             var charactersKeyValues = [];
                             for (const character of characters[0]) {
