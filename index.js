@@ -250,7 +250,8 @@ client.on('ready', async () => {
         me.toJSON(),
         assigncharacter.toJSON(),
         charactercreate.toJSON(),
-        addcharacterarchetype.toJSON()
+        addcharacterarchetype.toJSON(),
+        assignarchetype.toJSON()
     ]);
     client.user.setActivity("Infinite Magic Glories: Revolutionary Redux");
 });
