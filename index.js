@@ -153,7 +153,7 @@ var addarchetypestat = new SlashCommandBuilder().setName('addarchetypestat')
 var addskill = new SlashCommandBuilder().setName('addskill')
     .setDescription('Add a character/archetype-assignable skill for view in character sheet.')
     .addStringOption(option =>
-        option.setName('skillname')
+        option.setName('name')
             .setDescription('The name of the skill (e.g. Vorpal Slash, 1000 Needles, Gigaton Hammer)')
             .setRequired(true))
     .addStringOption(option =>
@@ -252,7 +252,8 @@ client.on('ready', async () => {
         addcharacterarchetype.toJSON(),
         assignarchetype.toJSON(),
         addstat.toJSON(),
-        addarchetypestat.toJSON()
+        addarchetypestat.toJSON(),
+        addskill.toJSON()
     ]);
     client.user.setActivity("Infinite Magic Glories: Revolutionary Redux");
 });
@@ -566,6 +567,16 @@ client.on('interactionCreate', async (interaction) => {
                 }
             } else {
                 interaction.reply({ content: 'Stat with this name already exists!', ephemeral: true });
+            }
+        } else if (interaction.commandName == 'addskill') {
+            var name = interaction.options.getString('name')
+            var description = interaction.options.getInteger('description');
+            var exists = await connection.promise().query('select * from skills where guild_id = ? and name = ?', [interaction.guildId, name]);
+            if (exists[0].length == 0) {
+                await connection.promise().query('insert into skills (name, description, guild_id) values (?, ?, ?)', [name, description, interaction.guildId]);
+                interaction.reply({ content: 'Skill added!', ephemeral: true });
+            } else {
+                interaction.reply({ content: 'Skill with this name already exists!', ephemeral: true });
             }
         }
 
