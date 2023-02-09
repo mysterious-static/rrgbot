@@ -252,7 +252,8 @@ client.on('ready', async () => {
         charactercreate.toJSON(),
         addcharacterarchetype.toJSON(),
         assignarchetype.toJSON(),
-        addstat.toJSON()
+        addstat.toJSON(),
+        addarchetypestat.toJSON()
     ]);
     client.user.setActivity("Infinite Magic Glories: Revolutionary Redux");
 });
@@ -529,11 +530,43 @@ client.on('interactionCreate', async (interaction) => {
             var name = interaction.options.getString('stat')
             var defaultValue = interaction.options.getInteger('defaultvalue');
             var exists = await connection.promise().query('select * from stats where guild_id = ? and name = ?', [interaction.guildId, name]);
-            if(exists[0].length == 0) {
-                await connection.promise().query('insert into stats (name, default_value, guild_id) values (?, ?, ?)', [name, defaultValue, interaction.guildId])
-                interaction.reply({content: 'Stat added!', ephemeral: true});
+            if (exists[0].length == 0) {
+                await connection.promise().query('insert into stats (name, default_value, guild_id) values (?, ?, ?)', [name, defaultValue, interaction.guildId]);
+                interaction.reply({ content: 'Stat added!', ephemeral: true });
             } else {
-                interaction.reply({content: 'Stat with this name already exists!', ephemeral: true});
+                interaction.reply({ content: 'Stat with this name already exists!', ephemeral: true });
+            }
+        } else if (interaction.commandName == 'addarchetypestat') {
+            // stat, description, defaultvalue
+            var name = interaction.options.getString('stat');
+            var description = interaction.options.getString('description');
+            var defaultValue = interaction.options.getInteger('defaultvalue');
+            var exists = await connection.promise().query('select * from archetypestats where guild_id = ? and name = ?', [interaction.guildId, name]);
+            if (exists[0].length == 0) {
+                var archetypes = connection.promise().query('select * from archetypes where guild_id = ?', [interaction.guildId]);
+                if (archetypes[0].length > 0) {
+                    var addedStat = await connection.promise().query('insert into archetypestats (name, description, default_value, guild_id) values (?, ?, ?, ?)', [name, description, defaultValue, interaction.guildId]);
+                    var archetypesKeyValues = [];
+                    for (const archetype of archetypes[0]) {
+                        archetypesKeyValues.push({ label: archetype.name, value: archetype.id.toString() });
+                    }
+                    const archetypeSelectComponent = new StringSelectMenuBuilder().setOptions(archetypesKeyValues).setCustomId('ArchetypeAssignmentSelector').setMinValues(1).setMaxValues(archetypes[0].length);
+                    var archetypeSelectRow = new ActionRowBuilder().addComponents(archetypeSelectComponent);
+                    var message = await interaction.reply({ content: 'Archetype stat added! Select archetype(s):', components: [archetypeSelectRow], ephemeral: true });
+                    var collector = message.createMessageComponentCollector({ time: 35000 });
+                    collector.on('collect', async (interaction_second) => {
+                        if (interaction_second.customId == 'ArchetypeAssignmentSelector') {
+                            for (const thisArchetype of interaction_second.values) {
+                                await connection.promise().query('insert into archetypes_archetypestats (archetype_id, archetypestat_id) values (?, ?)', [thisArchetype, addedStat[0].insertId]);
+                            }
+                            await interaction_second.update({ content: 'Successfully assigned stat to archetype(s).', components: [] });
+                        }
+                    });
+                } else {
+                    interaction.reply({ content: 'No archetypes exist! Please create an archetype first.', ephemeral: true });
+                }
+            } else {
+                interaction.reply({ content: 'Stat with this name already exists!', ephemeral: true });
             }
         }
 
