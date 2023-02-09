@@ -494,7 +494,7 @@ client.on('interactionCreate', async (interaction) => {
                 const archetypeSelectComponent = new StringSelectMenuBuilder().setOptions(archetypesKeyValues).setCustomId('ArchetypeAssignmentSelector').setMinValues(1).setMaxValues(1);
                 var archetypeSelectRow = new ActionRowBuilder().addComponents(archetypeSelectComponent);
                 var message = await interaction.reply({ content: 'Select an archetype to manage assignments:', components: [archetypeSelectRow] });
-                message.createMessageComponentCollector({ time: 35000 });
+                var collector = message.createMessageComponentCollector({ time: 35000 });
                 var selectedArchetype;
                 collector.on('collect', async (interaction_second) => {
                     if (interaction_second.customId == 'ArchetypeAssignmentSelector') {
