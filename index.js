@@ -177,7 +177,7 @@ var additem = new SlashCommandBuilder().setName('additem')
 var addworldstat = new SlashCommandBuilder().setName('addworldstat')
     .setDescription('Add a world stat for view in character sheet. World stats visibility can be assigned.')
     .addStringOption(option =>
-        option.setName('stat')
+        option.setName('name')
             .setDescription('The name of the stat')
             .setRequired(true))
     .addIntegerOption(option =>
@@ -187,6 +187,10 @@ var addworldstat = new SlashCommandBuilder().setName('addworldstat')
     .addStringOption(option =>
         option.setName('description')
             .setDescription('What this stat means or does.')
+            .setRequired(true))
+    .addBooleanOption(option =>
+        option.setName('globallyvisible')
+            .setDescription('Whether this is globally visible or needs to be targeted.')
             .setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
@@ -253,7 +257,9 @@ client.on('ready', async () => {
         assignarchetype.toJSON(),
         addstat.toJSON(),
         addarchetypestat.toJSON(),
-        addskill.toJSON()
+        addskill.toJSON(),
+        additem.toJSON(),
+        addworldstat.toJSON()
     ]);
     client.user.setActivity("Infinite Magic Glories: Revolutionary Redux");
 });
@@ -570,11 +576,33 @@ client.on('interactionCreate', async (interaction) => {
             }
         } else if (interaction.commandName == 'addskill') {
             var name = interaction.options.getString('name')
-            var description = interaction.options.getInteger('description');
+            var description = interaction.options.getString('description');
             var exists = await connection.promise().query('select * from skills where guild_id = ? and name = ?', [interaction.guildId, name]);
             if (exists[0].length == 0) {
                 await connection.promise().query('insert into skills (name, description, guild_id) values (?, ?, ?)', [name, description, interaction.guildId]);
                 interaction.reply({ content: 'Skill added!', ephemeral: true });
+            } else {
+                interaction.reply({ content: 'Skill with this name already exists!', ephemeral: true });
+            }
+        } else if (interaction.commandName == 'additem') {
+            var name = interaction.options.getString('itemname')
+            var description = interaction.options.getString('description');
+            // var exists = await connection.promise().query('select * from items where guild_id = ? and name = ?', [interaction.guildId, name]);
+            // if (exists[0].length == 0) {
+            await connection.promise().query('insert into items (name, description, guild_id) values (?, ?, ?)', [name, description, interaction.guildId]);
+            interaction.reply({ content: 'Item added!', ephemeral: true });
+            // } else {
+            // interaction.reply({ content: 'Skill with this name already exists!', ephemeral: true });
+            // }
+        } else if (interaction.commandName == 'addworldstat') {
+            var name = interaction.options.getString('name')
+            var description = interaction.options.getString('description');
+            var globallyvisible = interaction.options.getBoolean('globally_visible');
+            var value = interaction.options.getInteger('value')
+            var exists = await connection.promise().query('select * from worldstats where guild_id = ? and name = ?', [interaction.guildId, name]);
+            if (exists[0].length == 0) {
+                await connection.promise().query('insert into worldstats (name, description, globally_visible, value, guild_id) values (?, ?, ?, ?, ?)', [name, description, globallyvisible, value, interaction.guildId]);
+                interaction.reply({ content: 'World stat added!', ephemeral: true });
             } else {
                 interaction.reply({ content: 'Skill with this name already exists!', ephemeral: true });
             }
