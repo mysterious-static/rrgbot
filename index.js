@@ -194,6 +194,22 @@ var addworldstat = new SlashCommandBuilder().setName('addworldstat')
             .setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
+var setstat = new SlashCommandBuilder().setName('setstat')
+    .setDescription('Set a stat for a character.')
+    .addIntegerOption(option =>
+        option.setName('value')
+            .setDescription('The value to which the stat will be set.')
+            .setRequired(true))
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+    var setarchetypestat = new SlashCommandBuilder().setName('setarchetypestat')
+    .setDescription('Set an archetype stat for a character.')
+    .addIntegerOption(option =>
+        option.setName('value')
+            .setDescription('The value to which the archetype stat will be set.')
+            .setRequired(true))
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
 // TODO: Items will be REWORKED ENTIRELY later, with a fully-functional system where instances of items can be created versus having all items unique.
 
 var addquest = new SlashCommandBuilder().setName('addquest')
@@ -259,7 +275,9 @@ client.on('ready', async () => {
         addarchetypestat.toJSON(),
         addskill.toJSON(),
         additem.toJSON(),
-        addworldstat.toJSON()
+        addworldstat.toJSON(),
+        setstat.toJSON(),
+        setarchetypestat.toJSON()
     ]);
     client.user.setActivity("Infinite Magic Glories: Revolutionary Redux");
 });
@@ -595,7 +613,7 @@ client.on('interactionCreate', async (interaction) => {
             // interaction.reply({ content: 'Skill with this name already exists!', ephemeral: true });
             // }
         } else if (interaction.commandName == 'addworldstat') {
-            var name = interaction.options.getString('name')
+            var name = interaction.options.getString('name');
             var description = interaction.options.getString('description');
             var globallyvisible = interaction.options.getBoolean('globally_visible');
             var value = interaction.options.getInteger('value')
@@ -605,6 +623,120 @@ client.on('interactionCreate', async (interaction) => {
                 interaction.reply({ content: 'World stat added!', ephemeral: true });
             } else {
                 interaction.reply({ content: 'Skill with this name already exists!', ephemeral: true });
+            }
+        } else if (interaction.commandName == 'setstat') {
+            var value = interaction.options.getInteger('value');
+            // Create two dropdowns. For character and stat. See characterlocation for details.
+            var stats = await connection.promise().query('select * from stats where guild_id = ?', [interaction.guildId]);
+            if (stats[0].length > 0) {
+                var statsKeyValues = [{ label: 'Select a stat', value: '0' }];
+                for (const stat of stats[0]) {
+                    var thisStatKeyValue = { label: stat.name, value: stat.id.toString() };
+                    statsKeyValues.push(thisStatKeyValue);
+                }
+                const statSelectComponent = new StringSelectMenuBuilder().setOptions(statsKeyValues).setCustomId('StatAssignmentStatSelector').setMinValues(1).setMaxValues(1);
+                var statSelectRow = new ActionRowBuilder().addComponents(statSelectComponent);
+                var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
+                if (characters[0].length > 0) {
+                    var charactersKeyValues = [{ label: 'Select a character', value: '0' }];
+                    for (const character of characters[0]) {
+                        var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
+                        charactersKeyValues.push(thisCharacterKeyValue);
+                    }
+                    const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('StatAssignmentCharacterSelector').setMinValues(1).setMaxValues(1);
+                    var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                    var message = await interaction.reply({ content: '', components: [statSelectRow, characterSelectRow], ephemeral: true });
+                    const collector = message.createMessageComponentCollector({ time: 35000 });
+                    var statSelected;
+                    var characterSelected;
+                    collector.on('collect', async (interaction_second) => {
+                        if (interaction_second.values[0]) {
+                            if (interaction_second.customId == 'StatAssignmentStatSelector') {
+                                statSelected = interaction_second.values[0];
+                            } else {
+                                characterSelected = interaction_second.values[0];
+                            }
+                            if (statSelected && characterSelected) {
+                                var exists = connection.promise().query('select * from characters_stats where stat_id = ? and character_id = ?', [statSelected, characterSelected]);
+                                if(exists[0].length > 0) {
+                                    await connection.promise().query('update characters_stats set stat_id = ? where character_id = ?', [statSelected, characterSelected]);
+                                } else {
+                                    await connection.promise().query('insert into characters_stats (character_id, stat_id, override_value) values (?, ?, ?)', [characterSelected, statSelected, value]);
+                                }
+                                await interaction_second.update({ content: 'Successfully updated character stat value.', components: [] });
+                            } else {
+                                await interaction_second.deferUpdate();
+                            }
+                        } else {
+                            await interaction_second.deferUpdate();
+                        }
+                    });
+                    collector.on('end', async (collected) => {
+                        console.log(collected);
+                        // How do we clean the message up?
+                    });
+                } else {
+                    interaction.reply({ content: 'You haven\'t created any stats yet. Try creating a stat first.', ephemeral: true });
+                }
+            } else {
+                interaction.reply({ content: 'You haven\'t created any characters yet. Try creating a character first.', ephemeral: true });
+            }
+        }else if (interaction.commandName == 'setarchetypestat') {
+            var value = interaction.options.getInteger('value');
+            // Create two dropdowns. For character and stat. See characterlocation for details.
+            var stats = await connection.promise().query('select * from archetypestats where guild_id = ?', [interaction.guildId]);
+            if (stats[0].length > 0) {
+                var statsKeyValues = [{ label: 'Select a stat', value: '0' }];
+                for (const stat of stats[0]) {
+                    var thisStatKeyValue = { label: stat.name, value: stat.id.toString() };
+                    statsKeyValues.push(thisStatKeyValue);
+                }
+                const statSelectComponent = new StringSelectMenuBuilder().setOptions(statsKeyValues).setCustomId('ArchetypeStatAssignmentStatSelector').setMinValues(1).setMaxValues(1);
+                var statSelectRow = new ActionRowBuilder().addComponents(statSelectComponent);
+                var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
+                if (characters[0].length > 0) {
+                    var charactersKeyValues = [{ label: 'Select a character', value: '0' }];
+                    for (const character of characters[0]) {
+                        var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
+                        charactersKeyValues.push(thisCharacterKeyValue);
+                    }
+                    const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ArchetypeStatAssignmentCharacterSelector').setMinValues(1).setMaxValues(1);
+                    var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                    var message = await interaction.reply({ content: '', components: [statSelectRow, characterSelectRow], ephemeral: true });
+                    const collector = message.createMessageComponentCollector({ time: 35000 });
+                    var statSelected;
+                    var characterSelected;
+                    collector.on('collect', async (interaction_second) => {
+                        if (interaction_second.values[0]) {
+                            if (interaction_second.customId == 'ArchetypeStatAssignmentStatSelector') {
+                                statSelected = interaction_second.values[0];
+                            } else {
+                                characterSelected = interaction_second.values[0];
+                            }
+                            if (statSelected && characterSelected) {
+                                var exists = connection.promise().query('select * from characters_archetypestats where stat_id = ? and character_id = ?', [statSelected, characterSelected]);
+                                if(exists[0].length > 0) {
+                                    await connection.promise().query('update characters_archetypestats set stat_id = ? where character_id = ?', [statSelected, characterSelected]);
+                                } else {
+                                    await connection.promise().query('insert into characters_archetypestats (character_id, stat_id, override_value) values (?, ?, ?)', [characterSelected, statSelected, value]);
+                                }
+                                await interaction_second.update({ content: 'Successfully updated character archetype stat value.', components: [] });
+                            } else {
+                                await interaction_second.deferUpdate();
+                            }
+                        } else {
+                            await interaction_second.deferUpdate();
+                        }
+                    });
+                    collector.on('end', async (collected) => {
+                        console.log(collected);
+                        // How do we clean the message up?
+                    });
+                } else {
+                    interaction.reply({ content: 'You haven\'t created any archetype stats yet. Try creating an archetype stat first.', ephemeral: true });
+                }
+            } else {
+                interaction.reply({ content: 'You haven\'t created any characters yet. Try creating a character first.', ephemeral: true });
             }
         }
 
