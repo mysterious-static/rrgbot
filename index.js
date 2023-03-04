@@ -831,6 +831,59 @@ client.on('interactionCreate', async (interaction) => {
             } else {
                 interaction.reply({ content: 'Please create at least one skill first. <3', ephemeral: true });
             }
+        } else if (interaction.commandName == 'assignitem') {
+            var items = await connection.promise().query('select i.*, c.name as character_name from items i left outer join characters_items ci on i.id = ci.item_id left outer join characters c on ci.character_id = c.id where guild_id = ?', [interaction.guildId]);
+            if (items[0].length > 0) {
+                var itemsKeyValues = [{ label: 'Select a item', value: '0' }];
+                for (const item of items[0]) {
+                    if (!item.character_name) {
+                        item.character_name = 'Unassigned';
+                    }
+                    var thisItemKeyValue = { label: `${item.name} (${item.character_name})`, value: item.id.toString() };
+                    itemsKeyValues.push(thisItemKeyValue);
+                }
+                const itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemAssignmentItemSelector').setMinValues(1).setMaxValues(1);
+                var itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
+                var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
+                if (characters[0].length > 0) {
+                    var charactersKeyValues = [{ label: 'Select a character', value: '0' }];
+                    for (const character of characters[0]) {
+                        var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
+                        charactersKeyValues.push(thisCharacterKeyValue);
+                    }
+                    const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ItemAssignmentCharacterSelector').setMinValues(1).setMaxValues(1);
+                    var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                    var message = interaction.reply({ content: 'Please select the following options:', components: [itemSelectRow, characterSelectRow], ephemeral: true });
+                    var collector = message.createMessageComponentCollector();
+                    var characterSelected;
+                    var skillSelected;
+                    collector.on('collect', async (interaction_second) => {
+                        if (interaction_second.values[0]) {
+                            if (interaction_second.customId == 'ItemAssignmentItemSelector') {
+                                skillSelected = interaction_second.values[0];
+                            } else if (interaction_second.customId == 'ItemAssignmentCharacterSelector') {
+                                characterSelected = interaction_second.values[0];
+                            }
+                            if (itemSelected && characterSelected) {
+                                await connection.promise().query('replace into characters_items (character_id, item_id) values (?, ?)', [characterSelected, itemSelected]);
+                                await interaction_second.update({ content: 'Successfully assigned item to charactercharaljter.', components: [] });
+                            } else {
+                                await interaction_second.deferUpdate();
+                            }
+                        } else {
+                            await interaction_second.deferUpdate();
+                        }
+                    });
+                    collector.on('end', async (collected) => {
+                        console.log(collected);
+                        // How do we clean the message up?
+                    });
+                } else {
+                    interaction.reply({ content: 'Couldn\'t find any characters, which is a bit odd. Try creating one, or yell at Alli if you shouldn\'t be getting this.', ephemeral: true });
+                }
+            } else {
+                interaction.reply({ content: 'Please create at least one ~~skill~~ item first. <3', ephemeral: true });
+            }
         }
 
 
@@ -931,13 +984,43 @@ client.on('interactionCreate', async (interaction) => {
                     }
                     const skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
                     var skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
-                    var message = interaction.reply({ content: 'Select a location to move to:', components: [locationSelectRow], ephemeral: true });
+                    var message = interaction.reply({ content: 'Select a skill to share with the channel:', components: [skillSelectRow], ephemeral: true });
                     var collector = message.createMessageComponentCollector();
                     collector.on('collect', async (interaction_second) => {
                         if (interaction_second.values[0]) {
                             skillSelected = interaction_second.values[0];
                             var skill = skills.find(s => s.id == skillSelected);
                             interaction_second.reply({ content: `**${skill.name}**: ${skill.description}` });
+                        }
+
+                    });
+                    collector.on('end', async (collected) => {
+                        console.log(collected);
+                        // How do we clean the message up?
+                    });
+                } else {
+                    interaction.reply({ content: 'You don\'t seem to have any skills. Sorry about that.', ephemeral: true });
+                }
+                //dropdown
+                // put dropdown in thingy
+            } else if (interaction.commandName == 'item') {
+                var current_character = await connection.promise().query('select character_id from players_characters join players p on p.id = players_characters.player_id where p.user_id = ? and players_characters.active = 1', [interaction.user.id]);
+                var items = await connection.promise().query('select i.* from items i join characters_items ci on ci.item_id = i.id where ci.character_id = ?', [current_character[0].id]);
+                if (items[0].length > 0) {
+                    var itemsKeyValues = [];
+                    for (const item of items[0]) {
+                        var thisItemKeyValue = { label: item.name, value: item.id };
+                        itemsKeyValues.push(thisItemKeyValue);
+                    }
+                    const itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
+                    var itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
+                    var message = interaction.reply({ content: 'Select a item to share with the channel:', components: [itemSelectRow], ephemeral: true });
+                    var collector = message.createMessageComponentCollector();
+                    collector.on('collect', async (interaction_second) => {
+                        if (interaction_second.values[0]) {
+                            itemSelected = interaction_second.values[0];
+                            var item = items[0].find(i => i.id == itemSelected);
+                            interaction_second.reply({ content: `**${item.name}**: ${item.description}` });
                         }
 
                     });
