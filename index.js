@@ -1029,10 +1029,65 @@ client.on('interactionCreate', async (interaction) => {
                         // How do we clean the message up?
                     });
                 } else {
-                    interaction.reply({ content: 'You don\'t seem to have any skills. Sorry about that.', ephemeral: true });
+                    interaction.reply({ content: 'You don\'t seem to have any items. Sorry about that.', ephemeral: true });
                 }
                 //dropdown
                 // put dropdown in thingy
+            } else if (interaction.commandName == 'give') {
+                var current_character = await connection.promise().query('select character_id from players_characters join players p on p.id = players_characters.player_id where p.user_id = ? and players_characters.active = 1', [interaction.user.id]);
+                var items = await connection.promise().query('select i.* from items i join characters_items ci on ci.item_id = i.id where ci.character_id = ?', [current_character[0].id]);
+                if (items[0].length > 0) {
+                    var itemsKeyValues = [];
+                    for (const item of items[0]) {
+                        var thisItemKeyValue = { label: item.name, value: item.id };
+                        itemsKeyValues.push(thisItemKeyValue);
+                    }
+                    const itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('GiveItemSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
+                    var itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
+
+                    var characters = await connection.promise().query('select * from characters where guild_id = ? and id != ?', [interaction.guildId, current_character[0].id]);
+                    if (characters[0].length > 0) {
+                        var charactersKeyValues = [];
+                        for (const character of characters[0]) {
+                            charactersKeyValues.push({ label: character.name, value: character.id.toString() });
+                        }
+                        const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('GiveCharacterSelector').setMinValues(1).setMaxValues(characters[0].length);
+                        var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+
+                        var message = interaction.reply({ content: 'Select an item and a character to give it to:', components: [itemSelectRow, characterSelectRow], ephemeral: true });
+                        var collector = message.createMessageComponentCollector();
+                        var itemSelected;
+                        var characterSelected;
+                        collector.on('collect', async (interaction_second) => {
+                            if (interaction_second.values[0]) {
+                                if (interaction_second.customId == 'GiveItemSelector') {
+                                    itemSelected = interaction_second.values[0];
+                                } else {
+                                    characterSelected = interaction_second.values[0];
+                                }
+                                if (itemSelected && characterSelected) {
+                                    await connection.promise().query('update characters_items set character_id = ? where item_id = ?', [characterSelected, itemSelected]);
+                                    var item = items[0].find(i => i.id == itemSelected);
+                                    var character_destination = characters[0].find(c => c.id == characterSelected);
+                                    await interaction_second.reply({ content: `${current_character[0].name} gives ${character_destination.name} their **${item.name}**!` });
+                                } else {
+                                    await interaction_second.deferUpdate();
+                                }
+                            } else {
+                                await interaction_second.deferUpdate();
+                            }
+                        })
+                        //okay now set up the message
+
+                        // and the collector
+
+                        // and then process the give inside the collector (update item owner in characters_items)
+                    } else {
+                        interaction.reply('There don\'t seem to be any other characters in this game. You may want to double check on this.');
+                    }
+                } else {
+                    interaction.reply({ content: 'You don\'t seem to have any items. Sorry about that.', ephemeral: true });
+                }
             }
         }
     }
