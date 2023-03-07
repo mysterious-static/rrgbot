@@ -96,6 +96,10 @@ var charactercreate = new SlashCommandBuilder().setName('charactercreate')
         option.setName('name')
             .setDescription('The character name.')
             .setRequired(true))
+    .addStringOption(option =>
+        option.setName('description')
+            .setDescription('The character description.')
+            .setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 var assigncharacter = new SlashCommandBuilder().setName('assigncharacter')
@@ -116,6 +120,10 @@ var addcharacterarchetype = new SlashCommandBuilder().setName('addcharacterarche
         option.setName('archetype')
             .setDescription('The name of the archetype')
             .setRequired(true))
+            .addStringOption(option =>
+                option.setName('description')
+                    .setDescription('The archetype description.')
+                    .setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 var assignarchetype = new SlashCommandBuilder().setName('assignarchetype')
@@ -468,9 +476,10 @@ client.on('interactionCreate', async (interaction) => {
             }
         } else if (interaction.commandName == 'charactercreate') {
             var characterName = interaction.options.getString('name');
+            var description = interaction.options.getString('description');
             var character = await connection.promise().query('select * from characters where name = ? and guild_id = ?', [characterName, interaction.guildId]);
             if (character[0].length == 0) {
-                var inserted_character = await connection.promise().query('insert into characters (name, guild_id) values (?, ?)', [characterName, interaction.guildId]);
+                var inserted_character = await connection.promise().query('insert into characters (name, guild_id, description) values (?, ?, ?)', [characterName, interaction.guildId, description]);
                 interaction.reply({ content: 'Created character!', ephemeral: true })
             } else {
                 interaction.reply({ content: 'A character with this name for this game already exists.', ephemeral: true });
@@ -513,9 +522,10 @@ client.on('interactionCreate', async (interaction) => {
             }
         } else if (interaction.commandName == 'addcharacterarchetype') {
             var archetype = interaction.options.getString('archetype');
+            var description = interaction.options.getString('description');
             var archetypeExists = await connection.promise().query('select * from archetypes where guild_id = ? and name = ?', [interaction.guildId, archetype]);
             if (archetypeExists[0].length == 0) {
-                await connection.promise().query('insert into archetypes (name, guild_id) values (?, ?)', [archetype, interaction.guildId]);
+                await connection.promise().query('insert into archetypes (name, guild_id, description) values (?, ?, ?)', [archetype, interaction.guildId, description]);
                 interaction.reply({ content: 'Archetype added!', ephemeral: true });
             } else {
                 interaction.reply({ content: 'Archetype already exists for this game.', ephemeral: true });
