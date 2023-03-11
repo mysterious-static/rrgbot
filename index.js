@@ -966,7 +966,7 @@ client.on('interactionCreate', async (interaction) => {
                                 var rpsButtonP = new ButtonBuilder().setCustomId('rpsButtonP').setLabel('Precision').setStyle('Primary');
                                 var rpsButtonS = new ButtonBuilder().setCustomId('rpsButtonS').setLabel('Sweeping').setStyle('Primary');
                                 const rpsRow = new ActionRowBuilder().addComponents(rpsButtonR, rpsButtonP, rpsButtonS);
-                                await interaction.reply({ content: 'You have challenged me to a duel!', components: [rpsRow], ephemeral: true });
+                                await interaction.reply({ content: client.user.toString + 'has challenged me to a duel!', components: [rpsRow] });
                             });
                         }
                     });
@@ -1154,7 +1154,7 @@ client.on('interactionCreate', async (interaction) => {
                                     } else if ((res2[1][0].challenger_throw == 'R' && res2[1][0].challenged_throw == 'P') || (res2[1][0].challenger_throw == 'P' && res2[1][0].challenged_throw == 'S') || (res2[1][0].challenger_throw == 'S' && res2[1][0].challenged_throw == 'R')) {
                                         await interaction.followUp('<@' + res2[1][0].challenged + '> has won the RPS match! (' + res2[1][0].challenged_throw + ' > ' + res2[1][0].challenger_throw + ')');
                                     } else {
-                                        await interaction.followUp('The RPS round between <@' + res2[1][0].challenger + '> and <@' + res2[1][0].challenged + '> has ended in a draw.');
+                                        await interaction.followUp('The RPS round between <@' + res2[1][0].challenger + '> and <@' + res2[1][0].challenged + '> has ended in a draw. (' + res2[1][0].challenged_throw + ' = ' + res2[1][0].challenger_throw + ')');
                                     }
                                     await interaction.message.edit({ content: '<@' + res2[1][0].challenger + '> has challenged <@' + res2[1][0].challenged + '> to a duel!', components: [] });
                                 } else if (res2[1][0].challenged == client.user.id) {
@@ -1168,7 +1168,7 @@ client.on('interactionCreate', async (interaction) => {
                                         } else if ((res2[1][0].challenger_throw == 'R' && selection == 'P') || (res2[1][0].challenger_throw == 'P' && selection == 'S') || (res2[1][0].challenger_throw == 'S' && selection == 'R')) {
                                             await interaction.followUp('<@' + res2[1][0].challenged + '> has won the RPS match! (' + selection + ' > ' + res2[1][0].challenger_throw + ')');
                                         } else {
-                                            await interaction.followUp('The RPS round between <@' + res2[1][0].challenger + '> and <@' + res2[1][0].challenged + '> has ended in a draw.');
+                                            await interaction.followUp('The RPS round between <@' + res2[1][0].challenger + '> and <@' + res2[1][0].challenged + '> has ended in a draw. (' + res2[1][0].challenger_throw + ' = ' + res2[1][0].challenger_throw + ')');
                                         }
                                     });
                                     await interaction.message.edit({ content: '<@' + res2[1][0].challenger + '> has challenged <@' + res2[1][0].challenged + '> to a duel!', components: [] });
