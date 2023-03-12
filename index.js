@@ -761,7 +761,7 @@ client.on('interactionCreate', async (interaction) => {
                 interaction.reply({ content: 'You haven\'t created any characters yet. Try creating a character first.', ephemeral: true });
             }
         } else if (interaction.commandName == 'assignskill') {
-            var to_character = interaction.getBoolean('to_character');
+            var to_character = interaction.options.getBoolean('to_character');
             var skills = await connection.promise().query('select * from skills where guild_id = ?', [interaction.guildId]);
             if (skills[0].length > 0) {
                 var skillsKeyValues = [{ label: 'Select a skill', value: '0' }];
