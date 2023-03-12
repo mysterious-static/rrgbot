@@ -559,7 +559,6 @@ client.on('interactionCreate', async (interaction) => {
                             await interaction_second.update({ content: 'No characters are valid to assign to this archetype.', components: [] });
                         }
                     } else if (interaction_second.customId == 'CharacterAssignmentSelector') {
-                        await interaction_second.deferUpdate();
                         for (const thisId of interaction_second.values) {
                             await connection.promise().query('insert into characters_archetypes (character_id, archetype_id) values (?, ?)', [thisId, selectedArchetype]);
                         }
