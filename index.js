@@ -860,6 +860,8 @@ client.on('interactionCreate', async (interaction) => {
                                     await interaction_second.update({ content: 'Please select the following options:', components: [skillSelectRow, archetypeSelectRow] });
                                 }
                             }
+                            console.log(skillSelected);
+                            console.log(charactersSelected);
                             if (skillSelected && (charactersSelected || archetypesSelected)) {
                                 if (charactersSelected) {
                                     console.log(charactersSelected);
