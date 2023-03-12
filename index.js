@@ -1011,7 +1011,7 @@ client.on('interactionCreate', async (interaction) => {
                                 var rpsButtonP = new ButtonBuilder().setCustomId('rpsButtonP').setLabel('Precision').setStyle('Primary');
                                 var rpsButtonS = new ButtonBuilder().setCustomId('rpsButtonS').setLabel('Sweeping').setStyle('Primary');
                                 const rpsRow = new ActionRowBuilder().addComponents(rpsButtonR, rpsButtonP, rpsButtonS);
-                                await interaction.reply({ content: client.user + 'has challenged me to a duel!', components: [rpsRow] });
+                                await interaction.reply({ content: '<@' + client.user + '> has challenged me to a duel!', components: [rpsRow] });
                             });
                         }
                     });
