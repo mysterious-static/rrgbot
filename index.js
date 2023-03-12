@@ -887,7 +887,7 @@ client.on('interactionCreate', async (interaction) => {
                 interaction.reply({ content: 'Please create at least one skill first. <3', ephemeral: true });
             }
         } else if (interaction.commandName == 'assignitem') {
-            var items = await connection.promise().query('select i.*, c.name as character_name from items i left outer join characters_items ci on i.id = ci.item_id left outer join characters c on ci.character_id = c.id where guild_id = ?', [interaction.guildId]);
+            var items = await connection.promise().query('select i.*, c.name as character_name from items i left outer join characters_items ci on i.id = ci.item_id left outer join characters c on ci.character_id = c.id where i.guild_id = ?', [interaction.guildId]);
             if (items[0].length > 0) {
                 var itemsKeyValues = [{ label: 'Select a item', value: '0' }];
                 for (const item of items[0]) {
