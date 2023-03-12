@@ -563,7 +563,7 @@ client.on('interactionCreate', async (interaction) => {
                         for (const thisId of interaction_second.values) {
                             await connection.promise().query('insert into characters_archetypes (character_id, archetype_id) values (?, ?)', [thisId, selectedArchetype]);
                         }
-                        await interaction_second.update({ content: 'Successfully assigned characters to archetype.', components: [] });
+                        await interaction.update({ content: 'Successfully assigned characters to archetype.', components: [] });
                     }
                 })
 
