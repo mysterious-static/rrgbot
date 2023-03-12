@@ -832,7 +832,7 @@ client.on('interactionCreate', async (interaction) => {
                         if (interaction_second.values[0]) {
                             if (interaction_second.customId == 'SkillAssignmentSkillSelector') {
                                 skillSelected = interaction_second.values[0];
-                            } else if (interaction_second.customId = 'SkillAssignmentAlphabetSelector') {
+                            } else if (interaction_second.customId == 'SkillAssignmentAlphabetSelector') {
                                 alphabetSelected = interaction_second.values[0];
                             } else if (interaction_second.customId == 'SkillAssignmentCharacterSelector') {
                                 charactersSelected = interaction_second.values;
