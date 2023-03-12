@@ -770,17 +770,22 @@ client.on('interactionCreate', async (interaction) => {
         } else if (interaction.commandName == 'assignskill') {
             var to_character = interaction.options.getBoolean('to_character');
             var skills = await connection.promise().query('select * from skills where guild_id = ?', [interaction.guildId]);
+            var skillsAlphabetical;
+            var skillSelectComponent;
             if (skills[0].length > 0) {
                 if (skills[0].length <= 25) {
+                    skillsAlphabetical = false;
                     var skillsKeyValues = [{ label: 'Select a skill', value: '0' }];
                     for (const skill of skills[0]) {
                         var thisSkillKeyValue = { label: skill.name, value: skill.id.toString() };
                         skillsKeyValues.push(thisSkillKeyValue);
                     }
+                    skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillAssignmentSkillSelector').setMinValues(1).setMaxValues(1);
                 } else {
-                    //alphabet selector
+                    skillsAlphabetical = true;
+                    var skillsKeyValues = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
+                    skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillAssignmentAlphabetSelector').setMinValues(1).setMaxValues(1);
                 }
-                const skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillAssignmentSkillSelector').setMinValues(1).setMaxValues(1);
                 var skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
                 if (to_character) {
                     var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
@@ -819,10 +824,31 @@ client.on('interactionCreate', async (interaction) => {
                         if (interaction_second.values[0]) {
                             if (interaction_second.customId == 'SkillAssignmentSkillSelector') {
                                 skillSelected = interaction_second.values[0];
+                            } else if (interaction_second.customId = 'SkillAssignmentAlphabetSelector') {
+                                alphabetSelected = interaction_second.values[0];
                             } else if (interaction_second.customId == 'SkillAssignmentCharacterSelector') {
                                 charactersSelected = interaction_second.values;
                             } else {
                                 archetypesSelected = interaction_second.values;
+                            }
+                            if (alphabetSelected && !skillSelected) {
+                                if (alphabetSelected.length == 1) {
+                                    var skills = await connection.promise().query('select * from skills where guild_id = ? and name like \'??%\'', [interaction.guildId, alphabetSelected]);
+                                } else {
+                                    // hmm something is wrong, bail out
+                                }
+                                var skillsKeyValues = [{ label: 'Select a skill', value: '0' }];
+                                for (const skill of skills[0]) {
+                                    var thisSkillKeyValue = { label: skill.name, value: skill.id.toString() };
+                                    skillsKeyValues.push(thisSkillKeyValue);
+                                }
+                                var skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillAssignmentSkillSelector').setMinValues(1).setMaxValues(1);
+                                var skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
+                                if (to_character) {
+                                    interaction.update({ components: [skillSelectRow, characterSelectRow] });
+                                } else {
+                                    interaction.update({ components: [skillSelectRow, archetypeSelectRow] });
+                                }
                             }
                             if (skillSelected && (charactersSelected || archetypesSelected)) {
                                 if (charactersSelected) {
