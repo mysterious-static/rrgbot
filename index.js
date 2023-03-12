@@ -838,6 +838,7 @@ client.on('interactionCreate', async (interaction) => {
                             }
                             if (alphabetSelected && !skillSelected) {
                                 if (alphabetSelected.length == 1) {
+                                    console.log(alphabetSelected);
                                     var skills = await connection.promise().query('select * from skills where guild_id = ? and name like "??%"', [interaction_second.guildId, alphabetSelected]);
                                     console.log(skills[0]);
                                 } else {
