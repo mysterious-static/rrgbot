@@ -850,9 +850,9 @@ client.on('interactionCreate', async (interaction) => {
                                 var skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillAssignmentSkillSelector').setMinValues(1).setMaxValues(1);
                                 var skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
                                 if (to_character) {
-                                    await interaction.update({ components: [skillSelectRow, characterSelectRow] });
+                                    await interaction.update({ content: 'Please select the following options:', components: [skillSelectRow, characterSelectRow] });
                                 } else {
-                                    await interaction.update({ components: [skillSelectRow, archetypeSelectRow] });
+                                    await interaction.update({ content: 'Please select the following options:', components: [skillSelectRow, archetypeSelectRow] });
                                 }
                             }
                             if (skillSelected && (charactersSelected || archetypesSelected)) {
