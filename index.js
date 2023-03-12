@@ -834,6 +834,8 @@ client.on('interactionCreate', async (interaction) => {
                             } else if (interaction_second.customId = 'SkillAssignmentAlphabetSelector') {
                                 alphabetSelected = interaction_second.values[0];
                             } else if (interaction_second.customId == 'SkillAssignmentCharacterSelector') {
+                                console.log(interaction_second.values);
+                                console.log('characters!');
                                 charactersSelected = interaction_second.values;
                             } else {
                                 archetypesSelected = interaction_second.values;
