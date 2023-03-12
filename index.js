@@ -817,9 +817,9 @@ client.on('interactionCreate', async (interaction) => {
                 }
                 if ((to_character && characters[0].length > 0) || (!to_character && archetypes[0].length > 0)) {
                     if (to_character) {
-                        var message = interaction.reply({ content: 'Please select the following options:', components: [skillSelectRow, characterSelectRow], ephemeral: true });
+                        var message = await interaction.reply({ content: 'Please select the following options:', components: [skillSelectRow, characterSelectRow], ephemeral: true });
                     } else {
-                        var message = interaction.reply({ content: 'Please select the following options:', components: [skillSelectRow, archetypeSelectRow], ephemeral: true });
+                        var message = await interaction.reply({ content: 'Please select the following options:', components: [skillSelectRow, archetypeSelectRow], ephemeral: true });
                     }
                     var collector = message.createMessageComponentCollector();
                     var charactersSelected;
