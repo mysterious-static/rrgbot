@@ -860,12 +860,13 @@ client.on('interactionCreate', async (interaction) => {
                             }
                             if (skillSelected && (charactersSelected || archetypesSelected)) {
                                 if (charactersSelected) {
+                                    console.log(charactersSelected);
                                     for (const character_id of charactersSelected) {
-                                        await connection.promise().query('insert ignore into skills_characters (character_id, skill_id) values (?, ?)', [character_id, skillSelected]);
+                                        await connection.promise().query('insert into skills_characters (character_id, skill_id) values (?, ?)', [character_id, skillSelected]);
                                     }
                                 } else {
                                     for (const archetype_id of archetypesSelected) {
-                                        await connection.promise().query('insert ignore into skills_archetypes (archetype_id, skill_id) values (?, ?)', [archetype_id, skillSelected]);
+                                        await connection.promise().query('insert into skills_archetypes (archetype_id, skill_id) values (?, ?)', [archetype_id, skillSelected]);
                                     }
                                 }
                                 await interaction.update({ content: 'Successfully assigned skill to characters or archetypes. I\'d tell you which but Alli is lazy.', components: [] });
