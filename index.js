@@ -874,8 +874,8 @@ client.on('interactionCreate', async (interaction) => {
                                         await connection.promise().query('insert into skills_archetypes (archetype_id, skill_id) values (?, ?)', [archetype_id, skillSelected]);
                                     }
                                 }
-                                await interaction.update({ content: 'Successfully assigned skill to characters or archetypes. I\'d tell you which but Alli is lazy.', components: [] });
-                            } else if (!alphabetSelected) {
+                                await interaction_second.update({ content: 'Successfully assigned skill to characters or archetypes. I\'d tell you which but Alli is lazy.', components: [] });
+                            } else {
                                 await interaction_second.deferUpdate();
                             }
                         } else {
