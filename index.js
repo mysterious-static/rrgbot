@@ -554,16 +554,16 @@ client.on('interactionCreate', async (interaction) => {
                             }
                             const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterAssignmentSelector').setMinValues(1).setMaxValues(characters[0].length);
                             var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                            await message.update({ content: 'Select a character or characters to assign to this archetype:', components: [characterSelectRow] });
+                            await interaction_second.update({ content: 'Select a character or characters to assign to this archetype:', components: [characterSelectRow] });
                         } else {
-                            await message.update({ content: 'No characters are valid to assign to this archetype.', components: [] });
+                            await interaction_second.update({ content: 'No characters are valid to assign to this archetype.', components: [] });
                         }
                     } else if (interaction_second.customId == 'CharacterAssignmentSelector') {
                         await interaction_second.deferUpdate();
                         for (const thisId of interaction_second.values) {
                             await connection.promise().query('insert into characters_archetypes (character_id, archetype_id) values (?, ?)', [thisId, selectedArchetype]);
                         }
-                        await message.update({ content: 'Successfully assigned characters to archetype.', components: [] });
+                        await interaction_second.update({ content: 'Successfully assigned characters to archetype.', components: [] });
                     }
                 })
 
@@ -732,9 +732,9 @@ client.on('interactionCreate', async (interaction) => {
                                 }
                                 const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ArchetypeStatAssignmentCharacterSelector').setMinValues(1).setMaxValues(1);
                                 var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                                interaction_second.reply({ content: 'Select a character, please.', components: [characterSelectRow] }); //interaction_second.editReply()
+                                interaction_second.update({ content: 'Select a character, please.', components: [characterSelectRow] }); //interaction_second.editReply()
                             } else {
-                                interaction_second.reply({ content: 'Couldn\'t find any valid characters for this archetype stat.', components: [] });
+                                interaction_second.update({ content: 'Couldn\'t find any valid characters for this archetype stat.', components: [] });
                             }
                         } else {
                             characterSelected = interaction_second.values[0];
@@ -746,7 +746,7 @@ client.on('interactionCreate', async (interaction) => {
                             } else {
                                 await connection.promise().query('insert into characters_archetypestats (character_id, stat_id, override_value) values (?, ?, ?)', [characterSelected, archetypeStatSelected, value]);
                             }
-                            await interaction_second.editReply({ content: 'Successfully updated character archetype stat value.', components: [] });
+                            await interaction_second.update({ content: 'Successfully updated character archetype stat value.', components: [] });
                         } else {
                             await interaction_second.deferUpdate();
                         }
