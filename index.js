@@ -684,7 +684,7 @@ client.on('interactionCreate', async (interaction) => {
                                 } else {
                                     await connection.promise().query('insert into characters_stats (character_id, stat_id, override_value) values (?, ?, ?)', [characterSelected, statSelected, value]);
                                 }
-                                await interaction_second.update({ content: 'Successfully updated character stat value.', components: [] });
+                                await interaction.update({ content: 'Successfully updated character stat value.', components: [] });
                             } else {
                                 await interaction_second.deferUpdate();
                             }
@@ -732,9 +732,9 @@ client.on('interactionCreate', async (interaction) => {
                                 }
                                 const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ArchetypeStatAssignmentCharacterSelector').setMinValues(1).setMaxValues(1);
                                 var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                                interaction_second.update({ content: 'Select a character, please.', components: [characterSelectRow] }); //interaction_second.editReply()
+                                interaction.update({ content: 'Select a character, please.', components: [characterSelectRow] }); //interaction_second.editReply()
                             } else {
-                                interaction_second.update({ content: 'Couldn\'t find any valid characters for this archetype stat.', components: [] });
+                                interaction.update({ content: 'Couldn\'t find any valid characters for this archetype stat.', components: [] });
                             }
                         } else {
                             characterSelected = interaction_second.values[0];
@@ -746,7 +746,7 @@ client.on('interactionCreate', async (interaction) => {
                             } else {
                                 await connection.promise().query('insert into characters_archetypestats (character_id, stat_id, override_value) values (?, ?, ?)', [characterSelected, archetypeStatSelected, value]);
                             }
-                            await interaction_second.update({ content: 'Successfully updated character archetype stat value.', components: [] });
+                            await interaction.update({ content: 'Successfully updated character archetype stat value.', components: [] });
                         } else {
                             await interaction_second.deferUpdate();
                         }
@@ -824,7 +824,7 @@ client.on('interactionCreate', async (interaction) => {
                                         await connection.promise().query('insert ignore into skills_archetypes (archetype_id, skill_id) values (?, ?)', [archetype_id, skillSelected]);
                                     }
                                 }
-                                await interaction_second.update({ content: 'Successfully assigned skill to characters or archetypes. I\'d tell you which but Alli is lazy.', components: [] });
+                                await interaction.update({ content: 'Successfully assigned skill to characters or archetypes. I\'d tell you which but Alli is lazy.', components: [] });
                             } else {
                                 await interaction_second.deferUpdate();
                             }
@@ -877,7 +877,7 @@ client.on('interactionCreate', async (interaction) => {
                             }
                             if (itemSelected && characterSelected) {
                                 await connection.promise().query('replace into characters_items (character_id, item_id) values (?, ?)', [characterSelected, itemSelected]);
-                                await interaction_second.update({ content: 'Successfully assigned item to charactercharaljter.', components: [] });
+                                await interaction.update({ content: 'Successfully assigned item to charactercharaljter.', components: [] });
                             } else {
                                 await interaction_second.deferUpdate();
                             }
