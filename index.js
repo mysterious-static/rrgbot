@@ -827,6 +827,7 @@ client.on('interactionCreate', async (interaction) => {
                     var skillSelected;
                     collector.on('collect', async (interaction_second) => {
                         console.log('Collected!');
+                        console.log(interaction_second.customId);
                         if (interaction_second.values[0]) {
                             if (interaction_second.customId == 'SkillAssignmentSkillSelector') {
                                 skillSelected = interaction_second.values[0];
