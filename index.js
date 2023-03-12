@@ -828,14 +828,13 @@ client.on('interactionCreate', async (interaction) => {
                     collector.on('collect', async (interaction_second) => {
                         console.log('Collected!');
                         console.log(interaction_second.customId);
+                        console.log(interaction_second.values);
                         if (interaction_second.values[0]) {
                             if (interaction_second.customId == 'SkillAssignmentSkillSelector') {
                                 skillSelected = interaction_second.values[0];
                             } else if (interaction_second.customId = 'SkillAssignmentAlphabetSelector') {
                                 alphabetSelected = interaction_second.values[0];
                             } else if (interaction_second.customId == 'SkillAssignmentCharacterSelector') {
-                                console.log(interaction_second.values);
-                                console.log('characters!');
                                 charactersSelected = interaction_second.values;
                             } else {
                                 archetypesSelected = interaction_second.values;
