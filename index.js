@@ -513,7 +513,7 @@ client.on('interactionCreate', async (interaction) => {
                 collector.on('collect', async (interaction_second) => {
                     console.log(interaction_second.values); // Is this an array of all selected or is it an array of arrays
                     for (const thisId of interaction_second.values) {
-                        await connection.promise().query('insert into players_characters (player_id, character_id, active) values (?, ?, ?)', [user.id, thisId, 0]);
+                        await connection.promise().query('insert into players_characters (player_id, character_id, active) values (?, ?, ?)', [player[0][0].id, thisId, 0]);
                     }
                     interaction_second.update({ content: 'Successfully updated character-player relationships.', components: [] });
                 });
@@ -723,7 +723,7 @@ client.on('interactionCreate', async (interaction) => {
                         if (interaction_second.customId == 'ArchetypeStatAssignmentStatSelector') {
                             archetypeStatSelected = interaction_second.values[0];
                             var archetype = await connection.promise().query('select archetype_id from archetypes_archetypestats where archetypestat_id = ?', [archetypeStatSelected]);
-                            var characters = await connection.promise().query('select c.* from characters c join characters_archetypes ca on c.id = ca.character_id where guild_id = ? and ca.archetype_id = ?', [interaction.guildId, archetype[0].archetype_id]);
+                            var characters = await connection.promise().query('select c.* from characters c join characters_archetypes ca on c.id = ca.character_id where guild_id = ? and ca.archetype_id = ?', [interaction.guildId, archetype[0][0].archetype_id]);
                             if (characters[0].length > 0) {
                                 var charactersKeyValues = [{ label: 'Select a character', value: '0' }];
                                 for (const character of characters[0]) {
