@@ -723,7 +723,7 @@ client.on('interactionCreate', async (interaction) => {
                     if (interaction_second.values[0]) {
                         if (interaction_second.customId == 'ArchetypeStatAssignmentStatSelector') {
                             archetypeStatSelected = interaction_second.values[0];
-                            var characters = await connection.promise().query('select c.* from characters c left outer join characters_archetypes ca on c.id = ca.character_id where guild_id = ? and ca.archetype_id = ?', [interaction.guildId, archetype]);
+                            var characters = await connection.promise().query('select c.* from characters c join characters_archetypes ca on c.id = ca.character_id where guild_id = ? and ca.archetype_id = ?', [interaction.guildId, archetype]);
                             if (characters[0].length > 0) {
                                 var charactersKeyValues = [{ label: 'Select a character', value: '0' }];
                                 for (const character of characters[0]) {
@@ -732,7 +732,7 @@ client.on('interactionCreate', async (interaction) => {
                                 }
                                 const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ArchetypeStatAssignmentCharacterSelector').setMinValues(1).setMaxValues(1);
                                 var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                                message.update({ content: 'Select a character, please.', components: [characterSelectRow] });
+                                message.update({ content: 'Select a character, please.', components: [characterSelectRow] }); //interaction_second.editReply()
                             } else {
                                 message.update({ content: 'Couldn\'t find any valid characters for this archetype stat.', components: [] });
                             }
