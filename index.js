@@ -732,9 +732,9 @@ client.on('interactionCreate', async (interaction) => {
                                 }
                                 const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ArchetypeStatAssignmentCharacterSelector').setMinValues(1).setMaxValues(1);
                                 var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                                interaction_second.editReply({ content: 'Select a character, please.', components: [characterSelectRow] }); //interaction_second.editReply()
+                                interaction_second.reply({ content: 'Select a character, please.', components: [characterSelectRow] }); //interaction_second.editReply()
                             } else {
-                                interaction_second.editReply({ content: 'Couldn\'t find any valid characters for this archetype stat.', components: [] });
+                                interaction_second.reply({ content: 'Couldn\'t find any valid characters for this archetype stat.', components: [] });
                             }
                         } else {
                             characterSelected = interaction_second.values[0];
