@@ -783,7 +783,12 @@ client.on('interactionCreate', async (interaction) => {
                     skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillAssignmentSkillSelector').setMinValues(1).setMaxValues(1);
                 } else {
                     skillsAlphabetical = true;
-                    var skillsKeyValues = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
+                    var skills = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
+                    var skillsKeyValues = [];
+                    for (const skill of skills) {
+                        var thisSkillKeyValue = { label: skill, value: skill }
+                        skillsKeyValues.push(thisSkillKeyValue);
+                    }
                     skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillAssignmentAlphabetSelector').setMinValues(1).setMaxValues(1);
                 }
                 var skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
