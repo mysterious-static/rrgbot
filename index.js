@@ -870,7 +870,7 @@ client.on('interactionCreate', async (interaction) => {
                                     }
                                 }
                                 await interaction.update({ content: 'Successfully assigned skill to characters or archetypes. I\'d tell you which but Alli is lazy.', components: [] });
-                            } else {
+                            } else if (!alphabetSelected) {
                                 await interaction_second.deferUpdate();
                             }
                         } else {
