@@ -722,7 +722,8 @@ client.on('interactionCreate', async (interaction) => {
                     if (interaction_second.values[0]) {
                         if (interaction_second.customId == 'ArchetypeStatAssignmentStatSelector') {
                             archetypeStatSelected = interaction_second.values[0];
-                            var characters = await connection.promise().query('select c.* from characters c join characters_archetypes ca on c.id = ca.character_id where guild_id = ? and ca.archetype_id = ?', [interaction.guildId, archetype]);
+                            var archetype = await connection.promise().query('select archetype_id from archetypes_archetypestats where archetypestat_id = ?', [archetypeStatSelected]);
+                            var characters = await connection.promise().query('select c.* from characters c join characters_archetypes ca on c.id = ca.character_id where guild_id = ? and ca.archetype_id = ?', [interaction.guildId, archetype[0].archetype_id]);
                             if (characters[0].length > 0) {
                                 var charactersKeyValues = [{ label: 'Select a character', value: '0' }];
                                 for (const character of characters[0]) {
@@ -731,9 +732,9 @@ client.on('interactionCreate', async (interaction) => {
                                 }
                                 const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ArchetypeStatAssignmentCharacterSelector').setMinValues(1).setMaxValues(1);
                                 var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                                interaction.update({ content: 'Select a character, please.', components: [characterSelectRow] }); //interaction_second.editReply()
+                                interaction_second.update({ content: 'Select a character, please.', components: [characterSelectRow] }); //interaction_second.editReply()
                             } else {
-                                interaction.update({ content: 'Couldn\'t find any valid characters for this archetype stat.', components: [] });
+                                interaction_second.update({ content: 'Couldn\'t find any valid characters for this archetype stat.', components: [] });
                             }
                         } else {
                             characterSelected = interaction_second.values[0];
