@@ -226,6 +226,10 @@ var assignskill = new SlashCommandBuilder().setName('assignskill')
             .setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
+    var assignitem = new SlashCommandBuilder().setName('assignitem')
+    .setDescription('Assign a skill to a character or archetype')
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
 // TODO: Items will be REWORKED ENTIRELY later, with a fully-functional system where instances of items can be created versus having all items unique.
 
 var addquest = new SlashCommandBuilder().setName('addquest')
@@ -295,7 +299,9 @@ client.on('ready', async () => {
         setstat.toJSON(),
         setarchetypestat.toJSON(),
         assignskill.toJSON(),
-        skill.toJSON()
+        skill.toJSON(),
+        assignitem.toJSON(),
+        item.toJSON()
     ]);
     client.user.setActivity("Infinite Magic Glories: Revolutionary Redux");
 });
