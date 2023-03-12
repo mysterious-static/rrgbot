@@ -120,10 +120,10 @@ var addcharacterarchetype = new SlashCommandBuilder().setName('addcharacterarche
         option.setName('archetype')
             .setDescription('The name of the archetype')
             .setRequired(true))
-            .addStringOption(option =>
-                option.setName('description')
-                    .setDescription('The archetype description.')
-                    .setRequired(true))
+    .addStringOption(option =>
+        option.setName('description')
+            .setDescription('The archetype description.')
+            .setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 var assignarchetype = new SlashCommandBuilder().setName('assignarchetype')
@@ -226,7 +226,7 @@ var assignskill = new SlashCommandBuilder().setName('assignskill')
             .setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
-    var assignitem = new SlashCommandBuilder().setName('assignitem')
+var assignitem = new SlashCommandBuilder().setName('assignitem')
     .setDescription('Assign a skill to a character or archetype')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
@@ -738,9 +738,9 @@ client.on('interactionCreate', async (interaction) => {
                                 }
                                 const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ArchetypeStatAssignmentCharacterSelector').setMinValues(1).setMaxValues(1);
                                 var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                                interaction_second.update({ content: 'Select a character, please.', components: [characterSelectRow] }); //interaction_second.editReply()
+                                interaction.update({ content: 'Select a character, please.', components: [characterSelectRow] }); //interaction_second.editReply()
                             } else {
-                                interaction_second.update({ content: 'Couldn\'t find any valid characters for this archetype stat.', components: [] });
+                                interaction.update({ content: 'Couldn\'t find any valid characters for this archetype stat.', components: [] });
                             }
                         } else {
                             characterSelected = interaction_second.values[0];
@@ -771,10 +771,14 @@ client.on('interactionCreate', async (interaction) => {
             var to_character = interaction.options.getBoolean('to_character');
             var skills = await connection.promise().query('select * from skills where guild_id = ?', [interaction.guildId]);
             if (skills[0].length > 0) {
-                var skillsKeyValues = [{ label: 'Select a skill', value: '0' }];
-                for (const skill of skills[0]) {
-                    var thisSkillKeyValue = { label: skill.name, value: skill.id.toString() };
-                    skillsKeyValues.push(thisSkillKeyValue);
+                if (skills[0].length <= 25) {
+                    var skillsKeyValues = [{ label: 'Select a skill', value: '0' }];
+                    for (const skill of skills[0]) {
+                        var thisSkillKeyValue = { label: skill.name, value: skill.id.toString() };
+                        skillsKeyValues.push(thisSkillKeyValue);
+                    }
+                } else {
+                    //alphabet selector
                 }
                 const skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillAssignmentSkillSelector').setMinValues(1).setMaxValues(1);
                 var skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
