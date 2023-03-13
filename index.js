@@ -463,6 +463,7 @@ client.on('interactionCreate', async (interaction) => {
                                     await new_announcements.send('*' + character_name + ' arrives from ' + old_name + '.*');
                                 }
                                 await interaction_second.update({ content: 'Successfully moved character.', components: [] });
+                                await collector.stop();
                             } else {
                                 await interaction_second.deferUpdate();
                             }
@@ -563,12 +564,14 @@ client.on('interactionCreate', async (interaction) => {
                             await interaction_second.update({ content: 'Select a character or characters to assign to this archetype:', components: [characterSelectRow] });
                         } else {
                             await interaction_second.update({ content: 'No characters are valid to assign to this archetype.', components: [] });
+                            await collector.stop();
                         }
                     } else if (interaction_second.customId == 'CharacterAssignmentSelector') {
                         for (const thisId of interaction_second.values) {
                             await connection.promise().query('insert into characters_archetypes (character_id, archetype_id) values (?, ?)', [thisId, selectedArchetype]);
                         }
                         await interaction_second.update({ content: 'Successfully assigned characters to archetype.', components: [] });
+                        await collector.stop();
                     }
                 })
 
@@ -690,6 +693,7 @@ client.on('interactionCreate', async (interaction) => {
                                     await connection.promise().query('insert into characters_stats (character_id, stat_id, override_value) values (?, ?, ?)', [characterSelected, statSelected, value]);
                                 }
                                 await interaction.update({ content: 'Successfully updated character stat value.', components: [] });
+                                await collector.stop();
                             } else {
                                 await interaction_second.deferUpdate();
                             }
@@ -741,6 +745,7 @@ client.on('interactionCreate', async (interaction) => {
                                 interaction_second.update({ content: 'Select a character, please.', components: [characterSelectRow] }); //interaction_second.editReply()
                             } else {
                                 interaction_second.update({ content: 'Couldn\'t find any valid characters for this archetype stat.', components: [] });
+                                await collector.stop();
                             }
                         } else {
                             characterSelected = interaction_second.values[0];
@@ -753,6 +758,7 @@ client.on('interactionCreate', async (interaction) => {
                                 await connection.promise().query('insert into characters_archetypestats (character_id, stat_id, override_value) values (?, ?, ?)', [characterSelected, archetypeStatSelected, value]);
                             }
                             await interaction_second.update({ content: 'Successfully updated character archetype stat value.', components: [] });
+                            await collector.stop();
                         } else {
                             await interaction_second.deferUpdate();
                         }
@@ -869,6 +875,7 @@ client.on('interactionCreate', async (interaction) => {
                                     }
                                 }
                                 await interaction_second.update({ content: 'Successfully assigned skill to characters or archetypes. I\'d tell you which but Alli is lazy.', components: [] });
+                                await collector.stop();
                             } else {
                                 await interaction_second.deferUpdate();
                             }
@@ -940,6 +947,7 @@ client.on('interactionCreate', async (interaction) => {
                                     var items = await connection.promise().query('select i.*, c.name as character_name from items i left outer join characters_items ci on i.id = ci.item_id left outer join characters c on ci.character_id = c.id where i.guild_id = ? and i.name like ?', [interaction_second.guildId, alphabetSelected + '%']);
                                 } else {
                                     await interaction_second.update({ content: 'Something has gone really horribly wrong, can you ask Alli maybe?', components: [] });
+                                    await collector.stop();
                                 }
                                 var itemsKeyValues = [];
                                 for (const item of items[0]) {
@@ -955,6 +963,7 @@ client.on('interactionCreate', async (interaction) => {
                             } else if (itemSelected && characterSelected) {
                                 await connection.promise().query('replace into characters_items (character_id, item_id) values (?, ?)', [characterSelected, itemSelected]);
                                 await interaction_second.update({ content: 'Successfully assigned item to charactercharaljter.', components: [] });
+                                await collector.stop();
                             } else {
                                 await interaction_second.deferUpdate();
                             }
@@ -1078,7 +1087,8 @@ client.on('interactionCreate', async (interaction) => {
                         if (interaction_second.values[0]) {
                             skillSelected = interaction_second.values[0];
                             var skill = skills.find(s => s.id == skillSelected);
-                            interaction_second.reply({ content: `**${skill.name}**: ${skill.description}` });
+                            await interaction_second.reply({ content: `**${skill.name}**: ${skill.description}` });
+                            await collector.stop();
                         }
 
                     });
@@ -1108,7 +1118,8 @@ client.on('interactionCreate', async (interaction) => {
                         if (interaction_second.values[0]) {
                             itemSelected = interaction_second.values[0];
                             var item = items[0].find(i => i.id == itemSelected);
-                            interaction_second.reply({ content: `**${item.name}**: ${item.description}` });
+                            await interaction_second.reply({ content: `**${item.name}**: ${item.description}` });
+                            await collector.stop();
                         }
 
                     });
@@ -1158,6 +1169,7 @@ client.on('interactionCreate', async (interaction) => {
                                     var item = items[0].find(i => i.id == itemSelected);
                                     var character_destination = characters[0].find(c => c.id == characterSelected);
                                     await interaction_second.reply({ content: `${current_character[0].name} gives ${character_destination.name} their **${item.name}**!` });
+                                    await collector.stop();
                                 } else {
                                     await interaction_second.deferUpdate();
                                 }
