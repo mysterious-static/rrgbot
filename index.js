@@ -759,7 +759,7 @@ client.on('interactionCreate', async (interaction) => {
                             }
                             await interaction_second.update({ content: 'Successfully updated character archetype stat value.', components: [] });
                             await collector.stop();
-                        } else {
+                        } else if (!archetypeStatSelected) {
                             await interaction_second.deferUpdate();
                         }
                     } else {
