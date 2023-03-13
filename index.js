@@ -841,10 +841,7 @@ client.on('interactionCreate', async (interaction) => {
                             }
                             if (alphabetSelected && !skillSelected) {
                                 if (alphabetSelected.length == 1) {
-                                    console.log(alphabetSelected);
-                                    console.log(interaction_second.guildId);
                                     var skills = await connection.promise().query('select * from skills where guild_id = ? and name like ?', [interaction_second.guildId, alphabetSelected + '%']);
-                                    console.log(skills[0]);
                                 } else {
                                     // hmm something is wrong, bail out
                                 }
@@ -860,10 +857,7 @@ client.on('interactionCreate', async (interaction) => {
                                 } else {
                                     await interaction_second.update({ content: 'Please select the following options:', components: [skillSelectRow, archetypeSelectRow] });
                                 }
-                            }
-                            console.log(skillSelected);
-                            console.log(charactersSelected);
-                            if (skillSelected && (charactersSelected || archetypesSelected)) {
+                            } else if (skillSelected && (charactersSelected || archetypesSelected)) {
                                 if (charactersSelected) {
                                     console.log(charactersSelected);
                                     for (const character_id of charactersSelected) {
@@ -894,16 +888,29 @@ client.on('interactionCreate', async (interaction) => {
             }
         } else if (interaction.commandName == 'assignitem') {
             var items = await connection.promise().query('select i.*, c.name as character_name from items i left outer join characters_items ci on i.id = ci.item_id left outer join characters c on ci.character_id = c.id where i.guild_id = ?', [interaction.guildId]);
+            var itemsAlphabetical;
             if (items[0].length > 0) {
-                var itemsKeyValues = [{ label: 'Select a item', value: '0' }];
-                for (const item of items[0]) {
-                    if (!item.character_name) {
-                        item.character_name = 'Unassigned';
+                if (items[0].length <= 25) {
+                    itemsAlphabetical = false;
+                    var itemsKeyValues = [];
+                    for (const item of items[0]) {
+                        if (!item.character_name) {
+                            item.character_name = 'Unassigned';
+                        }
+                        var thisItemKeyValue = { label: `${item.name} (${item.character_name})`, value: item.id.toString() };
+                        itemsKeyValues.push(thisItemKeyValue);
                     }
-                    var thisItemKeyValue = { label: `${item.name} (${item.character_name})`, value: item.id.toString() };
-                    itemsKeyValues.push(thisItemKeyValue);
+                    const itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemAssignmentItemSelector').setMinValues(1).setMaxValues(1);
+                } else {
+                    itemsAlphabetical = true;
+                    var items = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
+                    var itemsKeyValues = [];
+                    for (const item of items) {
+                        var thisItemKeyValue = { label: item, value: item }
+                        itemsKeyValues.push(thisItemKeyValue);
+                    }
+                    itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemAssignmentAlphabetSelector').setMinValues(1).setMaxValues(1);
                 }
-                const itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemAssignmentItemSelector').setMinValues(1).setMaxValues(1);
                 var itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
                 var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
                 if (characters[0].length > 0) {
@@ -917,17 +924,37 @@ client.on('interactionCreate', async (interaction) => {
                     var message = interaction.reply({ content: 'Please select the following options:', components: [itemSelectRow, characterSelectRow], ephemeral: true });
                     var collector = message.createMessageComponentCollector();
                     var characterSelected;
-                    var skillSelected;
+                    var itemSelected;
+                    var alphabetSelected;
                     collector.on('collect', async (interaction_second) => {
                         if (interaction_second.values[0]) {
                             if (interaction_second.customId == 'ItemAssignmentItemSelector') {
-                                skillSelected = interaction_second.values[0];
+                                itemSelected = interaction_second.values[0];
+                            } else if (interaction_second.customId == 'ItemAssignmentAlphabetSelector') {
+                                alphabetSelected = interaction_second.values[0];
                             } else if (interaction_second.customId == 'ItemAssignmentCharacterSelector') {
                                 characterSelected = interaction_second.values[0];
                             }
-                            if (itemSelected && characterSelected) {
+                            if (alphabetSelected && !itemSelected) {
+                                if (alphabetSelected.length == 1) {
+                                    var items = await connection.promise().query('select i.*, c.name as character_name from items i left outer join characters_items ci on i.id = ci.item_id left outer join characters c on ci.character_id = c.id where i.guild_id = ? and i.name like ?', [interaction_second.guildId, alphabetSelected + '%']);
+                                } else {
+                                    await interaction_second.update({ content: 'Something has gone really horribly wrong, can you ask Alli maybe?', components: [] });
+                                }
+                                var itemsKeyValues = [];
+                                for (const item of items[0]) {
+                                    if (!item.character_name) {
+                                        item.character_name = 'Unassigned';
+                                    }
+                                    var thisItemKeyValue = { label: `${item.name} (${item.character_name})`, value: item.id.toString() };
+                                    itemsKeyValues.push(thisItemKeyValue);
+                                }
+                                const itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemAssignmentItemSelector').setMinValues(1).setMaxValues(1);
+                                var itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
+                                await interaction_second.update({ content: 'Please select the following options:', components: [itemSelectRow, characterSelectRow] });
+                            } else if (itemSelected && characterSelected) {
                                 await connection.promise().query('replace into characters_items (character_id, item_id) values (?, ?)', [characterSelected, itemSelected]);
-                                await interaction.update({ content: 'Successfully assigned item to charactercharaljter.', components: [] });
+                                await interaction_second.update({ content: 'Successfully assigned item to charactercharaljter.', components: [] });
                             } else {
                                 await interaction_second.deferUpdate();
                             }
