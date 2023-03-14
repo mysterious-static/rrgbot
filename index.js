@@ -1010,7 +1010,45 @@ client.on('interactionCreate', async (interaction) => {
             } else if (interaction.commandName == 'me') {
                 var current_character = await connection.promise().query('select character_id from players_characters join players p on p.id = players_characters.player_id where p.user_id = ? and players_characters.active = 1', [interaction.user.id]);
                 if (current_character[0].length > 0) {
+                    var character_information = await connection.promise().query('select * from characters where id = ?', [current_character[0][0].character_id]);
+                    var character_archetypes = await connection.promise().query('select * from archetypes a join characters_archetypes ca on ca.archetype_id = a.id where ca.character_id = ?', [current_character[0][0].character_id]);
+                    var character_stats = await connection.promise().query('select s.*, cs.override_value from stats s left outer join characters_stats cs on cs.stat_id = s.id and cs.character_id = ? where guild_id = ?', [current_character[0][0].character_id, interaction.guildId]);
+                    var archetype_stats = await connection.promise().query('select as.*, ca2.override_value from archetypestats as join archetypes_archetypestats aa on as.id = as.archetypestat_id join characters_archetypes ca on as.archetype_id = ca.archetype_id and ca.character_id = ? left outer join characters_archetypestats ca2 on ca.stat_id = as.id and ca2.character_id = ?', [current_character[0][0].character_id, current_character[0][0].character_id]);
+                    var world_stats = []; //TODO
+                    var msg = `**${character_information[0][0].name}** - ${character_information[0][0].description}\n\n`
+                    if (character_archetypes[0].length > 0) {
+                        msg.concat(`__Archetypes__\n`);
+                        for (const thisArchetype of character_archetypes[0]) {
+                            msg.concat(`**${thisArchetype.name}** - ${thisArchetype.description}\n`);
+                        }
+                    }
+                    if (character_stats[0].length > 0 || archetype_stats[0].length > 0 || world_stats[0].length > 0) {
+                        msg.concat(`__Stats__\n`);
+                    }
+                    if (character_stats[0].length > 0) {
+                        for (const thisStat of character_stats[0]) {
+                            if (thisStat.override_value) {
+                                msg.concat(`**${thisStat.name}** - ${thisStat.override_value}\n`);
+                            } else { // TODO else if thisStat has an ARCHETYPE override value
+                                msg.concat(`**${thisStat.name}** - ${thisStat.default_value}\n`);
+                            }
 
+                        }
+                    }
+                    if (archetype_stats[0].length > 0) {
+                        for (const thisStat of archetype_stats[0]) {
+                            if (thisStat.override_value) {
+                                msg.concat(`**${thisStat.name}** - ${thisStat.override_value}\n`);
+                            } else { // TODO else if thisStat has an ARCHETYPE override value
+                                msg.concat(`**${thisStat.name}** - ${thisStat.default_value}\n`);
+                            }
+                        }
+                    }
+                    if (world_stats[0].length > 0) {
+                        // TODO
+                    }
+                    // Add Buttons
+                    await interaction.reply(msg);
                 } else {
                     interaction.reply({ content: 'Somehow, you don\'t have an active character! If you\'re a player, this means something has gone HORRIBLY WRONG. Please let an Orchestrator know.', ephemeral: true });
                 }
@@ -1058,7 +1096,7 @@ client.on('interactionCreate', async (interaction) => {
                         }
                     });
                 }
-            } else if (interaction.commandName == 'skill') {
+            } else if (interaction.commandName == 'skill') { //TODO: Futureproof with alphabet selector.
                 var current_character = await connection.promise().query('select players_characters.character_id, c.name from players_characters join players p on p.id = players_characters.player_id join characters c on c.id = players_characters.character_id where p.user_id = ? and players_characters.active = 1', [interaction.user.id]);
                 if (current_character[0].length > 0) {
                     var archetypeskills = await connection.promise().query('select s.* from skills s join skills_archetypes sa on sa.skill_id = s.id join characters_archetypes ca on sa.archetype_id = ca.archetype_id where ca.character_id = ?', [current_character[0][0].character_id]);
@@ -1144,7 +1182,7 @@ client.on('interactionCreate', async (interaction) => {
                 }
                 //dropdown
                 // put dropdown in thingy
-            } else if (interaction.commandName == 'give') {
+            } else if (interaction.commandName == 'give') { //TODO: Futureproof this with the alphabet selector.
                 var current_character = await connection.promise().query('select c.location, pc.character_id, c.name from players_characters pc join characters c on c.id = pc.character_id join players p on p.id = players_characters.player_id where p.user_id = ? and players_characters.active = 1', [interaction.user.id]);
                 if (current_character[0].length > 0) {
                     var items = await connection.promise().query('select i.* from items i join characters_items ci on ci.item_id = i.id where ci.character_id = ?', [current_character[0][0].id]);
