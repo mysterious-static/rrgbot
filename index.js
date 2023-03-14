@@ -249,7 +249,7 @@ var rps = new SlashCommandBuilder().setName('rps')
 var move = new SlashCommandBuilder().setName('move')
     .setDescription('Move to a new location.');
 
-var me = new SlashCommandBuilder().setName('me')
+var sheet = new SlashCommandBuilder().setName('sheet')
     .setDescription('Show your character sheet.');
 
 var skill = new SlashCommandBuilder().setName('skill')
@@ -286,7 +286,7 @@ client.on('ready', async () => {
         characterlocation.toJSON(),
         rps.toJSON(),
         move.toJSON(),
-        me.toJSON(),
+        sheet.toJSON(),
         assigncharacter.toJSON(),
         charactercreate.toJSON(),
         addcharacterarchetype.toJSON(),
@@ -1007,7 +1007,7 @@ client.on('interactionCreate', async (interaction) => {
                 } else {
                     interaction.reply({ content: 'Sorry, but you don\'t seem to be in a location that allows movement right now. Try again another time, or contact the Orchestrators. :purple_heart:', ephemeral: true });
                 }
-            } else if (interaction.commandName == 'me') {
+            } else if (interaction.commandName == 'sheet') {
                 var current_character = await connection.promise().query('select character_id from players_characters join players p on p.id = players_characters.player_id where p.user_id = ? and players_characters.active = 1', [interaction.user.id]);
                 if (current_character[0].length > 0) {
                     var character_information = await connection.promise().query('select * from characters where id = ?', [current_character[0][0].character_id]);
