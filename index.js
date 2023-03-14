@@ -448,6 +448,7 @@ client.on('interactionCreate', async (interaction) => {
                                     console.log(location.id);
                                     var channel = await client.channels.cache.get(location.channel_id);
                                     if (location.id == locationSelected) {
+                                        console.log()
                                         await channel.permissionOverwrites.edit(interaction.member, { ViewChannel: true, SendMessages: true });
                                         if (location.announcements_id) {
                                             new_announcements = await client.channels.cache.get(location.announcements_id);
@@ -480,7 +481,6 @@ client.on('interactionCreate', async (interaction) => {
                         }
                     });
                     collector.on('end', async (collected) => {
-                        console.log(collected);
                         // How do we clean the message up?
                     });
                 } else {
