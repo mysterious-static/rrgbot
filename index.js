@@ -436,7 +436,7 @@ client.on('interactionCreate', async (interaction) => {
                             }
                             if (locationSelected && characterSelected) {
                                 var character = await connection.promise().query('select * from characters where id = ?', [characterSelected]);
-                                var locations = await connection.promise().query('select * from movement_locations where id in (?, ?)', [character[0].location_id, locationSelected]);
+                                var locations = await connection.promise().query('select * from movement_locations where id in (?, ?)', [character[0][0].location_id, locationSelected]);
                                 await connection.promise().query('update characters set location_id = ? where id = ?', [locationSelected, characterSelected]);
                                 var new_announcements;
                                 var new_name;
@@ -453,7 +453,6 @@ client.on('interactionCreate', async (interaction) => {
                                         await channel.permissionOverwrites.edit(interaction.member, { ViewChannel: true, SendMessages: true });
                                         if (location.announcements_channel) {
                                             new_announcements = await client.channels.cache.get(location.announcements_channel);
-                                            console.log(new_announcements);
                                             new_name = location.friendly_name;
                                         }
                                     } else {
