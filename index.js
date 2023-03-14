@@ -442,7 +442,7 @@ client.on('interactionCreate', async (interaction) => {
                                 var new_name;
                                 var old_announcements;
                                 var old_name;
-                                var character_name = character[0].name;
+                                var character_name = character[0][0].name;
                                 console.log(locations[0]);
                                 for (const location of locations[0]) {
                                     console.log(location.id);
