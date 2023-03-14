@@ -1385,12 +1385,12 @@ client.on('interactionCreate', async (interaction) => {
                 var msg = `__Skills__\n`;
                 if (character_skills[0].length > 0) {
                     for (const thisSkill of character_skills[0]) {
-                        msg = msg.concat(`**${thisSkill.name}**: ${thisSkill.description}`);
+                        msg = msg.concat(`**${thisSkill.name}**: ${thisSkill.description}\n`);
                     }
                 }
                 if (archetype_skills[0].length > 0) {
                     for (const thisSkill of archetype_skills[0]) {
-                        msg = msg.concat(`**${thisSkill.name}**: ${thisSkill.description}`);
+                        msg = msg.concat(`**${thisSkill.name}**: ${thisSkill.description}\n`);
                     }
                 }
             } else {
