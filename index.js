@@ -1445,7 +1445,8 @@ client.on('interactionCreate', async (interaction) => {
             //var locations = await connection.promise().query('select ml.*, c.name as character_name from players p left outer join players_characters pc on p.id = pc.player_id join characters c on pc.character_id = c.id join movement_locations ml on c.location_id = ml.id where ((p.user_id = ? and pc.active = 1) or c.location_id = ?) and ml.movement_allowed = 1 and ml.guild_id = ?', [interaction.user.id, dest_id, interaction.guild_id]);
             console.log(interaction.member.id);
             console.log(interaction.guildId);
-            var locations = await connection.promise().query('select ml.*, c.name as character_name from movement_locations ml left outer join characters c on c.location_id = ml.id left outer join players_characters pc on pc.character_id = c.id left outer join players p on p.id = pc.player_id where ((p.user_id = ? and pc.active = 1) or ml.id = ?) and ml.movement_allowed = 1 and ml.guild_id = ?', [interaction.member.id, dest_id, interaction.guildId]); //todo get dest id working
+            var locations = await connection.promise().query('select ml.* from movement_locations ml left outer join characters c on c.location_id = ml.id left outer join players_characters pc on pc.character_id = c.id left outer join players p on p.id = pc.player_id where ((p.user_id = ? and pc.active = 1) or ml.id = ?) and ml.movement_allowed = 1 and ml.guild_id = ?', [interaction.member.id, dest_id, interaction.guildId]); //todo get dest id working
+            var active_character = await connection.promise().query('select c.* from characters join players_characters pc on pc.character_id = c.id join players p on p.id = pc.player_id where p.user_id = ? and pc.active = 1', [interaction.member.id]);
             console.log(locations[0]);
             if (locations[0].length == 2) {
                 await interaction.update({ content: 'Location selected for movement!', components: [] });
@@ -1454,13 +1455,13 @@ client.on('interactionCreate', async (interaction) => {
                 var new_name;
                 var old_announcements;
                 var old_name;
-                var character_name = locations[0][0].character_name;
+                var character_name = active_character[0][0].name;
                 for (const location of locations[0]) {
-                    var channel = await client.channels.cache.get(location.channel_id);
+                    var channel = await client.channels.cache.get(location.channel);
                     if (location.id == dest_id) {
                         await channel.permissionOverwrites.edit(interaction.member, { ViewChannel: true, SendMessages: true });
-                        if (location.announcements_id) {
-                            new_announcements = await client.channels.cache.get(location.announcements_id);
+                        if (location.announcements_channel) {
+                            new_announcements = await client.channels.cache.get(location.announcements_channel);
                             new_name = location.friendly_name;
                         }
                     } else {
@@ -1468,8 +1469,8 @@ client.on('interactionCreate', async (interaction) => {
                             await channel.permissionOverwrites.edit(interaction.member, { ViewChannel: false });
                         }
                         await channel.permissionOverwrites.edit(interaction.member, { SendMessages: false });
-                        if (location.announcements_id) {
-                            old_announcements = await client.channels.cache.get(location.announcements_id);
+                        if (location.announcements_channel) {
+                            old_announcements = await client.channels.cache.get(location.announcements_channel);
                             old_name = location.friendly_name;
                         }
                     }
@@ -1480,6 +1481,7 @@ client.on('interactionCreate', async (interaction) => {
                 if (new_announcements) {
                     await new_announcements.send('*' + character_name + ' arrives from ' + old_name + '.*');
                 }
+                await connection.promise().query('update characters set location = ? where id = ?', [active_character[0][0].id]);
             } else {
                 interaction.update({ content: 'Sorry, either your current location or your destination was locked for traveling between the time you started your move and the time you submitted it. Please contact an Orchestrator. :purple_heart:', components: [] });
 
