@@ -1448,16 +1448,16 @@ client.on('interactionCreate', async (interaction) => {
                 for (const location of locations[0]) {
                     var channel = await client.channels.cache.get(location.channel_id);
                     if (location.id == dest_id) {
-                        await channel.permissionOverwrites.edit(interaction.member, { VIEW_CHANNEL: true, SEND_MESSAGES: true });
+                        await channel.permissionOverwrites.edit(interaction.member, { 'VIEW_CHANNEL': true, 'SEND_MESSAGES': true });
                         if (location.announcements_id) {
                             new_announcements = await client.channels.cache.get(location.announcements_id);
                             new_name = location.friendly_name;
                         }
                     } else {
                         if (location.global_read == 0) {
-                            await channel.permissionOverwrites.edit(interaction.member, { VIEW_CHANNEL: false });
+                            await channel.permissionOverwrites.edit(interaction.member, { 'VIEW_CHANNEL': false });
                         }
-                        await channel.permissionOverwrites.edit(interaction.member, { SEND_MESSAGES: false });
+                        await channel.permissionOverwrites.edit(interaction.member, { 'SEND_MESSAGES': false });
                         if (location.announcements_id) {
                             old_announcements = await client.channels.cache.get(location.announcements_id);
                             old_name = location.friendly_name;
