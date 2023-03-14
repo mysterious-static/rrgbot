@@ -56,7 +56,7 @@ var locationannouncements = new SlashCommandBuilder().setName('locationannouncem
             .setDescription('The announcements channel. Leave unset to remove. Can be set to location channel.')
     ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
-var movementvisibility = new SlashCommandBuilder().setName('locationvisibility')
+var locationvisibility = new SlashCommandBuilder().setName('locationvisibility')
     .setDescription('Enable or disable the ability for players to view a location after they leave ("global read" mode)')
     .addChannelOption(option =>
         option.setName('location')
@@ -284,7 +284,7 @@ client.on('ready', async () => {
         allowmovement.toJSON(),
         locationannouncements.toJSON(),
         addlocation.toJSON(),
-        movementvisibility.toJSON(),
+        locationvisibility.toJSON(),
         resetlocationvis.toJSON(),
         playercreate.toJSON(),
         characterlocation.toJSON(),
@@ -373,7 +373,7 @@ client.on('interactionCreate', async (interaction) => {
                 await connection.promise().query('update movement_locations set movement_allowed = ? where guild_id = ? ', [interaction.guildId, enabled]);
                 interaction.reply({ content: 'Should be all set! (changed movement allowed value of ALL locations to ' + enabled + ')', ephemeral: true });
             }
-        } else if (interaction.commandName == 'movementvisibility') {
+        } else if (interaction.commandName == 'locationvisibility') {
             var thisChannel = interaction.options.getChannel('channel');
             var channelexists = await connection.promise().query('select * from movement_locations where guild_id = ? and channel_id = ?', [interaction.guildId, thisChannel.id]);
             if (channelexists[0].length > 0) {
