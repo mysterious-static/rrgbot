@@ -1481,7 +1481,7 @@ client.on('interactionCreate', async (interaction) => {
                 if (new_announcements) {
                     await new_announcements.send('*' + character_name + ' arrives from ' + old_name + '.*');
                 }
-                await connection.promise().query('update characters set location = ? where id = ?', [active_character[0][0].id]);
+                await connection.promise().query('update characters set location = ? where id = ?', [dest_id, active_character[0][0].id]);
             } else {
                 interaction.update({ content: 'Sorry, either your current location or your destination was locked for traveling between the time you started your move and the time you submitted it. Please contact an Orchestrator. :purple_heart:', components: [] });
 
