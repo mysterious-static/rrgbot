@@ -449,6 +449,7 @@ client.on('interactionCreate', async (interaction) => {
                                     var channel = await client.channels.cache.get(location.channel_id);
                                     if (location.id == locationSelected) {
                                         console.log('match')
+                                        console.log(location);
                                         await channel.permissionOverwrites.edit(interaction.member, { ViewChannel: true, SendMessages: true });
                                         if (location.announcements_id) {
                                             new_announcements = await client.channels.cache.get(location.announcements_id);
