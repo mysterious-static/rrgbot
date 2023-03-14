@@ -1332,6 +1332,79 @@ client.on('interactionCreate', async (interaction) => {
                     }
                 }
             });
+        } else if (interaction.customId.startsWith('sheet-')) {
+            var character_id = interaction.customId.split('-')[1];
+            var character_information = await connection.promise().query('select * from characters where id = ?', [character_id]);
+            var character_archetypes = await connection.promise().query('select * from archetypes a join characters_archetypes ca on ca.archetype_id = a.id where ca.character_id = ?', [character_id]);
+            var character_stats = await connection.promise().query('select s.*, cs.override_value from stats s left outer join characters_stats cs on cs.stat_id = s.id and cs.character_id = ? where guild_id = ?', [character_id, interaction.guildId]);
+            var archetype_stats = await connection.promise().query('select ars.*, ca2.override_value from archetypestats ars join archetypes_archetypestats aa on ars.id = aa.archetypestat_id join characters_archetypes ca on aa.archetype_id = ca.archetype_id and ca.character_id = ? left outer join characters_archetypestats ca2 on ca2.stat_id = ars.id and ca2.character_id = ?', [character_id, character_id]);
+            var world_stats = [[]]; //TODO
+            var msg = `**${character_information[0][0].name}** - ${character_information[0][0].description}\n`
+            if (character_archetypes[0].length > 0) {
+                msg = msg.concat(`\n__Archetypes__\n`);
+                for (const thisArchetype of character_archetypes[0]) {
+                    msg = msg.concat(`**${thisArchetype.name}** - ${thisArchetype.description}\n`);
+                }
+            }
+            if (character_stats[0].length > 0 || archetype_stats[0].length > 0 || world_stats[0].length > 0) {
+                msg = msg.concat(`\n__Stats__\n`);
+            }
+            if (character_stats[0].length > 0) {
+                for (const thisStat of character_stats[0]) {
+                    if (thisStat.override_value) {
+                        msg = msg.concat(`**${thisStat.name}** - ${thisStat.override_value}\n`);
+                    } else { // TODO else if thisStat has an ARCHETYPE override value
+                        msg = msg.concat(`**${thisStat.name}** - ${thisStat.default_value}\n`);
+                    }
+
+                }
+            }
+            if (archetype_stats[0].length > 0) {
+                for (const thisStat of archetype_stats[0]) {
+                    if (thisStat.override_value) {
+                        msg = msg.concat(`**${thisStat.name}** - ${thisStat.override_value}\n`);
+                    } else { // TODO else if thisStat has an ARCHETYPE override value
+                        msg = msg.concat(`**${thisStat.name}** - ${thisStat.default_value}\n`);
+                    }
+                }
+            }
+            if (world_stats[0].length > 0) {
+                // TODO
+            }
+            const buttonActionRow = new ActionRowBuilder()
+                .addComponents(
+                    new ButtonBuilder().setCustomId(`skills-${character_id}`).setLabel('Skills').setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder().setCustomId(`inventory-${character_id}`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
+                );
+            await interaction.update({ content: msg, components: [buttonActionRow] });
+        } else if (interaction.customId.startsWith('skills-')) {
+            var character_id = interaction.customId.split('-')[1];
+            var character_skills = await connection.promise().query('select s.* from skills s join skills_characters sc on s.id = sc.skill_id where sc.character_id = ?', [character_id]);
+            var archetype_skills = await connection.promise().query('select s.* from skills s join skills_archetypes sa on s.id = sa.skill_id join characters_archetypes ca on sa.archetype_id = ca.archetype_id and ca.character_id = ?', [character_id]);
+            if (character_skills[0].length > 0 || archetype_skills[0].length > 0) {
+                var msg = `__Skills__\n`;
+                if (character_skills[0].length > 0) {
+                    for (const thisSkill of character_skills[0]) {
+                        msg = msg.concat(`**${thisSkill.name}**: ${thisSkill.description}`);
+                    }
+                }
+                if (archetype_skills[0].length > 0) {
+                    for (const thisSkill of archetype_skills[0]) {
+                        msg = msg.concat(`**${thisSkill.name}**: ${thisSkill.description}`);
+                    }
+                }
+            } else {
+                var msg = `You don't have any skills! Hmm. Maybe check with an Orchestrator if you weren't expecting this.`;
+            }
+            const buttonActionRow = new ActionRowBuilder()
+                .addComponents(
+                    new ButtonBuilder().setCustomId(`sheet-${character_id}`).setLabel('Skills').setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder().setCustomId(`inventory-${character_id}`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
+                );
+            await interaction.update({ content: msg, components: [buttonActionRow] });
+        } else if (interaction.customId.startsWith('inventory-')) {
+            var character_id = interaction.customId.split('-')[1];
+
         }
     }
 
