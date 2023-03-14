@@ -1012,6 +1012,7 @@ client.on('interactionCreate', async (interaction) => {
                 if (current_character[0].length > 0) {
                     var character_information = await connection.promise().query('select * from characters where id = ?', [current_character[0][0].character_id]);
                     var character_archetypes = await connection.promise().query('select * from archetypes a join characters_archetypes ca on ca.archetype_id = a.id where ca.character_id = ?', [current_character[0][0].character_id]);
+                    console.log(character_archetypes);
                     var character_stats = await connection.promise().query('select s.*, cs.override_value from stats s left outer join characters_stats cs on cs.stat_id = s.id and cs.character_id = ? where guild_id = ?', [current_character[0][0].character_id, interaction.guildId]);
                     var archetype_stats = await connection.promise().query('select ars.*, ca2.override_value from archetypestats ars join archetypes_archetypestats aa on ars.id = aa.archetypestat_id join characters_archetypes ca on aa.archetype_id = ca.archetype_id and ca.character_id = ? left outer join characters_archetypestats ca2 on ca2.stat_id = ars.id and ca2.character_id = ?', [current_character[0][0].character_id, current_character[0][0].character_id]);
                     var world_stats = [[]]; //TODO
