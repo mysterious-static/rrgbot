@@ -1059,7 +1059,8 @@ client.on('interactionCreate', async (interaction) => {
                     });
                 }
             } else if (interaction.commandName == 'skill') {
-                var current_character = await connection.promise().query('select character_id from players_characters join players p on p.id = players_characters.player_id where p.user_id = ? and players_characters.active = 1', [interaction.user.id]);
+                var current_character = await connection.promise().query('select players_characters.character_id from players_characters join players p on p.id = players_characters.player_id where p.user_id = ? and players_characters.active = 1', [interaction.user.id]);
+                console.log(current_character[0]);
                 var archetypeskills = await connection.promise().query('select s.* from skills s join skills_archetypes sa on sa.skill_id = s.id join characters_archetypes ca on sa.archetype_id = ca.archetype_id where ca.character_id = ?', [current_character[0][0].character_id]);
                 var characterskills = await connection.promise().query('select s.* from skills s join skills_characters sc on sc.skill_id = s.id where sc.character_id = ?', [current_character[0][0].character_id]);
                 var skills;
