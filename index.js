@@ -1457,7 +1457,7 @@ client.on('interactionCreate', async (interaction) => {
                 var old_name;
                 var character_name = active_character[0][0].name;
                 for (const location of locations[0]) {
-                    var channel = await client.channels.cache.get(location.channel);
+                    var channel = await client.channels.cache.get(location.channel_id);
                     if (location.id == dest_id) {
                         await channel.permissionOverwrites.edit(interaction.member, { ViewChannel: true, SendMessages: true });
                         if (location.announcements_channel) {
