@@ -751,7 +751,7 @@ client.on('interactionCreate', async (interaction) => {
                             characterSelected = interaction_second.values[0];
                         }
                         if (archetypeStatSelected && characterSelected) {
-                            var exists = connection.promise().query('select * from characters_archetypestats where stat_id = ? and character_id = ?', [archetypeStatSelected, characterSelected]);
+                            var exists = await connection.promise().query('select * from characters_archetypestats where stat_id = ? and character_id = ?', [archetypeStatSelected, characterSelected]);
                             if (exists[0].length > 0) {
                                 await connection.promise().query('update characters_archetypestats set stat_id = ? where character_id = ?', [archetypeStatSelected, characterSelected]);
                             } else {
@@ -928,7 +928,7 @@ client.on('interactionCreate', async (interaction) => {
                     }
                     const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ItemAssignmentCharacterSelector').setMinValues(1).setMaxValues(1);
                     var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                    var message = interaction.reply({ content: 'Please select the following options:', components: [itemSelectRow, characterSelectRow], ephemeral: true });
+                    var message = await interaction.reply({ content: 'Please select the following options:', components: [itemSelectRow, characterSelectRow], ephemeral: true });
                     var collector = message.createMessageComponentCollector();
                     var characterSelected;
                     var itemSelected;
