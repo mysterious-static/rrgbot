@@ -443,7 +443,9 @@ client.on('interactionCreate', async (interaction) => {
                                 var old_announcements;
                                 var old_name;
                                 var character_name = character[0].name;
+                                console.log(locationSelected);
                                 for (const location of locations[0]) {
+                                    console.log(location.id);
                                     var channel = await client.channels.cache.get(location.channel_id);
                                     if (location.id == locationSelected) {
                                         await channel.permissionOverwrites.edit(interaction.member, { ViewChannel: true, SendMessages: true });
@@ -990,7 +992,7 @@ client.on('interactionCreate', async (interaction) => {
         } else if (interaction.commandName == 'modsheet') {
             //dropdown for characters
             //then generate character sheet ephemeral using the sheet code EXACTLY
-            interaction.reply({content: 'nyi, sorry', ephemeral: true});
+            interaction.reply({ content: 'nyi, sorry', ephemeral: true });
         }
 
 
