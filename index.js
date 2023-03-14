@@ -436,7 +436,7 @@ client.on('interactionCreate', async (interaction) => {
                             }
                             if (locationSelected && characterSelected) {
                                 var character = await connection.promise().query('select * from characters where id = ?', [characterSelected]);
-                                var locations = await connection.promise().query('select * from movement_locations where id in (?, ?)', [character[0].location, locationSelected]);
+                                var locations = await connection.promise().query('select * from movement_locations where id in (?, ?)', [character[0].location_id, locationSelected]);
                                 await connection.promise().query('update characters set location_id = ? where id = ?', [locationSelected, characterSelected]);
                                 var new_announcements;
                                 var new_name;
