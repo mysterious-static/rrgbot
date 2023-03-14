@@ -1003,7 +1003,7 @@ client.on('interactionCreate', async (interaction) => {
                     if (locations[0].length > 0) {
                         var locationsKeyValues = [];
                         for (const location of locations[0]) {
-                            var thisLocationKeyValue = { label: location.friendly_name, value: location.id };
+                            var thisLocationKeyValue = { label: location.friendly_name, value: location.id.toString() };
                             locationsKeyValues.push(thisLocationKeyValue);
                         }
                         const locationSelectComponent = new StringSelectMenuBuilder().setOptions(locationsKeyValues).setCustomId('LocationMovementSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
