@@ -1064,13 +1064,16 @@ client.on('interactionCreate', async (interaction) => {
                 var characterskills = await connection.promise().query('select s.* from skills s join skills_characters sc on sc.skill_id = s.id where sc.character_id = ?', [current_character[0].id]);
                 var skills;
                 if (archetypeskills[0].length > 0) {
+                    console.log(archetypeskills[0]);
                     var skillids = new Set(archetypeskills[0].map(d => d.id));
                     if (characterskills[0].length > 0) {
+                        console.log(characterskills[0]);
                         skills = [...archetypeskills[0], ...characterskills[0].filter(d => !skillids.has(d.ID))];
                     } else {
                         skills = archetypeskills[0];
                     }
                 } else if (characterskills[0].length > 0) {
+                    console.log(characterskills[0]);
                     skills = characterskills[0];
                 }
                 if (skills) {
