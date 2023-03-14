@@ -1068,7 +1068,7 @@ client.on('interactionCreate', async (interaction) => {
                     var skillids = new Set(archetypeskills[0].map(d => d.id));
                     if (characterskills[0].length > 0) {
                         console.log(characterskills[0]);
-                        skills = [...archetypeskills[0], ...characterskills[0].filter(d => !skillids.has(d.ID))];
+                        skills = [...archetypeskills[0], ...characterskills[0].filter(d => !skillids.has(d.id))];
                     } else {
                         skills = archetypeskills[0];
                     }
