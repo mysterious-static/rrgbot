@@ -447,7 +447,7 @@ client.on('interactionCreate', async (interaction) => {
                                 for (const location of locations[0]) {
                                     console.log(location.id);
                                     var channel = await client.channels.cache.get(location.channel_id);
-                                    console.log(channel);
+                                    console.log(channel.permissionOverwrites);
                                     if (location.id == locationSelected) {
                                         console.log('match')
                                         console.log(location);
