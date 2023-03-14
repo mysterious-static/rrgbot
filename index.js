@@ -552,7 +552,7 @@ client.on('interactionCreate', async (interaction) => {
                 collector.on('collect', async (interaction_second) => {
                     if (interaction_second.customId == 'ArchetypeAssignmentSelector') {
                         selectedArchetype = interaction_second.values[0];
-                        var characters = await connection.promise().query('select unique characters.* from characters left outer join characters_archetypes ca on characters.id = ca.character_id where guild_id = ? and (ca.archetype_id <> ? or ca.archetype_id is null)', [interaction.guildId, selectedArchetype]);
+                        var characters = await connection.promise().query('select distinct characters.* from characters left outer join characters_archetypes ca on characters.id = ca.character_id where guild_id = ? and (ca.archetype_id <> ? or ca.archetype_id is null)', [interaction.guildId, selectedArchetype]);
                         if (characters[0].length > 0) {
                             console.log(characters[0]);
                             var charactersKeyValues = [];
