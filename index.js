@@ -1086,7 +1086,7 @@ client.on('interactionCreate', async (interaction) => {
                     }
                     const skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
                     var skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
-                    var message = interaction.reply({ content: 'Select a skill to share with the channel:', components: [skillSelectRow], ephemeral: true });
+                    var message = await interaction.reply({ content: 'Select a skill to share with the channel:', components: [skillSelectRow], ephemeral: true });
                     var collector = message.createMessageComponentCollector();
                     collector.on('collect', async (interaction_second) => {
                         if (interaction_second.values[0]) {
@@ -1117,7 +1117,7 @@ client.on('interactionCreate', async (interaction) => {
                     }
                     const itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
                     var itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
-                    var message = interaction.reply({ content: 'Select a item to share with the channel:', components: [itemSelectRow], ephemeral: true });
+                    var message = await interaction.reply({ content: 'Select a item to share with the channel:', components: [itemSelectRow], ephemeral: true });
                     var collector = message.createMessageComponentCollector();
                     collector.on('collect', async (interaction_second) => {
                         if (interaction_second.values[0]) {
