@@ -1405,6 +1405,13 @@ client.on('interactionCreate', async (interaction) => {
         } else if (interaction.customId.startsWith('inventory-')) {
             var character_id = interaction.customId.split('-')[1];
 
+            var msg = 'lol alli hasnt built this yet';
+            const buttonActionRow = new ActionRowBuilder()
+                .addComponents(
+                    new ButtonBuilder().setCustomId(`sheet-${character_id}`).setLabel('Sheet').setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder().setCustomId(`skills-${character_id}`).setLabel('Skills').setStyle(ButtonStyle.Primary)
+                );
+            await interaction.update({ content: msg, components: [buttonActionRow] });
         }
     }
 
