@@ -443,7 +443,7 @@ client.on('interactionCreate', async (interaction) => {
                                 var old_announcements;
                                 var old_name;
                                 var character_name = character[0].name;
-                                console.log(locationSelected);
+                                console.log(locations[0]);
                                 for (const location of locations[0]) {
                                     console.log(location.id);
                                     var channel = await client.channels.cache.get(location.channel_id);
@@ -451,8 +451,8 @@ client.on('interactionCreate', async (interaction) => {
                                         console.log('match')
                                         console.log(location);
                                         await channel.permissionOverwrites.edit(interaction.member, { ViewChannel: true, SendMessages: true });
-                                        if (location.announcements_id) {
-                                            new_announcements = await client.channels.cache.get(location.announcements_id);
+                                        if (location.announcements_channel) {
+                                            new_announcements = await client.channels.cache.get(location.announcements_channel);
                                             console.log(new_announcements);
                                             new_name = location.friendly_name;
                                         }
@@ -461,8 +461,8 @@ client.on('interactionCreate', async (interaction) => {
                                             await channel.permissionOverwrites.edit(interaction.member, { ViewChannel: false });
                                         }
                                         await channel.permissionOverwrites.edit(interaction.member, { SendMessages: false });
-                                        if (location.announcements_id) {
-                                            old_announcements = await client.channels.cache.get(location.announcements_id);
+                                        if (location.announcements_channel) {
+                                            old_announcements = await client.channels.cache.get(location.announcements_channel);
                                             old_name = location.friendly_name;
                                         }
                                     }
