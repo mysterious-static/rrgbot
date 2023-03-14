@@ -1081,7 +1081,7 @@ client.on('interactionCreate', async (interaction) => {
                 if (skills) {
                     var skillsKeyValues = [];
                     for (const skill of skills) {
-                        var thisSkillKeyValue = { label: skill.name, value: skill.id };
+                        var thisSkillKeyValue = { label: skill.name, value: skill.id.toString() };
                         skillsKeyValues.push(thisSkillKeyValue);
                     }
                     const skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
@@ -1108,11 +1108,11 @@ client.on('interactionCreate', async (interaction) => {
                 // put dropdown in thingy
             } else if (interaction.commandName == 'item') {
                 var current_character = await connection.promise().query('select character_id from players_characters join players p on p.id = players_characters.player_id where p.user_id = ? and players_characters.active = 1', [interaction.user.id]);
-                var items = await connection.promise().query('select i.* from items i join characters_items ci on ci.item_id = i.id where ci.character_id = ?', [current_character[0].id]);
+                var items = await connection.promise().query('select i.* from items i join characters_items ci on ci.item_id = i.id where ci.character_id = ?', [current_character[0][0].character_id]);
                 if (items[0].length > 0) {
                     var itemsKeyValues = [];
                     for (const item of items[0]) {
-                        var thisItemKeyValue = { label: item.name, value: item.id };
+                        var thisItemKeyValue = { label: item.name, value: item.id.toString() };
                         itemsKeyValues.push(thisItemKeyValue);
                     }
                     const itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
