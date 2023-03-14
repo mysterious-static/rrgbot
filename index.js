@@ -1,6 +1,6 @@
 /*jslint es6*/
 const Discord = require('discord.js');
-const { Permissions, ActionRowBuilder, ButtonBuilder, TextInputComponent, StringSelectMenuBuilder, TextInputStyle, Modal, PermissionFlagsBits, GatewayIntentBits, SlashCommandBuilder } = require('discord.js')
+const { Permissions, ActionRowBuilder, ButtonBuilder, TextInputComponent, StringSelectMenuBuilder, TextInputStyle, Modal, PermissionFlagsBits, GatewayIntentBits, SlashCommandBuilder, ButtonStyle } = require('discord.js')
 const client = new Discord.Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildWebhooks, GatewayIntentBits.GuildMessageReactions, GatewayIntentBits.GuildEmojisAndStickers, GatewayIntentBits.GuildMembers] });
 var mysql = require('mysql2');
 var connection = mysql.createConnection({
@@ -1012,7 +1012,6 @@ client.on('interactionCreate', async (interaction) => {
                 if (current_character[0].length > 0) {
                     var character_information = await connection.promise().query('select * from characters where id = ?', [current_character[0][0].character_id]);
                     var character_archetypes = await connection.promise().query('select * from archetypes a join characters_archetypes ca on ca.archetype_id = a.id where ca.character_id = ?', [current_character[0][0].character_id]);
-                    console.log(character_archetypes);
                     var character_stats = await connection.promise().query('select s.*, cs.override_value from stats s left outer join characters_stats cs on cs.stat_id = s.id and cs.character_id = ? where guild_id = ?', [current_character[0][0].character_id, interaction.guildId]);
                     var archetype_stats = await connection.promise().query('select ars.*, ca2.override_value from archetypestats ars join archetypes_archetypestats aa on ars.id = aa.archetypestat_id join characters_archetypes ca on aa.archetype_id = ca.archetype_id and ca.character_id = ? left outer join characters_archetypestats ca2 on ca2.stat_id = ars.id and ca2.character_id = ?', [current_character[0][0].character_id, current_character[0][0].character_id]);
                     var world_stats = [[]]; //TODO
@@ -1048,8 +1047,12 @@ client.on('interactionCreate', async (interaction) => {
                     if (world_stats[0].length > 0) {
                         // TODO
                     }
-                    // Add Buttons
-                    await interaction.reply(msg);
+                    const buttonActionRow = new ActionRowBuilder()
+                        .addComponents(
+                            new ButtonBuilder().setCustomId(`skills-${current_character[0][0].character_id}`).setLabel('Skills').setStyle(ButtonStyle.Primary),
+                            new ButtonBuilder().setCustomId(`inventory-${current_character[0][0].character_id}`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
+                        );
+                    await interaction.reply({ content: msg, components: [buttonActionRow] });
                 } else {
                     interaction.reply({ content: 'Somehow, you don\'t have an active character! If you\'re a player, this means something has gone HORRIBLY WRONG. Please let an Orchestrator know.', ephemeral: true });
                 }
