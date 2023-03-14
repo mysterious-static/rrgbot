@@ -1052,7 +1052,7 @@ client.on('interactionCreate', async (interaction) => {
                             new ButtonBuilder().setCustomId(`skills-${current_character[0][0].character_id}`).setLabel('Skills').setStyle(ButtonStyle.Primary),
                             new ButtonBuilder().setCustomId(`inventory-${current_character[0][0].character_id}`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
                         );
-                    await interaction.reply({ content: msg, components: [buttonActionRow] });
+                    await interaction.reply({ content: msg, components: [buttonActionRow], ephemeral: true });
                 } else {
                     interaction.reply({ content: 'Somehow, you don\'t have an active character! If you\'re a player, this means something has gone HORRIBLY WRONG. Please let an Orchestrator know.', ephemeral: true });
                 }
