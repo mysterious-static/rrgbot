@@ -435,7 +435,7 @@ client.on('interactionCreate', async (interaction) => {
                                 characterSelected = interaction_second.values[0];
                             }
                             if (locationSelected && characterSelected) {
-                                var character = await connection.promise().query('select * from characters where id = ?', [characterSelected]);
+                                var character = await connection.promise().query('select c.*, p.user_id from characters join players_characters pc on characters.id = pc.character_id join players p on p.id = pc.player_id where characters.id = ? ', [characterSelected]);
                                 var locations = await connection.promise().query('select * from movement_locations where id in (?, ?)', [character[0][0].location_id, locationSelected]);
                                 await connection.promise().query('update characters set location_id = ? where id = ?', [locationSelected, characterSelected]);
                                 var new_announcements;
@@ -451,16 +451,16 @@ client.on('interactionCreate', async (interaction) => {
                                     if (location.id == locationSelected) {
                                         console.log('match')
                                         console.log(location);
-                                        await channel.permissionOverwrites.edit(interaction.member, { ViewChannel: true, SendMessages: true });
+                                        await channel.permissionOverwrites.edit(character[0][0].user_id, { ViewChannel: true, SendMessages: true });
                                         if (location.announcements_channel) {
                                             new_announcements = await client.channels.cache.get(location.announcements_channel);
                                             new_name = location.friendly_name;
                                         }
                                     } else {
                                         if (location.global_read == 0) {
-                                            await channel.permissionOverwrites.edit(interaction.member, { ViewChannel: false });
+                                            await channel.permissionOverwrites.edit(character[0][0].user_id, { ViewChannel: false });
                                         }
-                                        await channel.permissionOverwrites.edit(interaction.member, { SendMessages: false });
+                                        await channel.permissionOverwrites.edit(character[0][0].user_id, { SendMessages: false });
                                         if (location.announcements_channel) {
                                             old_announcements = await client.channels.cache.get(location.announcements_channel);
                                             old_name = location.friendly_name;
@@ -1459,16 +1459,16 @@ client.on('interactionCreate', async (interaction) => {
                 for (const location of locations[0]) {
                     var channel = await client.channels.cache.get(location.channel_id);
                     if (location.id == dest_id) {
-                        await channel.permissionOverwrites.edit(interaction.member, { ViewChannel: true, SendMessages: true });
+                        await channel.permissionOverwrites.edit(interaction.member.id, { ViewChannel: true, SendMessages: true });
                         if (location.announcements_channel) {
                             new_announcements = await client.channels.cache.get(location.announcements_channel);
                             new_name = location.friendly_name;
                         }
                     } else {
                         if (location.global_read == 0) {
-                            await channel.permissionOverwrites.edit(interaction.member, { ViewChannel: false });
+                            await channel.permissionOverwrites.edit(interaction.member.id, { ViewChannel: false });
                         }
-                        await channel.permissionOverwrites.edit(interaction.member, { SendMessages: false });
+                        await channel.permissionOverwrites.edit(interaction.member.id, { SendMessages: false });
                         if (location.announcements_channel) {
                             old_announcements = await client.channels.cache.get(location.announcements_channel);
                             old_name = location.friendly_name;
