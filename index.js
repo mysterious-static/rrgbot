@@ -232,6 +232,10 @@ var assignitem = new SlashCommandBuilder().setName('assignitem')
 
 // TODO: Items will be REWORKED ENTIRELY later, with a fully-functional system where instances of items can be created versus having all items unique.
 
+var modsheet = new SlashCommandBuilder().setName('modsheet')
+    .setDescription('Show a character sheet.')
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
 var addquest = new SlashCommandBuilder().setName('addquest')
     .setDescription('NYI: Add a quest for display on character sheet.');
 
@@ -301,7 +305,8 @@ client.on('ready', async () => {
         assignskill.toJSON(),
         skill.toJSON(),
         assignitem.toJSON(),
-        item.toJSON()
+        item.toJSON(),
+        modsheet.toJSON()
     ]);
     client.user.setActivity("Infinite Magic Glories: Revolutionary Redux");
 });
@@ -430,7 +435,7 @@ client.on('interactionCreate', async (interaction) => {
                             }
                             if (locationSelected && characterSelected) {
                                 var character = await connection.promise().query('select * from characters where id = ?', [characterSelected]);
-                                var locations = await connection.promise().query('select * from locations where id in (?, ?)', [character[0].location, locationSelected]);
+                                var locations = await connection.promise().query('select * from movement_locations where id in (?, ?)', [character[0].location, locationSelected]);
                                 await connection.promise().query('update characters set location_id = ? where id = ?', [locationSelected, characterSelected]);
                                 var new_announcements;
                                 var new_name;
@@ -981,6 +986,10 @@ client.on('interactionCreate', async (interaction) => {
             } else {
                 interaction.reply({ content: 'Please create at least one ~~skill~~ item first. <3', ephemeral: true });
             }
+        } else if (interaction.commandName == 'modsheet') {
+            //dropdown for characters
+            //then generate character sheet ephemeral using the sheet code EXACTLY
+            interaction.reply({content: 'nyi, sorry', ephemeral: true});
         }
 
 
