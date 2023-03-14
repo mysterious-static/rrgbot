@@ -1016,15 +1016,15 @@ client.on('interactionCreate', async (interaction) => {
                     var character_stats = await connection.promise().query('select s.*, cs.override_value from stats s left outer join characters_stats cs on cs.stat_id = s.id and cs.character_id = ? where guild_id = ?', [current_character[0][0].character_id, interaction.guildId]);
                     var archetype_stats = await connection.promise().query('select ars.*, ca2.override_value from archetypestats ars join archetypes_archetypestats aa on ars.id = aa.archetypestat_id join characters_archetypes ca on aa.archetype_id = ca.archetype_id and ca.character_id = ? left outer join characters_archetypestats ca2 on ca2.stat_id = ars.id and ca2.character_id = ?', [current_character[0][0].character_id, current_character[0][0].character_id]);
                     var world_stats = [[]]; //TODO
-                    var msg = `**${character_information[0][0].name}** - ${character_information[0][0].description}\n\n`
+                    var msg = `**${character_information[0][0].name}** - ${character_information[0][0].description}\n`
                     if (character_archetypes[0].length > 0) {
-                        msg = msg.concat(`__Archetypes__\n`);
+                        msg = msg.concat(`\n__Archetypes__\n`);
                         for (const thisArchetype of character_archetypes[0]) {
                             msg = msg.concat(`**${thisArchetype.name}** - ${thisArchetype.description}\n`);
                         }
                     }
                     if (character_stats[0].length > 0 || archetype_stats[0].length > 0 || world_stats[0].length > 0) {
-                        msg = msg.concat(`__Stats__\n`);
+                        msg = msg.concat(`\n__Stats__\n`);
                     }
                     if (character_stats[0].length > 0) {
                         for (const thisStat of character_stats[0]) {
