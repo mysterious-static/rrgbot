@@ -1404,8 +1404,17 @@ client.on('interactionCreate', async (interaction) => {
             await interaction.update({ content: msg, components: [buttonActionRow] });
         } else if (interaction.customId.startsWith('inventory-')) {
             var character_id = interaction.customId.split('-')[1];
+            var character_items = await connection.promise().query('select i.* from items i join characters_items ci on i.id = ci.item_id where ci.character_id = ?', [character_id]);
 
-            var msg = 'lol alli hasnt built this yet';
+            if (character_items[0].length > 0) {
+                var msg = '__Items__\n';
+                for (const thisItem of character_items[0]) {
+                    msg = msg.concat(`**${thisItem.name}**: ${thisItem.description}\n`);
+                }
+            } else {
+                var msg = `Your inventory is empty. If you believe you have received this message in error, please contact an Orchestrator.`;
+            }
+
             const buttonActionRow = new ActionRowBuilder()
                 .addComponents(
                     new ButtonBuilder().setCustomId(`sheet-${character_id}`).setLabel('Sheet').setStyle(ButtonStyle.Primary),
