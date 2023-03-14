@@ -1398,7 +1398,7 @@ client.on('interactionCreate', async (interaction) => {
             }
             const buttonActionRow = new ActionRowBuilder()
                 .addComponents(
-                    new ButtonBuilder().setCustomId(`sheet-${character_id}`).setLabel('Skills').setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder().setCustomId(`sheet-${character_id}`).setLabel('Sheet').setStyle(ButtonStyle.Primary),
                     new ButtonBuilder().setCustomId(`inventory-${character_id}`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
                 );
             await interaction.update({ content: msg, components: [buttonActionRow] });
