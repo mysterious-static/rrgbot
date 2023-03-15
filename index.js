@@ -1340,7 +1340,7 @@ client.on('interactionCreate', async (interaction) => {
 
                             // and then process the give inside the collector (update item owner in characters_items)
                         } else {
-                            interaction.reply({ content: 'There don\'t seem to be any other characters in this game. You may want to double check on this.', ephemeral: true });
+                            interaction.reply({ content: 'There don\'t seem to be any other characters in this game...or maybe just in your area. You may want to double check on this.', ephemeral: true });
                         }
                     } else {
                         interaction.reply({ content: 'You don\'t seem to have any items. Sorry about that.', ephemeral: true });
