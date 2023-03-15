@@ -383,7 +383,7 @@ client.on('interactionCreate', async (interaction) => {
                     if (thisLocation.global_read == true) {
                         for (const thisPlayer of players[0]) {
                             console.log(thisPlayer);
-                            var user = await client.users.cache.get(thisPlayer.user_id);
+                            var user = await client.users.fetch(thisPlayer.user_id);
                             await channel.permissionOverwrites.edit(user, { ViewChannel: true });
                             if (thisPlayer.location_id == thisLocation.id) {
                                 await channel.permissionOverwrites.edit(user, { SendMessages: true });
@@ -395,7 +395,7 @@ client.on('interactionCreate', async (interaction) => {
                     } else {
                         for (const thisPlayer of players[0]) {
                             console.log(thisPlayer);
-                            var user = await client.users.cache.get(thisPlayer.user_id);
+                            var user = await client.users.fetch(thisPlayer.user_id);
                             if (thisPlayer.location_id == thisLocation.id) {
                                 await channel.permissionOverwrites.edit(user, { ViewChannel: true, SendMessages: true });
                             } else {
