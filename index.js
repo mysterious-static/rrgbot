@@ -1289,7 +1289,7 @@ client.on('interactionCreate', async (interaction) => {
                 //dropdown
                 // put dropdown in thingy
             } else if (interaction.commandName == 'give') { //TODO: Futureproof this with the alphabet selector.
-                var current_character = await connection.promise().query('select c.location, pc.character_id, c.name from players_characters pc join characters c on c.id = pc.character_id join players p on p.id = players_characters.player_id where p.user_id = ? and players_characters.active = 1', [interaction.user.id]);
+                var current_character = await connection.promise().query('select c.location_id, pc.character_id, c.name from players_characters pc join characters c on c.id = pc.character_id join players p on p.id = players_characters.player_id where p.user_id = ? and players_characters.active = 1', [interaction.user.id]);
                 if (current_character[0].length > 0) {
                     var items = await connection.promise().query('select i.* from items i join characters_items ci on ci.item_id = i.id where ci.character_id = ?', [current_character[0][0].id]);
                     if (items[0].length > 0) {
@@ -1301,7 +1301,7 @@ client.on('interactionCreate', async (interaction) => {
                         const itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('GiveItemSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
                         var itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
 
-                        var characters = await connection.promise().query('select * from characters where guild_id = ? and id != ? and location = ?', [interaction.guildId, current_character[0][0].id, current_character[0][0].location]);
+                        var characters = await connection.promise().query('select * from characters where guild_id = ? and id != ? and location_id = ?', [interaction.guildId, current_character[0][0].id, current_character[0][0].location_id]);
                         if (characters[0].length > 0) {
                             var charactersKeyValues = [];
                             for (const character of characters[0]) {
