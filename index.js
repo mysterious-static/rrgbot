@@ -384,11 +384,11 @@ client.on('interactionCreate', async (interaction) => {
                         for (const thisPlayer of players[0]) {
                             console.log(thisPlayer);
                             var user = await client.users.cache.get(thisPlayer.user_id);
-                            await channel.permissionOverwrites.edit(thisPlayer.user_id, { ViewChannel: true });
+                            await channel.permissionOverwrites.edit(user, { ViewChannel: true });
                             if (thisPlayer.location_id == thisLocation.id) {
-                                await channel.permissionOverwrites.edit(thisPlayer.user_id, { SendMessages: true });
+                                await channel.permissionOverwrites.edit(user, { SendMessages: true });
                             } else {
-                                await channel.permissionOverwrites.edit(thisPlayer.user_id, { SendMessages: false });
+                                await channel.permissionOverwrites.edit(user, { SendMessages: false });
                             }
                         }
                         // get all players if active character in location set send message true else false.
@@ -397,9 +397,9 @@ client.on('interactionCreate', async (interaction) => {
                             console.log(thisPlayer);
                             var user = await client.users.cache.get(thisPlayer.user_id);
                             if (thisPlayer.location_id == thisLocation.id) {
-                                await channel.permissionOverwrites.edit(thisPlayer.user_id, { ViewChannel: true, SendMessages: true });
+                                await channel.permissionOverwrites.edit(user, { ViewChannel: true, SendMessages: true });
                             } else {
-                                await channel.permissionOverwrites.edit(thisPlayer.user_id, { ViewChannel: false, SendMessages: false });
+                                await channel.permissionOverwrites.edit(user, { ViewChannel: false, SendMessages: false });
                             }
                         }
                         // get all players, for each player if active character is in location then set read and send true else false.
