@@ -382,6 +382,7 @@ client.on('interactionCreate', async (interaction) => {
                     var channel = client.channels.cache.get(thisLocation.channel_id);
                     if (thisLocation.global_read == true) {
                         for (const thisPlayer of players[0]) {
+                            console.log(thisPlayer);
                             await channel.permissionOverwrites.edit(thisPlayer.user_id, { ViewChannel: true });
                             if (thisPlayer.location_id == thisLocation.id) {
                                 await channel.permissionOverwrites.edit(thisPlayer.user_id, { SendMessages: true });
@@ -392,6 +393,7 @@ client.on('interactionCreate', async (interaction) => {
                         // get all players if active character in location set send message true else false.
                     } else {
                         for (const thisPlayer of players[0]) {
+                            console.log(thisPlayer);
                             if (thisPlayer.location_id == thisLocation.id) {
                                 await channel.permissionOverwrites.edit(thisPlayer.user_id, { ViewChannel: true, SendMessages: true });
                             } else {
