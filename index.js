@@ -399,6 +399,7 @@ client.on('interactionCreate', async (interaction) => {
                             if (thisPlayer.location_id == thisLocation.id) {
                                 await channel.permissionOverwrites.edit(user, { ViewChannel: true, SendMessages: true });
                             } else {
+                                console.log(user);
                                 await channel.permissionOverwrites.edit(user, { ViewChannel: false, SendMessages: false });
                             }
                         }
