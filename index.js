@@ -1072,10 +1072,10 @@ client.on('interactionCreate', async (interaction) => {
                     }
                     const buttonActionRow = new ActionRowBuilder()
                         .addComponents(
-                            new ButtonBuilder().setCustomId(`skills-${current_character[0][0].character_id}`).setLabel('Skills').setStyle(ButtonStyle.Primary),
-                            new ButtonBuilder().setCustomId(`inventory-${current_character[0][0].character_id}`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
+                            new ButtonBuilder().setCustomId(`skills-${characterSelected}`).setLabel('Skills').setStyle(ButtonStyle.Primary),
+                            new ButtonBuilder().setCustomId(`inventory-${characterSelected}`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
                         );
-                    await interaction_second.update({ content: msg, components: [buttonActionRow], ephemeral: true });
+                    await interaction_second.update({ content: msg, components: [buttonActionRow] });
                     await collector.stop();
                 });
             } else {
