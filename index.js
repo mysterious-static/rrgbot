@@ -306,7 +306,8 @@ client.on('ready', async () => {
         skill.toJSON(),
         assignitem.toJSON(),
         item.toJSON(),
-        modsheet.toJSON()
+        modsheet.toJSON(),
+        give.toJSON()
     ]);
     client.user.setActivity("Infinite Magic Glories: Revolutionary Redux");
 });
