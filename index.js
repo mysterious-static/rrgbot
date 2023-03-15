@@ -1298,7 +1298,7 @@ client.on('interactionCreate', async (interaction) => {
                             var thisItemKeyValue = { label: item.name, value: item.id.toString() };
                             itemsKeyValues.push(thisItemKeyValue);
                         }
-                        const itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('GiveItemSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
+                        const itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('GiveItemSelector').setMinValues(1).setMaxValues(1);
                         var itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
 
                         var characters = await connection.promise().query('select * from characters where guild_id = ? and id != ? and location_id = ?', [interaction.guildId, current_character[0][0].id, current_character[0][0].location_id]);
