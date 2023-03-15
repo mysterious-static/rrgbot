@@ -379,10 +379,11 @@ client.on('interactionCreate', async (interaction) => {
             var players = await connection.promise().query('select p.user_id, c.location_id from players p join players_characters pc on p.id = pc.player_id join characters c on c.id = pc.character_id where pc.active = 1');
             if (locations[0].length > 0) {
                 for (const thisLocation of locations[0]) {
-                    var channel = client.channels.cache.get(thisLocation.channel_id);
+                    var channel = await client.channels.cache.get(thisLocation.channel_id);
                     if (thisLocation.global_read == true) {
                         for (const thisPlayer of players[0]) {
                             console.log(thisPlayer);
+                            var user = await client.users.cache.get(thisPlayer.user_id);
                             await channel.permissionOverwrites.edit(thisPlayer.user_id, { ViewChannel: true });
                             if (thisPlayer.location_id == thisLocation.id) {
                                 await channel.permissionOverwrites.edit(thisPlayer.user_id, { SendMessages: true });
@@ -394,6 +395,7 @@ client.on('interactionCreate', async (interaction) => {
                     } else {
                         for (const thisPlayer of players[0]) {
                             console.log(thisPlayer);
+                            var user = await client.users.cache.get(thisPlayer.user_id);
                             if (thisPlayer.location_id == thisLocation.id) {
                                 await channel.permissionOverwrites.edit(thisPlayer.user_id, { ViewChannel: true, SendMessages: true });
                             } else {
