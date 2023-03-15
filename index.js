@@ -373,6 +373,33 @@ client.on('interactionCreate', async (interaction) => {
                 await connection.promise().query('update movement_locations set movement_allowed = ? where guild_id = ? ', [interaction.guildId, enabled]);
                 interaction.reply({ content: 'Should be all set! (changed movement allowed value of ALL locations to ' + enabled + ')', ephemeral: true });
             }
+        } else if (interaction.commandName == 'resetlocationvis') {
+            var locations = await connection.promise().query('select * from movement_locations where guild_id = ?', [interaction.guildId]);
+            var players = await connection.promise().query('select p.user_id, c.location_id from players p join players_characters pc on p.id = pc.player_id join characters c on c.id = pc.character_id where pc.active = 1');
+            if (locations[0].length > 0) {
+                for (const thisLocation of locations[0]) {
+                    if (thisLocation.global_read == true) {
+                        for (const thisPlayer of players[0]) {
+                            await channel.permissionOverwrites.edit(thisPlayer.user_id, { ViewChannel: true });
+                            if (thisPlayer.location_id == thisLocation.id) {
+                                await channel.permissionOverwrites.edit(thisPlayer.user_id, { SendMessages: true });
+                            } else {
+                                await channel.permissionOverwrites.edit(thisPlayer.user_id, { SendMessages: false });
+                            }
+                        }
+                        // get all players if active character in location set send message true else false.
+                    } else {
+                        for (const thisPlayer of players[0]) {
+                            if (thisPlayer.location_id == thisLocation.id) {
+                                await channel.permissionOverwrites.edit(thisPlayer.user_id, { ViewChannel: true, SendMessages: true });
+                            } else {
+                                await channel.permissionOverwrites.edit(thisPlayer.user_id, { ViewChannel: false, SendMessages: false });
+                            }
+                        }
+                        // get all players, for each player if active character is in location then set read and send true else false.
+                    }
+                }
+            }
         } else if (interaction.commandName == 'locationvisibility') {
             var thisChannel = await interaction.options.getChannel('location');
             console.log(thisChannel);
