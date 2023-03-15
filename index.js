@@ -1317,8 +1317,10 @@ client.on('interactionCreate', async (interaction) => {
                             collector.on('collect', async (interaction_second) => {
                                 if (interaction_second.values[0]) {
                                     if (interaction_second.customId == 'GiveItemSelector') {
+                                        console.log('item');
                                         itemSelected = interaction_second.values[0];
                                     } else {
+                                        console.log('character');
                                         characterSelected = interaction_second.values[0];
                                     }
                                     if (itemSelected && characterSelected) {
