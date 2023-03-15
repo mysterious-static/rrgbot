@@ -1289,7 +1289,7 @@ client.on('interactionCreate', async (interaction) => {
                 //dropdown
                 // put dropdown in thingy
             } else if (interaction.commandName == 'give') { //TODO: Futureproof this with the alphabet selector.
-                var current_character = await connection.promise().query('select c.location_id, pc.character_id, c.name from players_characters pc join characters c on c.id = pc.character_id join players p on p.id = pc.player_id where p.user_id = ? and pc.active = 1', [interaction.user.id]);
+                var current_character = await connection.promise().query('select c.location_id, pc.character_id, c.name, c.id from players_characters pc join characters c on c.id = pc.character_id join players p on p.id = pc.player_id where p.user_id = ? and pc.active = 1', [interaction.user.id]);
                 if (current_character[0].length > 0) {
                     var items = await connection.promise().query('select i.* from items i join characters_items ci on ci.item_id = i.id where ci.character_id = ?', [current_character[0][0].id]);
                     if (items[0].length > 0) {
