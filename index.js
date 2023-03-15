@@ -1322,6 +1322,7 @@ client.on('interactionCreate', async (interaction) => {
                                         characterSelected = interaction_second.values[0];
                                     }
                                     if (itemSelected && characterSelected) {
+                                        console.log('hi');
                                         await connection.promise().query('update characters_items set character_id = ? where item_id = ?', [characterSelected, itemSelected]);
                                         var item = items[0].find(i => i.id == itemSelected);
                                         var character_destination = characters[0].find(c => c.id == characterSelected);
