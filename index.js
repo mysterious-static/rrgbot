@@ -1580,9 +1580,13 @@ client.on('interactionCreate', async (interaction) => {
                 }
                 if (old_announcements && new_name) {
                     await old_announcements.send('*' + character_name + ' moves to ' + new_name + '.*');
+                } else if (old_announcements) {
+                    await old_announcements.send('*' + character_name + ' leaves for parts unknown.*');
                 }
                 if (new_announcements && old_name) {
                     await new_announcements.send('*' + character_name + ' arrives from ' + old_name + '.*');
+                } else if (new_announcements) {
+                    await new_announcements.send('*' + character_name + ' arrives!*');
                 }
                 await connection.promise().query('update characters set location_id = ? where id = ?', [dest_id, active_character[0][0].id]);
             } else {
