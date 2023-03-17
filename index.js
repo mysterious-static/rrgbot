@@ -1546,6 +1546,7 @@ client.on('interactionCreate', async (interaction) => {
                 }
             });
         } else if (interaction.customId.startsWith('duelButton')) {
+            console.log(interaction.customId);
             var duel_id = interaction.customId.match(/\d/g).join("");
             var results = await connection.promise().query('select * from duels where id = ?', [duel_id]);
             var duelInfo = results[0][0];
