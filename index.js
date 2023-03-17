@@ -1442,8 +1442,8 @@ client.on('interactionCreate', async (interaction) => {
                             .setTitle(`DUEL: ${player[0][0].name} v. ${target[0][0].name}`)
                             .setDescription(`Round 1`)
                             .addFields(
-                                { name: player[0][0].name, value: `${isHealthStat[0][0].name}: ${computedPlayerHealth}: ` },
-                                { name: target[0][0].name, value: `${isHealthStat[0][0].name}: ${computedTargetHealth}` }
+                                { name: player[0][0].name, value: `${isHealthStat[0][0].name}: ${computedPlayerHealth}`, inline: true },
+                                { name: target[0][0].name, value: `${isHealthStat[0][0].name}: ${computedTargetHealth}`, inline: true }
                             );
                         var duel = await connection.promise().query('insert into duels (player_id, target_id) values (?, ?)', [player[0][0].id, target[0][0].id]);
                         var duelButtonR = new ButtonBuilder().setCustomId('duelButtonR' + duel[0].insertId).setLabel('Rapid').setStyle('Primary'); // TODO ButtonBuilder doesn't exist in Discord.js v14
