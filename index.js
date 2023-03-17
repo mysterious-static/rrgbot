@@ -1589,7 +1589,6 @@ client.on('interactionCreate', async (interaction) => {
                                 var results = await connection.promise().query('select * from duels where id = ?', duel_id);
                                 var duel = results[0][0];
                                 var healthStat = await connection.promise().query('select * from stats join stats_specialstats sps on stats.id = sps.stat_id where stats.guild_id = ? and sps.special_type = "health"', [interaction.guildId]);
-                                var target = interaction.options.getUser('target');
                                 var player = await connection.promise().query('select c.* from characters c where character_id = ?', [duel.player_id]);
                                 var target = await connection.promise().query('select c.* from characters c where character_id = ?', [duel.target_id]);
                                 var isCustomPlayerHealth = await connection.promise().query('select override_value from characters_stats where character_id = ? and stat_id = ?', [player[0][0].id, isHealthStat[0][0].id]);
