@@ -1588,10 +1588,10 @@ client.on('interactionCreate', async (interaction) => {
                                     interaction_second.update({ content: "Innate selected.", components: [] });
                                     // BEGIN DUEL REDRAW BLOCK
                                     var results = await connection.promise().query('select * from duels where id = ?', duel_id);
-                                    var duel = results[0][0];
+                                    var duel = results[0];
                                     var healthStat = await connection.promise().query('select * from stats join stats_specialstats sps on stats.id = sps.stat_id where stats.guild_id = ? and sps.special_type = "health"', [interaction.guildId]);
-                                    var player = await connection.promise().query('select c.* from characters c where id = ?', [duel.player_id]);
-                                    var target = await connection.promise().query('select c.* from characters c where id = ?', [duel.target_id]);
+                                    var player = await connection.promise().query('select c.* from characters c where id = ?', [duel[0].player_id]);
+                                    var target = await connection.promise().query('select c.* from characters c where id = ?', [duel[0].target_id]);
                                     var isCustomPlayerHealth = await connection.promise().query('select override_value from characters_stats where character_id = ? and stat_id = ?', [player[0][0].id, healthStat[0][0].id]);
                                     var isCustomTargetHealth = await connection.promise().query('select override_value from characters_stats where character_id = ? and stat_id = ?', [target[0][0].id, healthStat[0][0].id]);
                                     var results = await connection.promise().query('select * from duels_rounds where duel_id = ? order by round_id desc limit 1', [duel_id]);
@@ -1646,10 +1646,10 @@ client.on('interactionCreate', async (interaction) => {
                                             { name: player[0][0].name, value: `${healthStat[0][0].name}: ${computedPlayerHealth}`, inline: true }, // active skills, innates, etc
                                             { name: target[0][0].name, value: `${healthStat[0][0].name}: ${computedTargetHealth}`, inline: true } // active skills, innates, etc
                                         );
-                                    var duelButtonR = new ButtonBuilder().setCustomId('duelButtonR' + duel[0].insertId).setLabel('Rapid').setStyle('Primary'); // TODO ButtonBuilder doesn't exist in Discord.js v14
-                                    var duelButtonP = new ButtonBuilder().setCustomId('duelButtonP' + duel[0].insertId).setLabel('Precision').setStyle('Primary');
-                                    var duelButtonS = new ButtonBuilder().setCustomId('duelButtonS' + duel[0].insertId).setLabel('Sweeping').setStyle('Primary');
-                                    var duelButtonSkill = new ButtonBuilder().setCustomId('duelButtonSkill' + duel[0].insertId).setLabel('Declare Innates').setStyle('Primary');
+                                    var duelButtonR = new ButtonBuilder().setCustomId('duelButtonR' + duel.insertId).setLabel('Rapid').setStyle('Primary'); // TODO ButtonBuilder doesn't exist in Discord.js v14
+                                    var duelButtonP = new ButtonBuilder().setCustomId('duelButtonP' + duel.insertId).setLabel('Precision').setStyle('Primary');
+                                    var duelButtonS = new ButtonBuilder().setCustomId('duelButtonS' + duel.insertId).setLabel('Sweeping').setStyle('Primary');
+                                    var duelButtonSkill = new ButtonBuilder().setCustomId('duelButtonSkill' + duel.insertId).setLabel('Declare Innates').setStyle('Primary');
                                     const rpsRow = new ActionRowBuilder().addComponents(duelButtonR, duelButtonP, duelButtonS, duelButtonSkill);
                                     await interaction.update({ embeds: [embed], components: [rpsRow] });
                                     // END DUEL REDRAW BLOCK
