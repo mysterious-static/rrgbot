@@ -1442,8 +1442,8 @@ client.on('interactionCreate', async (interaction) => {
                             .setTitle(`DUEL: ${player[0][0].name} v. ${target[0][0].name}`)
                             .setDescription(`Round 1`)
                             .addFields(
-                                { name: player[0][0].name, value: `${isHealthStat[0][0].name}: ${computedPlayerHealth}`, inline: true },
-                                { name: target[0][0].name, value: `${isHealthStat[0][0].name}: ${computedTargetHealth}`, inline: true }
+                                { name: player[0][0].name, value: `${isHealthStat[0][0].name}: ${computedPlayerHealth}`, inline: true }, // active skills, innates, etc
+                                { name: target[0][0].name, value: `${isHealthStat[0][0].name}: ${computedTargetHealth}`, inline: true } // active skills, innates, etc
                             );
                         var duel = await connection.promise().query('insert into duels (player_id, target_id) values (?, ?)', [player[0][0].id, target[0][0].id]);
                         var duelButtonR = new ButtonBuilder().setCustomId('duelButtonR' + duel[0].insertId).setLabel('Rapid').setStyle('Primary'); // TODO ButtonBuilder doesn't exist in Discord.js v14
@@ -1545,6 +1545,56 @@ client.on('interactionCreate', async (interaction) => {
                     }
                 }
             });
+        } else if (interaction.customId.startsWith('duelButton')) {
+            var duel_id = interaction.customId.match(/\d/g).join("");
+            var results = await connection.promise().query('select * from duels where id = ?', [duel_id]);
+            var duelInfo = results[0][0];
+            var results = await connection.promise().query('select * from characters c join players_characters pc on c.id = pc.character_id join players p on p.id = pc.player_id where p.user_id = ? and pc.active = 1', [interaction.user.id]);
+            var activeCharacter = results[0][0];
+            if (activeCharacter.id == duelInfo.player_id || activeCharacter.id == duelInfo.target_id) {
+                if (interaction.customId.startsWith('duelButtonSkill')) {
+                    var rounds = await connection.promise().query('select * from duels_rounds where duel_id = ?', [duel_id]);
+                    if (rounds[0].length > 0) {
+                        //combat skill checking
+                    } else {
+                        // get character skills where skill is innate and not already used in this duel (in duels_innates)
+                        var results = await connection.promise().query('select * from duels_innates where duel_id = ? and character_id = ?', [duel_id, activeCharacter.id]);
+                        var innates = results[0];
+                        var usedInnates = [];
+                        var availableInnates;
+                        if (innates.length > 0) {
+                            for (const innate of innates) {
+                                usedInnates.push(innate.skill_id);
+                            }
+                            availableInnates = await connection.promise().query('select distinct s.* from skills s left outer join skills_archetypes sa on sa.skill_id = s.id join characters_archetypes ca on ca.archetype_id = sa.archetype_id left outer join skills_characters sc on sc.skill_id = s.id join characters c where (sc.character_id = ? or ca.character_id = ?) and s.id not in (?) and s.type = "innate" and s.guildId = ?', [activeCharacter.id, activeCharacter.id, usedInnates, interaction.guildId]);
+                        } else {
+                            availableInnates = await connection.promise().query('select distinct s.* from skills s left outer join skills_archetypes sa on sa.skill_id = s.id join characters_archetypes ca on ca.archetype_id = sa.archetype_id left outer join skills_characters sc on sc.skill_id = s.id join characters c where (sc.character_id = ? or ca.character_id = ?) and s.type = "innate" and s.guildId = ?', [activeCharacter.id, activeCharacter.id, interaction.guildId]);
+                        }
+                        if (availableInnates[0].length > 0) {
+                            var innatesKeyValues = [];
+                            for (const innate of availableInnates[0]) {
+                                innatesKeyValues.push({ label: innate.name, value: innate.id.toString() });
+                            }
+                            const innateSelectComponent = new StringSelectMenuBuilder().setOptions(innatesKeyValues).setCustomId('DuelInnateSelector').setMinValues(1).setMaxValues(1);
+                            var innateSelectRow = new ActionRowBuilder().addComponents(innateSelectComponent);
+
+                            var message = await interaction.reply({ content: 'Select an innate:', components: [innateSelectRow], ephemeral: true });
+                            var collector = message.createMessageComponentCollector();
+                            var innateSelected;
+                            collector.on('collect', async (interaction_second) => {
+                                innateSelected = interaction_second.values[0];
+                                await connection.promise().query('insert into duels_innates (duel_id, character_id, skill_id) values (?, ?, ?)', [duel_id, activeCharacter.id, innateSelected]);
+                                interaction_second.update({ content: "Innate selected.", components: [] });
+                                await collector.stop();
+                            });
+                        } else {
+                            await interaction.reply({ content: 'You have no other available innates, sorry.', ephemeral: true });
+                        }
+                    }
+                }
+            } else {
+                await interaction.reply({ content: "You're not a participant in this duel!", ephemeral: true });
+            }
         } else if (interaction.customId.startsWith('sheet-')) {
             var character_id = interaction.customId.split('-')[1];
             var character_information = await connection.promise().query('select * from characters where id = ?', [character_id]);
