@@ -1605,6 +1605,7 @@ client.on('interactionCreate', async (interaction) => {
                                 } else {
                                     var displayRound = 1;
                                 }
+                                //HEALTH CALCS
                                 if (isCustomPlayerHealth[0].length > 0) {
                                     var computedPlayerHealth = isCustomPlayerHealth[0][0].override_value;
                                 } else {
@@ -1614,6 +1615,29 @@ client.on('interactionCreate', async (interaction) => {
                                     var computedTargetHealth = isCustomTargetHealth[0][0].override_value;
                                 } else {
                                     var computedTargetHealth = healthStat[0][0].default_value;
+                                }
+                                var innates = await connection.promise().query('select di.*, sce.strength, sce.effect from duels_innates di join skills_combateffects sce on di.skill_id = sce.skill_id where duel_id = ?', duel_id);
+                                if (innates[0].length > 0) {
+                                    for (const innate of innates[0]) {
+                                        if (innate.effect = 'add_health') {
+                                            if (innate.player_id = duel.player_id) {
+                                                computedPlayerHealth += innate.strength;
+                                            } else {
+                                                computedTargetHealth += innate.strength;
+                                            }
+                                        }
+                                    }
+                                }
+                                var rounds = await connection.promise().query('select * from duels_rounds where duel_id = ?', [duel_id]);
+                                if (rounds[0].length > 0) {
+                                    var prevRdSpecial = false;
+                                    for (const round of rounds[0]) {
+                                        // Per-round health calcluation based on 
+                                        //  - Round winner
+                                        //  - Special attack used previous round
+                                        //  - Prereqs/effects of previous round attack (eventually: prereqs/effects of all attacks with duration (or "until the end of combat"))
+                                        //  - Innate effects
+                                    }
                                 }
                                 var embed = new EmbedBuilder()
                                     .setTitle(`DUEL: ${player[0][0].name} v. ${target[0][0].name}`)
