@@ -1566,9 +1566,9 @@ client.on('interactionCreate', async (interaction) => {
                             for (const innate of innates) {
                                 usedInnates.push(innate.skill_id);
                             }
-                            availableInnates = await connection.promise().query('select distinct s.* from skills s left outer join skills_archetypes sa on sa.skill_id = s.id join characters_archetypes ca on ca.archetype_id = sa.archetype_id left outer join skills_characters sc on sc.skill_id = s.id join characters c where (sc.character_id = ? or ca.character_id = ?) and s.id not in (?) and s.type = "innate" and s.guildId = ?', [activeCharacter.id, activeCharacter.id, usedInnates, interaction.guildId]);
+                            availableInnates = await connection.promise().query('select distinct s.* from skills s left outer join skills_archetypes sa on sa.skill_id = s.id join characters_archetypes ca on ca.archetype_id = sa.archetype_id left outer join skills_characters sc on sc.skill_id = s.id join characters c where (sc.character_id = ? or ca.character_id = ?) and s.id not in (?) and s.type = "innate" and s.guild_id = ?', [activeCharacter.id, activeCharacter.id, usedInnates, interaction.guildId]);
                         } else {
-                            availableInnates = await connection.promise().query('select distinct s.* from skills s left outer join skills_archetypes sa on sa.skill_id = s.id join characters_archetypes ca on ca.archetype_id = sa.archetype_id left outer join skills_characters sc on sc.skill_id = s.id join characters c where (sc.character_id = ? or ca.character_id = ?) and s.type = "innate" and s.guildId = ?', [activeCharacter.id, activeCharacter.id, interaction.guildId]);
+                            availableInnates = await connection.promise().query('select distinct s.* from skills s left outer join skills_archetypes sa on sa.skill_id = s.id join characters_archetypes ca on ca.archetype_id = sa.archetype_id left outer join skills_characters sc on sc.skill_id = s.id join characters c where (sc.character_id = ? or ca.character_id = ?) and s.type = "innate" and s.guild_id = ?', [activeCharacter.id, activeCharacter.id, interaction.guildId]);
                         }
                         if (availableInnates[0].length > 0) {
                             var innatesKeyValues = [];
