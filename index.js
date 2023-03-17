@@ -1647,10 +1647,10 @@ client.on('interactionCreate', async (interaction) => {
                                             { name: player[0][0].name, value: `${healthStat[0][0].name}: ${computedPlayerHealth}`, inline: true }, // active skills, innates, etc
                                             { name: target[0][0].name, value: `${healthStat[0][0].name}: ${computedTargetHealth}`, inline: true } // active skills, innates, etc
                                         );
-                                    var duelButtonR = new ButtonBuilder().setCustomId('duelButtonR' + duel.insertId).setLabel('Rapid').setStyle('Primary'); // TODO ButtonBuilder doesn't exist in Discord.js v14
-                                    var duelButtonP = new ButtonBuilder().setCustomId('duelButtonP' + duel.insertId).setLabel('Precision').setStyle('Primary');
-                                    var duelButtonS = new ButtonBuilder().setCustomId('duelButtonS' + duel.insertId).setLabel('Sweeping').setStyle('Primary');
-                                    var duelButtonSkill = new ButtonBuilder().setCustomId('duelButtonSkill' + duel.insertId).setLabel('Declare Innates').setStyle('Primary');
+                                    var duelButtonR = new ButtonBuilder().setCustomId('duelButtonR' + duel_id).setLabel('Rapid').setStyle('Primary'); // TODO ButtonBuilder doesn't exist in Discord.js v14
+                                    var duelButtonP = new ButtonBuilder().setCustomId('duelButtonP' + duel_id).setLabel('Precision').setStyle('Primary');
+                                    var duelButtonS = new ButtonBuilder().setCustomId('duelButtonS' + duel_id).setLabel('Sweeping').setStyle('Primary');
+                                    var duelButtonSkill = new ButtonBuilder().setCustomId('duelButtonSkill' + duel_id).setLabel('Declare Innates').setStyle('Primary');
                                     const rpsRow = new ActionRowBuilder().addComponents(duelButtonR, duelButtonP, duelButtonS, duelButtonSkill);
                                     await interaction.message.edit({ embeds: [embed], components: [rpsRow] });
                                     // END DUEL REDRAW BLOCK
