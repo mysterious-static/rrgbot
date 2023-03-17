@@ -1134,7 +1134,7 @@ client.on('interactionCreate', async (interaction) => {
                     } else if (interaction_second.customId == 'SpecialStatStatSelector') {
                         statSelected = interaction_second.values[0];
                     }
-                    interaction_second.deferUpdate();
+
                     if (statSelected && typeSelected) {
                         var exists = await connection.promise().query('select * from stats_specialstats join stats on stats_specialstats.stat_id = stats.id where special_type = ? and stats.guild_id = ?', [typeSelected, interaction.guildId]);
                         if (exists[0].length > 0) {
@@ -1144,6 +1144,8 @@ client.on('interactionCreate', async (interaction) => {
                         }
                         await interaction_second.update({ content: 'Updated special stat.', components: [] });
                         await collector.stop();
+                    } else {
+                        await interaction_second.deferUpdate();
                     }
                 });
             } else {
