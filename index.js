@@ -1720,6 +1720,7 @@ client.on('interactionCreate', async (interaction) => {
                         } else {
                             await connection.promise().query('update duels_rounds set winner_id = -1 where id = ?', [currentRound[0][0].id]);
                         }
+                        rounds = await connection.promise().query('select * from duels_rounds where duel_id = ? order by round_id asc', [duel_id]);
 
                         // BEGIN DUEL REDRAW BLOCK
                         var healthStat = await connection.promise().query('select * from stats join stats_specialstats sps on stats.id = sps.stat_id where stats.guild_id = ? and sps.special_type = "health"', [interaction.guildId]);
