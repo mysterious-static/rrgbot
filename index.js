@@ -1549,7 +1549,7 @@ client.on('interactionCreate', async (interaction) => {
             var duel_id = interaction.customId.match(/\d/g).join("");
             var results = await connection.promise().query('select * from duels where id = ?', [duel_id]);
             var duelInfo = results[0][0];
-            var results = await connection.promise().query('select * from characters c join players_characters pc on c.id = pc.character_id join players p on p.id = pc.player_id where p.user_id = ? and pc.active = 1 and p.guild_id = ?', [interaction.user.id, interaction.guildId]);
+            var results = await connection.promise().query('select c.* from characters c join players_characters pc on c.id = pc.character_id join players p on p.id = pc.player_id where p.user_id = ? and pc.active = 1 and p.guild_id = ?', [interaction.user.id, interaction.guildId]);
             var activeCharacter = results[0][0];
             if (activeCharacter.id == duelInfo.player_id || activeCharacter.id == duelInfo.target_id) {
                 if (interaction.customId.startsWith('duelButtonSkill')) {
