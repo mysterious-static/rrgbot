@@ -1422,7 +1422,7 @@ client.on('interactionCreate', async (interaction) => {
             } else if (interaction.commandName == 'duel') {
                 var isHealthStat = await connection.promise().query('select * from stats join stats_specialstats sps on stats.id = sps.stat_id where stats.guild_id = ? and sps.special_type = "health"', [interaction.guildId]);
                 if (isHealthStat[0].length > 0) {
-                    var target = interaction.getUser('target');
+                    var target = interaction.options.getUser('target');
                     var player = await connection.promise().query('select c.* from characters join players_characters pc on characters.id = pc.character_id join players p on pc.player_id = p.id where pc.active = 1 and p.user_id = ?', [interaction.user.id]);
                     var target = await connection.promise().query('select c.* from characters join players_characters pc on characters.id = pc.character_id join players p on pc.player_id = p.id where pc.active = 1 and p.user_id = ?', [target.id]);
                     if (player[0][0] && target[0][0]) {
