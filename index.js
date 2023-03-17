@@ -557,7 +557,7 @@ client.on('interactionCreate', async (interaction) => {
             }
         } else if (interaction.commandName == 'assigncharacter') {
             var user = interaction.options.getUser('user');
-            var player = await connection.promise().query('select * from players where user_id = ?', [user.id]);
+            var player = await connection.promise().query('select * from players where user_id = ? and guild_id = ?', [user.id, interaction.guildId]);
             if (player[0].length > 0) {
                 console.log(interaction.guildId);
                 var owned_characters = await connection.promise().query('select distinct c.id from characters c join players_characters pc on c.id = pc.character_id join players p on pc.player_id = p.id where c.guild_id = ? and p.user_id = ?', [interaction.guildId, user.id]);
