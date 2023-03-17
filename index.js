@@ -1556,7 +1556,8 @@ client.on('interactionCreate', async (interaction) => {
                 if (interaction.customId.startsWith('duelButtonSkill')) {
                     var rounds = await connection.promise().query('select * from duels_rounds where duel_id = ?', [duel_id]);
                     if (rounds[0].length > 1 || (rounds[0].length == 1 && rounds[0][0].player_throw && rounds[0][0].target_throw)) {
-                        //combat skill checking
+                        // If previous round's winner == activeCharacter
+                        // - Give a SpAtk dropdown.
                     } else {
                         // get character skills where skill is innate and not already used in this duel (in duels_innates)
                         var results = await connection.promise().query('select * from duels_innates where duel_id = ? and character_id = ?', [duel_id, activeCharacter.id]);
@@ -1628,6 +1629,7 @@ client.on('interactionCreate', async (interaction) => {
                                         }
                                     }
                                     if (rounds[0].length > 0) {
+                                        var prevRdWinner = false;
                                         var prevRdSpecial = false;
                                         for (const round of rounds[0]) {
                                             // Per-round health calcluation based on 
@@ -1641,8 +1643,8 @@ client.on('interactionCreate', async (interaction) => {
                                                 computedTargetHealth -= 1;
                                             }
                                             //  - Special attack used previous round
-                                            if (prevRdSpecial) {
-                                                if (prevRdSpecial == duelInfo.player_id) {
+                                            if (prevRdWinner != -1 && prevRdSpecial) {
+                                                if (prevRdWinner == duelInfo.player_id) {
                                                     computedTargetHealth -= 1;
                                                 } else {
                                                     computedPlayerHealth -= 1;
@@ -1654,6 +1656,12 @@ client.on('interactionCreate', async (interaction) => {
                                             //  - Innate effects, if there are combats
 
                                             // ...and stores whether there was a special this round in prevRdSpecial, or false.
+                                            if (round.skill_used) {
+                                                prevRdSpecial = round.skill_used;
+                                            } else {
+                                                prevRdSpecial = false;
+                                            }
+                                            prevRdWinner = round.winner_id;
                                         }
                                     }
                                     var embed = new EmbedBuilder()
@@ -1666,7 +1674,11 @@ client.on('interactionCreate', async (interaction) => {
                                     var duelButtonR = new ButtonBuilder().setCustomId('duelButtonR' + duel_id).setLabel('Rapid').setStyle('Primary'); // TODO ButtonBuilder doesn't exist in Discord.js v14
                                     var duelButtonP = new ButtonBuilder().setCustomId('duelButtonP' + duel_id).setLabel('Precision').setStyle('Primary');
                                     var duelButtonS = new ButtonBuilder().setCustomId('duelButtonS' + duel_id).setLabel('Sweeping').setStyle('Primary');
-                                    var duelButtonSkill = new ButtonBuilder().setCustomId('duelButtonSkill' + duel_id).setLabel('Declare Innates').setStyle('Primary');
+                                    if (displayRound > 1) {
+                                        var duelButtonSkill = new ButtonBuilder().setCustomId('duelButtonSkill' + duel_id).setLabel('Use Special').setStyle('Primary');
+                                    } else {
+                                        var duelButtonSkill = new ButtonBuilder().setCustomId('duelButtonSkill' + duel_id).setLabel('Declare Innates').setStyle('Primary');
+                                    }
                                     const rpsRow = new ActionRowBuilder().addComponents(duelButtonR, duelButtonP, duelButtonS, duelButtonSkill);
                                     await interaction.message.edit({ embeds: [embed], components: [rpsRow] });
                                     // END DUEL REDRAW BLOCK
@@ -1750,6 +1762,7 @@ client.on('interactionCreate', async (interaction) => {
                             }
                         }
                         if (rounds[0].length > 0) {
+                            var prevRdWinner = false;
                             var prevRdSpecial = false;
                             for (const round of rounds[0]) {
                                 // Per-round health calcluation based on 
@@ -1763,8 +1776,8 @@ client.on('interactionCreate', async (interaction) => {
                                     computedTargetHealth -= 1;
                                 }
                                 //  - Special attack used previous round
-                                if (prevRdSpecial) {
-                                    if (prevRdSpecial == duelInfo.player_id) {
+                                if (prevRdWinner != -1 && prevRdSpecial) {
+                                    if (prevRdWinner == duelInfo.player_id) {
                                         computedTargetHealth -= 1;
                                     } else {
                                         computedPlayerHealth -= 1;
@@ -1776,6 +1789,12 @@ client.on('interactionCreate', async (interaction) => {
                                 //  - Innate effects, if there are combats
 
                                 // ...and stores whether there was a special this round in prevRdSpecial, or false.
+                                if (round.skill_used) {
+                                    prevRdSpecial = round.skill_used;
+                                } else {
+                                    prevRdSpecial = false;
+                                }
+                                prevRdWinner = round.winner_id;
                             }
                         }
                         var embed = new EmbedBuilder()
@@ -1788,7 +1807,11 @@ client.on('interactionCreate', async (interaction) => {
                         var duelButtonR = new ButtonBuilder().setCustomId('duelButtonR' + duel_id).setLabel('Rapid').setStyle('Primary'); // TODO ButtonBuilder doesn't exist in Discord.js v14
                         var duelButtonP = new ButtonBuilder().setCustomId('duelButtonP' + duel_id).setLabel('Precision').setStyle('Primary');
                         var duelButtonS = new ButtonBuilder().setCustomId('duelButtonS' + duel_id).setLabel('Sweeping').setStyle('Primary');
-                        var duelButtonSkill = new ButtonBuilder().setCustomId('duelButtonSkill' + duel_id).setLabel('Declare Innates').setStyle('Primary');
+                        if (displayRound > 1) {
+                            var duelButtonSkill = new ButtonBuilder().setCustomId('duelButtonSkill' + duel_id).setLabel('Use Special').setStyle('Primary');
+                        } else {
+                            var duelButtonSkill = new ButtonBuilder().setCustomId('duelButtonSkill' + duel_id).setLabel('Declare Innates').setStyle('Primary');
+                        }
                         const rpsRow = new ActionRowBuilder().addComponents(duelButtonR, duelButtonP, duelButtonS, duelButtonSkill);
                         await interaction.message.edit({ embeds: [embed], components: [rpsRow] });
                         // END DUEL REDRAW BLOCK
