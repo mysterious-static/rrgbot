@@ -1650,7 +1650,7 @@ client.on('interactionCreate', async (interaction) => {
                                 var duelButtonS = new ButtonBuilder().setCustomId('duelButtonS' + duel[0].insertId).setLabel('Sweeping').setStyle('Primary');
                                 var duelButtonSkill = new ButtonBuilder().setCustomId('duelButtonSkill' + duel[0].insertId).setLabel('Declare Innates').setStyle('Primary');
                                 const rpsRow = new ActionRowBuilder().addComponents(duelButtonR, duelButtonP, duelButtonS, duelButtonSkill);
-                                await interaction.message.edit({ embeds: [embed], components: [rpsRow] });
+                                await interaction.update({ embeds: [embed], components: [rpsRow] });
                                 // END DUEL REDRAW BLOCK
                                 await collector.stop();
                             });
