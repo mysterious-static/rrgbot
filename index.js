@@ -236,6 +236,11 @@ var modsheet = new SlashCommandBuilder().setName('modsheet')
     .setDescription('Show a character sheet.')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
+var assignspecialstat = new SlashCommandBuilder().setName('assignspecialstat')
+    .setDescription('Assign a stat to a special function.')
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+// movement, health, etc.
+
 var addquest = new SlashCommandBuilder().setName('addquest')
     .setDescription('NYI: Add a quest for display on character sheet.');
 
@@ -265,6 +270,12 @@ var item = new SlashCommandBuilder().setName('item')
 var give = new SlashCommandBuilder().setName('give')
     .setDescription('Gives an item to another character in your location.');
 
+var duel = new SlashCommandBuilder().setName('duel')
+    .setDescription('Duels another player.')
+    .addUserOption(option =>
+        option.setName('target')
+            .setDescription('The player you wish to challenge.')
+            .setRequired(true));
 
 
 //PRE-PROCESSING FUNCTIONS
@@ -307,7 +318,9 @@ client.on('ready', async () => {
         assignitem.toJSON(),
         item.toJSON(),
         modsheet.toJSON(),
-        give.toJSON()
+        give.toJSON(),
+        duel.toJSON(),
+        assignspecialstat.toJSON()
     ]);
     client.user.setActivity("Infinite Magic Glories: Revolutionary Redux");
 });
@@ -407,7 +420,7 @@ client.on('interactionCreate', async (interaction) => {
                         // get all players, for each player if active character is in location then set read and send true else false.
                     }
                 }
-                interaction.reply({content: 'Reset done.', ephemeral: true});
+                interaction.reply({ content: 'Reset done.', ephemeral: true });
             }
         } else if (interaction.commandName == 'locationvisibility') {
             var thisChannel = await interaction.options.getChannel('location');
@@ -429,7 +442,7 @@ client.on('interactionCreate', async (interaction) => {
             } else {
                 var inserted_player = await connection.promise().query('insert into players (user_id, guild_id, name) values (?, ?, ?)', [user.id, interaction.guildId, playerName]);
                 if (interaction.options.getBoolean('create_character')) {
-                    var inserted_character = await connection.promise().query('insert into characters (name, guild_id) values (?, ?)', [playerName, interaction.guildId]); // This table also has "location", because all characters are in a location.
+                    var inserted_character = await connection.promise().query('insert into characters (name, guild_id, description) values (?, ?, ?)', [playerName, interaction.guildId, '']); // This table also has "location", because all characters are in a location.
                     await connection.promise().query('insert into players_characters (player_id, character_id, active) values (?, ?, ?)', [inserted_player[0].insertId, inserted_character[0].insertId, 1]); // Futureproofing for "multiple players can own a character".
                     interaction.reply({ content: 'Added the player and character!', ephemeral: true });
                 } else {
@@ -1096,6 +1109,46 @@ client.on('interactionCreate', async (interaction) => {
             }
             //dropdown for characters
             //then generate character sheet ephemeral using the sheet code EXACTLY
+        } else if (interaction.commandName == 'assignspecialstat') {
+            var stats = await connection.promise().query('select * from stats left outer join stats_specialstats sps on stats.id = sps.stat_id where guild_id = ? and sps.special_type is null', [interaction.guildId]);
+            if (stats[0].length > 0) {
+                var typesKeyValues = [
+                    { label: 'Health', value: 'health' },
+                    { label: 'Movement Speed', value: 'movement' }
+                ];
+                var statsKeyValues = [];
+                for (const stat of stats[0]) {
+                    statsKeyValues.push({ label: stat.name, value: stat.id.toString() });
+                }
+                const typeSelectComponent = new StringSelectMenuBuilder().setOptions(typesKeyValues).setCustomId('SpecialStatTypeSelector').setMinValues(1).setMaxValues(1);
+                var typeSelectRow = new ActionRowBuilder().addComponents(typeSelectComponent);
+                const statSelectComponent = new StringSelectMenuBuilder().setOptions(statsKeyValues).setCustomId('SpecialStatStatSelector').setMinValues(1).setMaxValues(1);
+                var statSelectRow = new ActionRowBuilder().addComponents(statSelectComponent);
+                var message = await interaction.reply({ content: 'Please select the following options:', components: [typeSelectRow, statSelectRow], ephemeral: true });
+                var collector = message.createMessageComponentCollector();
+                var statSelected;
+                var typeSelected;
+                collector.on('collect', async (interaction_second) => {
+                    if (interaction_second.customId == 'SpecialStatTypeSelector') {
+                        typeSelected = interaction_second.values[0];
+                    } else if (interaction_second.customId == 'SpecialStatStatSelector') {
+                        statSelected = interaction_second.values[0];
+                    }
+                    interaction_second.deferUpdate();
+                    if (statSelected && typeSelected) {
+                        var exists = await connection.promise().query('select * from stats_specialstats join stats on stats_specialstats.stat_id = stats.id where special_type = ? and stats.guild_id = ?', [typeSelected, interaction.guildId]);
+                        if (exists[0].length > 0) {
+                            await connection.promise().query('update stats_specialstats set stat_id = ? where stat_id = ?', [statSelected, exists[0][0].stat_id]);
+                        } else {
+                            await connection.promise().query('insert into stats_specialstats (stat_id, special_type) values (?, ?)', [statSelected, typeSelected]);
+                        }
+                        await interaction_second.update({ content: 'Updated special stat.', components: [] });
+                        await collector.stop();
+                    }
+                });
+            } else {
+                await interaction.reply({ content: 'There aren\'t any eligible stats for this! Please double-check and ensure that you have a stat that\'s not assigned to a special function.', ephemeral: true });
+            }
         }
 
 
@@ -1363,6 +1416,46 @@ client.on('interactionCreate', async (interaction) => {
                     }
                 } else {
                     interaction.reply({ content: 'You don\'t seem to have an active character. If you weren\'t expecting to see this message, check in with the mods.', ephemeral: true });
+                }
+            } else if (interaction.commandName == 'duel') {
+                var isHealthStat = await connection.promise().query('select * from stats join stats_specialstats sps on stats.id = sps.stat_id where stats.guild_id = ? and sps.special_type = "health"', [interaction.guildId]);
+                if (isHealthStat[0].length > 0) {
+                    var target = interaction.getUser('target');
+                    var player = await connection.promise().query('select c.* from characters join players_characters pc on characters.id = pc.character_id join players p on pc.player_id = p.id where pc.active = 1 and p.user_id = ?', [interaction.user.id]);
+                    var target = await connection.promise().query('select c.* from characters join players_characters pc on characters.id = pc.character_id join players p on pc.player_id = p.id where pc.active = 1 and p.user_id = ?', [target.id]);
+                    if (player[0][0] && target[0][0]) {
+                        var isCustomPlayerHealth = await connection.promise().query('select override_value from characters_stats where character_id = ? and stat_id = ?', [player[0][0].id, isHealthStat[0][0].id]);
+                        var isCustomTargetHealth = await connection.promise().query('select override_value from characters_stats where character_id = ? and stat_id = ?', [target[0][0].id, isHealthStat[0][0].id]);
+                        if (isCustomPlayerHealth[0].length > 0) {
+                            var computedPlayerHealth = isCustomPlayerHealth[0][0].override_value;
+                        } else {
+                            var computedPlayerHealth = isHealthStat[0][0].default_value;
+                        }
+                        if (isCustomTargetHealth[0].length > 0) {
+                            var computedTargetHealth = isCustomTargetHealth[0][0].override_value;
+                        } else {
+                            var computedTargetHealth = isHealthStat[0][0].default_value;
+                        }
+                        var embed = new EmbedBuilder()
+                            .setTitle(`DUEL: ${player[0][0].name} v. ${target[0][0].name}`)
+                            .setDescription(`Round 1`)
+                            .addFields(
+                                { name: player[0][0].name, value: `${isHealthStat[0][0].name}: ${computedPlayerHealth}: ` },
+                                { name: target[0][0].name, value: `${isHealthStat[0][0].name}: ${computedTargetHealth}` }
+                            );
+                        var duel = await connection.promise().query('insert into duels (player_id, target_id) values (?, ?)', [player[0][0].id, target[0][0].id]);
+                        var duelButtonR = new ButtonBuilder().setCustomId('duelButtonR' + duel[0].insertId).setLabel('Rapid').setStyle('Primary'); // TODO ButtonBuilder doesn't exist in Discord.js v14
+                        var duelButtonP = new ButtonBuilder().setCustomId('duelButtonP' + duel[0].insertId).setLabel('Precision').setStyle('Primary');
+                        var duelButtonS = new ButtonBuilder().setCustomId('duelButtonS' + duel[0].insertId).setLabel('Sweeping').setStyle('Primary');
+                        var duelButtonSkill = new ButtonBuilder().setCustomId('duelButtonSkill' + duel[0].insertId).setLabel('Declare Innates').setStyle('Primary');
+                        const rpsRow = new ActionRowBuilder().addComponents(duelButtonR, duelButtonP, duelButtonS, duelButtonSkill);
+                        var msg = interaction.reply({ embeds: [embed], components: [rpsRow] });
+                        // buttons rps + skill; skill offers dropdown using interaction.followUp
+                    } else {
+                        await interaction.reply({ content: 'Either you aren\'t an active character or your target isn\'t. Please double check!', ephemeral: true });
+                    }
+                } else {
+                    await interaction.reply({ content: 'No health stat is set. Check with the Orchestrators, please!', ephemeral: true });
                 }
             }
         }
