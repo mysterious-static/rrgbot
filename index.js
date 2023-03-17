@@ -1650,7 +1650,7 @@ client.on('interactionCreate', async (interaction) => {
                                                 //  - Prereqs/effects of previous round attack (eventually: prereqs/effects of all attacks with duration (or "until the end of combat"))
 
                                             }
-                                            
+
                                             //  - Innate effects, if there are combats
 
                                             // ...and stores whether there was a special this round in prevRdSpecial, or false.
@@ -1709,7 +1709,89 @@ client.on('interactionCreate', async (interaction) => {
                             await connection.promise().query('update duels_rounds set winner_id = -1 where id = ?', [currentRound[0][0].id]);
                         }
 
-                        // REDRAW EMBED.
+                        // BEGIN DUEL REDRAW BLOCK
+                        var healthStat = await connection.promise().query('select * from stats join stats_specialstats sps on stats.id = sps.stat_id where stats.guild_id = ? and sps.special_type = "health"', [interaction.guildId]);
+                        var player = await connection.promise().query('select c.* from characters c where id = ?', [duelInfo.player_id]);
+                        var target = await connection.promise().query('select c.* from characters c where id = ?', [duelInfo.target_id]);
+                        var isCustomPlayerHealth = await connection.promise().query('select override_value from characters_stats where character_id = ? and stat_id = ?', [player[0][0].id, healthStat[0][0].id]);
+                        var isCustomTargetHealth = await connection.promise().query('select override_value from characters_stats where character_id = ? and stat_id = ?', [target[0][0].id, healthStat[0][0].id]);
+                        var results = await connection.promise().query('select * from duels_rounds where duel_id = ? order by round_id desc limit 1', [duel_id]);
+                        if (results[0].length > 0) {
+                            var currentRound = results[0][0];
+                            if (currentRound.winner_id) {
+                                var displayRound = currentRound.round_id + 1;
+                            } else {
+                                var displayRound = currentRound.round_id;
+                            }
+                        } else {
+                            var displayRound = 1;
+                        }
+                        //HEALTH CALCS
+                        if (isCustomPlayerHealth[0].length > 0) {
+                            var computedPlayerHealth = isCustomPlayerHealth[0][0].override_value;
+                        } else {
+                            var computedPlayerHealth = healthStat[0][0].default_value;
+                        }
+                        if (isCustomTargetHealth[0].length > 0) {
+                            var computedTargetHealth = isCustomTargetHealth[0][0].override_value;
+                        } else {
+                            var computedTargetHealth = healthStat[0][0].default_value;
+                        }
+                        var innates = await connection.promise().query('select di.*, sce.strength, sce.effect from duels_innates di join skills_combateffects sce on di.skill_id = sce.skill_id where duel_id = ?', duel_id);
+                        if (innates[0].length > 0) {
+                            for (const innate of innates[0]) {
+                                if (innate.effect = 'add_health') {
+                                    if (innate.player_id == duelInfo.player_id) {
+                                        computedPlayerHealth += innate.strength;
+                                    } else {
+                                        computedTargetHealth += innate.strength;
+                                    }
+                                }
+                            }
+                        }
+                        if (rounds[0].length > 0) {
+                            var prevRdSpecial = false;
+                            for (const round of rounds[0]) {
+                                // Per-round health calcluation based on 
+                                //  - Round winner
+                                if (round.winner_id == duelInfo.player_id) {
+                                    computedTargetHealth -= 2;
+                                } else if (round.winner_id == duelInfo.target_id) {
+                                    computedPlayerHealth -= 2;
+                                } else if (round.winner_id == -1) {
+                                    computedPlayerHealth -= 1;
+                                    computedTargetHealth -= 1;
+                                }
+                                //  - Special attack used previous round
+                                if (prevRdSpecial) {
+                                    if (prevRdSpecial == duelInfo.player_id) {
+                                        computedTargetHealth -= 1;
+                                    } else {
+                                        computedPlayerHealth -= 1;
+                                    }
+                                    //  - Prereqs/effects of previous round attack (eventually: prereqs/effects of all attacks with duration (or "until the end of combat"))
+
+                                }
+
+                                //  - Innate effects, if there are combats
+
+                                // ...and stores whether there was a special this round in prevRdSpecial, or false.
+                            }
+                        }
+                        var embed = new EmbedBuilder()
+                            .setTitle(`DUEL: ${player[0][0].name} v. ${target[0][0].name}`)
+                            .setDescription(`Round ${displayRound}`)
+                            .addFields(
+                                { name: player[0][0].name, value: `${healthStat[0][0].name}: ${computedPlayerHealth}`, inline: true }, // active skills, innates, etc
+                                { name: target[0][0].name, value: `${healthStat[0][0].name}: ${computedTargetHealth}`, inline: true } // active skills, innates, etc
+                            );
+                        var duelButtonR = new ButtonBuilder().setCustomId('duelButtonR' + duel_id).setLabel('Rapid').setStyle('Primary'); // TODO ButtonBuilder doesn't exist in Discord.js v14
+                        var duelButtonP = new ButtonBuilder().setCustomId('duelButtonP' + duel_id).setLabel('Precision').setStyle('Primary');
+                        var duelButtonS = new ButtonBuilder().setCustomId('duelButtonS' + duel_id).setLabel('Sweeping').setStyle('Primary');
+                        var duelButtonSkill = new ButtonBuilder().setCustomId('duelButtonSkill' + duel_id).setLabel('Declare Innates').setStyle('Primary');
+                        const rpsRow = new ActionRowBuilder().addComponents(duelButtonR, duelButtonP, duelButtonS, duelButtonSkill);
+                        await interaction.message.edit({ embeds: [embed], components: [rpsRow] });
+                        // END DUEL REDRAW BLOCK
 
                     } else {
                         interaction.deferUpdate();
