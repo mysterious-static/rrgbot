@@ -1620,7 +1620,7 @@ client.on('interactionCreate', async (interaction) => {
                                     if (innates[0].length > 0) {
                                         for (const innate of innates[0]) {
                                             if (innate.effect = 'add_health') {
-                                                if (innate.player_id = duel.player_id) {
+                                                if (innate.player_id == duel.player_id) {
                                                     computedPlayerHealth += innate.strength;
                                                 } else {
                                                     computedTargetHealth += innate.strength;
