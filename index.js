@@ -1745,6 +1745,8 @@ client.on('interactionCreate', async (interaction) => {
                                         await interaction.message.edit({ embeds: [embed], components: [] });
                                     }
                                     // END DUEL REDRAW BLOCK
+                                    var skill = await connection.promise().query('select * from skills where id = ?', [innateSelected]);
+                                    await interaction.channel.send(`${activeCharacter.name} uses ${skill[0][0].name}: ${skill[0][0].description}`);
                                     await collector.stop();
                                 } else {
                                     await interaction.deferUpdate();
