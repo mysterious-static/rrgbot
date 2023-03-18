@@ -1668,6 +1668,9 @@ client.on('interactionCreate', async (interaction) => {
                                     if (innates[0].length > 0) {
                                         for (const innate of innates[0]) {
                                             if (innate.effect = 'add_health') {
+
+                                                console.log(innate.player_id);
+                                                console.log(duelInfo.player_id);
                                                 if (innate.player_id == duelInfo.player_id) {
                                                     computedPlayerHealth += innate.strength;
                                                 } else {
@@ -1697,6 +1700,7 @@ client.on('interactionCreate', async (interaction) => {
                                                 } else {
                                                     computedPlayerHealth -= 1;
                                                 }
+                                                // BUG: Calc is one round behind for special attacks. Is this because I'm assuming the special is in the PREVIOUS round here when I am puttin git in the SAME round above? yes
                                                 //  - Prereqs/effects of previous round attack (eventually: prereqs/effects of all attacks with duration (or "until the end of combat"))
 
                                             }
