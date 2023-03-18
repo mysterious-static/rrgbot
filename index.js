@@ -1563,7 +1563,7 @@ client.on('interactionCreate', async (interaction) => {
                             lastRound = rounds[0].at(-2);
                             roundCurrentlyActive = true;
                         }
-                        if (lastRound.winner_id == activeCharacter.id && (roundCurrentlyActive && !rounds[0].at(-1).skill_id) || (!roundCurrentlyActive && !lastRound.skill_id)) {
+                        if (lastRound.winner_id == activeCharacter.id && (roundCurrentlyActive && !rounds[0].at(-2).skill_id) || (!roundCurrentlyActive && !rounds[0].at(-3).skill_id)) {
                             var usedSkills = [];
                             var previousRoundWinner = false;
                             for (const round of rounds[0]) {
@@ -1592,9 +1592,9 @@ client.on('interactionCreate', async (interaction) => {
                                     var skill = await connection.promise().query('select * from skills where id = ?', [skill_id]);
                                     var lastRound = await connection.promise().query('select * from duels_rounds where duel_id = ? order by round_id desc limit 1', [duel_id]);
                                     if (lastRound[0][0].winner_id) {
-                                        await connection.promise().query('insert into duels_rounds (duel_id, round_id, skill_used) values (?, ?, ?)', [duel_id, lastRound[0][0].round_id + 1, skill_id]);
+                                        await connection.promise().query('update duels_rounds set skill_used = ? where id = ?', [skill_id, lastRound[0][0].id]);
                                     } else {
-                                        await connection.promise().query('update duels_rounds set skill_used = ? where id = ?', [lastRound[0][0].id]);
+                                        await connection.promise().query('update duels_rounds set skill_used = ? where id = ?', [skill_id, lastRound[0][0].id - 1]);
                                     }
                                     await interaction_second.channel.send({ content: `${activeCharacter.name} uses ${skill[0][0].name}: ${skill[0][0].description}` });
                                     await collector.stop();
@@ -1668,10 +1668,7 @@ client.on('interactionCreate', async (interaction) => {
                                     if (innates[0].length > 0) {
                                         for (const innate of innates[0]) {
                                             if (innate.effect = 'add_health') {
-
-                                                console.log(innate.player_id);
-                                                console.log(duelInfo.player_id);
-                                                if (innate.player_id == duelInfo.player_id) {
+                                                if (innate.character_id == duelInfo.player_id) {
                                                     computedPlayerHealth += innate.strength;
                                                 } else {
                                                     computedTargetHealth += innate.strength;
@@ -1828,10 +1825,7 @@ client.on('interactionCreate', async (interaction) => {
                         if (innates[0].length > 0) {
                             for (const innate of innates[0]) {
                                 if (innate.effect = 'add_health') {
-                                    
-                                    console.log(innate.player_id);
-                                    console.log(duelInfo.player_id);
-                                    if (innate.player_id == duelInfo.player_id) {
+                                    if (innate.character_id == duelInfo.player_id) {
                                         computedPlayerHealth += innate.strength;
                                     } else {
                                         computedTargetHealth += innate.strength;
