@@ -1567,7 +1567,7 @@ client.on('interactionCreate', async (interaction) => {
                             var usedSkills = [];
                             var previousRoundWinner = false;
                             for (const round of rounds[0]) {
-                                if (round.skill_used && previousRoundWinner == activeCharacter.id) {
+                                if (round.skill_used && round.winner_id == activeCharacter.id) {
                                     usedSkills.push(round.skill_used);
                                 }
                                 previousRoundWinner = round.winner_id;
