@@ -1683,6 +1683,7 @@ client.on('interactionCreate', async (interaction) => {
                                     if (computedPlayerHealth > 0 && computedTargetHealth > 0) {
                                         await interaction.message.edit({ embeds: [embed], components: [rpsRow] });
                                     } else {
+                                        await connection.promise().query('update duels set complete = 1 where id = ?', [duel_id]);
                                         await interaction.message.edit({ embeds: [embed], components: [] });
                                     }
                                     // END DUEL REDRAW BLOCK
@@ -1832,6 +1833,7 @@ client.on('interactionCreate', async (interaction) => {
                         if (computedPlayerHealth > 0 && computedTargetHealth > 0) {
                             await interaction.message.edit({ embeds: [embed], components: [rpsRow] });
                         } else {
+                            await connection.promise().query('update duels set complete = 1 where id = ?', [duel_id]);
                             await interaction.message.edit({ embeds: [embed], components: [] });
                         }
                         // END DUEL REDRAW BLOCK
