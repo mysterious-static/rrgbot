@@ -1605,6 +1605,8 @@ client.on('interactionCreate', async (interaction) => {
                             } else {
                                 await interaction.reply({ content: "You don't seem to have any skills to use.", ephemeral: true });
                             }
+                        } else {
+                            await interaction.reply({ content: 'You didn\'t win the last round, so you can\'t use a combat skill.', ephemeral: true });
                         }
 
                     } else {
