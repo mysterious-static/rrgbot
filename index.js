@@ -1707,13 +1707,13 @@ client.on('interactionCreate', async (interaction) => {
                     } else {
                         if (activeCharacter.id == duelInfo.player_id) {
                             if (currentRound[0].length > 0) {
-                            await connection.promise().query('insert into duels_rounds (duel_id, round_id, player_throw) values (?, ?, ?)', [duelInfo.id, currentRound[0][0].round_id + 1, rpsThrow]);
+                                await connection.promise().query('insert into duels_rounds (duel_id, round_id, player_throw) values (?, ?, ?)', [duelInfo.id, currentRound[0][0].round_id + 1, rpsThrow]);
                             } else {
                                 await connection.promise().query('insert into duels_rounds (duel_id, round_id, player_throw) values (?, ?, ?)', [duelInfo.id, 1, rpsThrow]);
                             }
                         } else {
                             if (currentRound[0].length > 0) {
-                            await connection.promise().query('insert into duels_rounds (duel_id, round_id, target_throw) values (?, ?, ?)', [duelInfo.id, currentRound[0][0].round_id + 1, rpsThrow]);
+                                await connection.promise().query('insert into duels_rounds (duel_id, round_id, target_throw) values (?, ?, ?)', [duelInfo.id, currentRound[0][0].round_id + 1, rpsThrow]);
                             } else {
                                 await connection.promise().query('insert into duels_rounds (duel_id, round_id, target_throw) values (?, ?, ?)', [duelInfo.id, 1, rpsThrow]);
                             }
@@ -1824,7 +1824,7 @@ client.on('interactionCreate', async (interaction) => {
                         const rpsRow = new ActionRowBuilder().addComponents(duelButtonR, duelButtonP, duelButtonS, duelButtonSkill);
                         await interaction.message.edit({ embeds: [embed], components: [rpsRow] });
                         // END DUEL REDRAW BLOCK
-
+                        interaction.deferUpdate();
                     } else {
                         interaction.deferUpdate();
                     }
