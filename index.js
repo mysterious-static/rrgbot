@@ -1554,12 +1554,58 @@ client.on('interactionCreate', async (interaction) => {
             var activeCharacter = results[0][0];
             if (activeCharacter.id == duelInfo.player_id || activeCharacter.id == duelInfo.target_id) {
                 if (interaction.customId.startsWith('duelButtonSkill')) {
-                    var rounds = await connection.promise().query('select * from duels_rounds where duel_id = ?', [duel_id]);
+                    var rounds = await connection.promise().query('select * from duels_rounds where duel_id = ? order by round_id asc', [duel_id]);
                     if (rounds[0].length > 1 || (rounds[0].length == 1 && rounds[0][0].player_throw && rounds[0][0].target_throw)) {
                         // If previous round's winner == activeCharacter AND skill is not yet set for this round
-                        // - Give a SpAtk dropdown.
-                        // - create a collector
-                        // - send message saying skill is used
+                        var lastRound = rounds[0].at(-1);
+                        var roundCurrentlyActive = false;
+                        if (!(lastRound.player_throw && lastRound.target_throw) && rounds[0].at(-2)) {
+                            lastRound = rounds[0].at(-2);
+                            roundCurrentlyActive = true;
+                        }
+                        if (lastRound.winner_id == activeCharacter.id && (roundCurrentlyActive && !rounds[0].at(-1).skill_id) || (!roundCurrentlyActive && !lastRound.skill_id)) {
+                            var usedSkills = [];
+                            var previousRoundWinner = false;
+                            for (const round of rounds[0]) {
+                                if (round.skill_used && previousRoundWinner == activeCharacter.id) {
+                                    usedSkills.push(round.skill_used);
+                                }
+                                previousRoundWinner = round.winner_id;
+                            }
+                            if (usedSkills.length > 0) {
+                                var availableSkills = await connection.promise().query('select distinct s.* from skills s left outer join skills_archetypes sa on sa.skill_id = s.id left outer join characters_archetypes ca on ca.archetype_id = sa.archetype_id left outer join skills_characters sc on sc.skill_id = s.id where (sc.character_id = ? or ca.character_id = ?) and s.id not in (?) and s.type = "combat" and s.guild_id = ?', [activeCharacter.id, activeCharacter.id, usedInnates, interaction.guildId]);
+                            } else {
+                                var availableSkills = await connection.promise().query('select distinct s.* from skills s left outer join skills_archetypes sa on sa.skill_id = s.id left outer join characters_archetypes ca on ca.archetype_id = sa.archetype_id left outer join skills_characters sc on sc.skill_id = s.id where (sc.character_id = ? or ca.character_id = ?) and s.type = "combat" and s.guild_id = ?', [activeCharacter.id, activeCharacter.id, interaction.guildId]);
+                            }
+                            if (availableSkills[0].length > 0) {
+                                var skillsKeyValues = [];
+                                for (const skill of availableSkills[0]) {
+                                    var thisSkillKeyValue = { label: skill.name, value: skill.id.toString() };
+                                    skillsKeyValues.push(thisSkillKeyValue);
+                                }
+                                const skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
+                                var skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
+                                var message = await interaction.reply({ content: 'Select a skill to share with the channel:', components: [skillSelectRow], ephemeral: true });
+                                var collector = message.createMessageComponentCollector();
+                                collector.on('collect', async (interaction_second) => {
+                                    var skill_id = interaction_second.values[0];
+                                    var skill = await connection.promise().query('select * from skills where id = ?', [skill_id]);
+                                    var lastRound = await connection.promise().query('select * from duels_rounds where duel_id = ? order by round_id desc limit 1', [duel_id]);
+                                    if (lastRound[0][0].winner_id) {
+                                        await connection.promise().query('insert into duels_rounds (duel_id, round_id, skill_used) values (?, ?, ?)', [duel_id, lastRound[0][0].round_id + 1, skill_id]);
+                                    } else {
+                                        await connection.promise().query('update duels_rounds set skill_used = ? where id = ?', [lastRound[0][0].id]);
+                                    }
+                                    await interaction_second.channel.send({ content: `${activeCharacter.name} uses ${skill[0][0].name}: ${skill[0][0].description}` });
+                                    await collector.stop();
+                                });
+                                // - Give a SpAtk dropdown.
+                                // - create a collector
+                            } else {
+                                await interaction.reply({ content: "You don't seem to have any skills to use.", ephemeral: true });
+                            }
+                        }
+
                     } else {
                         // get character skills where skill is innate and not already used in this duel (in duels_innates)
                         var results = await connection.promise().query('select * from duels_innates where duel_id = ? and character_id = ?', [duel_id, activeCharacter.id]);
