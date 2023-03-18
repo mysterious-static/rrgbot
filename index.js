@@ -1680,7 +1680,11 @@ client.on('interactionCreate', async (interaction) => {
                                         var duelButtonSkill = new ButtonBuilder().setCustomId('duelButtonSkill' + duel_id).setLabel('Declare Innates').setStyle('Primary');
                                     }
                                     const rpsRow = new ActionRowBuilder().addComponents(duelButtonR, duelButtonP, duelButtonS, duelButtonSkill);
-                                    await interaction.message.edit({ embeds: [embed], components: [rpsRow] });
+                                    if (computedPlayerHealth > 0 && computedTargetHealth > 0) {
+                                        await interaction.message.edit({ embeds: [embed], components: [rpsRow] });
+                                    } else {
+                                        await interaction.message.edit({ embeds: [embed], components: [] });
+                                    }
                                     // END DUEL REDRAW BLOCK
                                     await collector.stop();
                                 } else {
@@ -1825,7 +1829,11 @@ client.on('interactionCreate', async (interaction) => {
                             var duelButtonSkill = new ButtonBuilder().setCustomId('duelButtonSkill' + duel_id).setLabel('Declare Innates').setStyle('Primary');
                         }
                         const rpsRow = new ActionRowBuilder().addComponents(duelButtonR, duelButtonP, duelButtonS, duelButtonSkill);
-                        await interaction.message.edit({ embeds: [embed], components: [rpsRow] });
+                        if (computedPlayerHealth > 0 && computedTargetHealth > 0) {
+                            await interaction.message.edit({ embeds: [embed], components: [rpsRow] });
+                        } else {
+                            await interaction.message.edit({ embeds: [embed], components: [] });
+                        }
                         // END DUEL REDRAW BLOCK
                         interaction.deferUpdate();
                     } else {
