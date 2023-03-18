@@ -1828,6 +1828,9 @@ client.on('interactionCreate', async (interaction) => {
                         if (innates[0].length > 0) {
                             for (const innate of innates[0]) {
                                 if (innate.effect = 'add_health') {
+                                    
+                                    console.log(innate.player_id);
+                                    console.log(duelInfo.player_id);
                                     if (innate.player_id == duelInfo.player_id) {
                                         computedPlayerHealth += innate.strength;
                                     } else {
