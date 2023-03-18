@@ -1847,6 +1847,13 @@ client.on('interactionCreate', async (interaction) => {
                         } else {
                             await connection.promise().query('update duels set complete = 1 where id = ?', [duel_id]);
                             await interaction.message.edit({ embeds: [embed], components: [] });
+                            if (computedTargetHealth == 0 && computedPlayerHealth > 0) {
+                                await interaction.channel.send(`${player[0][0].name} has defeated ${target[0][0].name}!`);
+                            } else if (computedPlayerHealth == 0 && computedTargetHealth > 0) {
+                                await interaction.channel.send(`${target[0][0].name} has defeated ${player[0][0].name}!`);
+                            } else {
+                                await interaction.channel.send(`${target[0][0].name} and ${player[0][0].name} have *tied!*`);
+                            }
                         }
                         // END DUEL REDRAW BLOCK
                         interaction.deferUpdate();
