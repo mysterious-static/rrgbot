@@ -1563,7 +1563,7 @@ client.on('interactionCreate', async (interaction) => {
                             lastRound = rounds[0].at(-2);
                             roundCurrentlyActive = true;
                         }
-                        if (lastRound.winner_id == activeCharacter.id && (roundCurrentlyActive && !rounds[0].at(-1).skill_id) || (!roundCurrentlyActive && !rounds[0].at(-2).skill_id)) {
+                        if (lastRound.winner_id == activeCharacter.id && (roundCurrentlyActive && !rounds[0].at(-2).skill_id) || (!roundCurrentlyActive && !rounds[0].at(-1).skill_id)) {
                             var usedSkills = [];
                             var previousRoundWinner = false;
                             for (const round of rounds[0]) {
