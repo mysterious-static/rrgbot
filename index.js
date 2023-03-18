@@ -1556,8 +1556,10 @@ client.on('interactionCreate', async (interaction) => {
                 if (interaction.customId.startsWith('duelButtonSkill')) {
                     var rounds = await connection.promise().query('select * from duels_rounds where duel_id = ?', [duel_id]);
                     if (rounds[0].length > 1 || (rounds[0].length == 1 && rounds[0][0].player_throw && rounds[0][0].target_throw)) {
-                        // If previous round's winner == activeCharacter
+                        // If previous round's winner == activeCharacter AND skill is not yet set for this round
                         // - Give a SpAtk dropdown.
+                        // - create a collector
+                        // - send message saying skill is used
                     } else {
                         // get character skills where skill is innate and not already used in this duel (in duels_innates)
                         var results = await connection.promise().query('select * from duels_innates where duel_id = ? and character_id = ?', [duel_id, activeCharacter.id]);
