@@ -1725,13 +1725,13 @@ client.on('interactionCreate', async (interaction) => {
                         var target = await connection.promise().query('select c.* from characters c where id = ?', [duelInfo.target_id]);
                         if ((currentRound[0][0].player_throw == 'R' && currentRound[0][0].target_throw == 'S') || (currentRound[0][0].player_throw == 'P' && currentRound[0][0].target_throw == 'R') || (currentRound[0][0].player_throw == 'S' && currentRound[0][0].target_throw == 'P')) {
                             await connection.promise().query('update duels_rounds set winner_id = ? where id = ?', [duelInfo.player_id, currentRound[0][0].id]);
-                            interaction.channel.send(`${player.name} defeats ${target.name} (${currentRound[0][0].player_throw} > ${currentRound[0][0].target_throw})`);
+                            interaction.channel.send(`${player[0][0].name} defeats ${target[0][0].name} (${currentRound[0][0].player_throw} > ${currentRound[0][0].target_throw})`);
                         } else if ((currentRound[0][0].target_throw == 'R' && currentRound[0][0].player_throw == 'S') || (currentRound[0][0].target_throw == 'P' && currentRound[0][0].player_throw == 'R') || (currentRound[0][0].target_throw == 'S' && currentRound[0][0].player_throw == 'P')) {
                             await connection.promise().query('update duels_rounds set winner_id = ? where id = ?', [duelInfo.target_id, currentRound[0][0].id]);
-                            interaction.channel.send(`${target.name} defeats ${player.name} (${currentRound[0][0].target_throw} > ${currentRound[0][0].player_throw})`);
+                            interaction.channel.send(`${target[0][0].name} defeats ${player[0][0].name} (${currentRound[0][0].target_throw} > ${currentRound[0][0].player_throw})`);
                         } else {
                             await connection.promise().query('update duels_rounds set winner_id = -1 where id = ?', [currentRound[0][0].id]);
-                            interaction.channel.send(`${target.name} and ${player.name} tie! (${currentRound[0][0].target_throw} = ${currentRound[0][0].player_throw})`)
+                            interaction.channel.send(`${target[0][0].name} and ${player[0][0].name} tie! (${currentRound[0][0].target_throw} = ${currentRound[0][0].player_throw})`)
                         }
                         rounds = await connection.promise().query('select * from duels_rounds where duel_id = ? order by round_id asc', [duel_id]);
 
