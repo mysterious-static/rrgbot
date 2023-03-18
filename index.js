@@ -1664,6 +1664,12 @@ client.on('interactionCreate', async (interaction) => {
                                             prevRdWinner = round.winner_id;
                                         }
                                     }
+                                    if (computedTargetHealth < 0) {
+                                        computedTargetHealth = 0;
+                                    }
+                                    if (computedPlayerHealth < 0) {
+                                        computedPlayerHealth = 0;
+                                    }
                                     var embed = new EmbedBuilder()
                                         .setTitle(`DUEL: ${player[0][0].name} v. ${target[0][0].name}`)
                                         .setDescription(`Round ${displayRound}`)
@@ -1813,6 +1819,12 @@ client.on('interactionCreate', async (interaction) => {
                                 }
                                 prevRdWinner = round.winner_id;
                             }
+                        }
+                        if (computedTargetHealth < 0) {
+                            computedTargetHealth = 0;
+                        }
+                        if (computedPlayerHealth < 0) {
+                            computedPlayerHealth = 0;
                         }
                         var embed = new EmbedBuilder()
                             .setTitle(`DUEL: ${player[0][0].name} v. ${target[0][0].name}`)
