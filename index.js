@@ -364,10 +364,11 @@ client.on('interactionCreate', async (interaction) => {
                 if (interaction.options.getChannel('announcements_channel')) {
                     var announcements_channel = interaction.options.getChannel('announcements_channel');
                     await connection.promise().query('update movement_locations set announcements_channel = ? where channel_id = ?', [announcements_channel.id, thisChannel.id]);
+                    interaction.reply({ content: 'Should be all set! (changed announcements channel value of ' + thisChannel.toString() + ' to ' + announcements_channel.toString() + ')', ephemeral: true });
                 } else {
                     await connection.promise().query('update movement_locations set announcements_channel = NULL where channel_id = ?', [thisChannel.id]);
+                    interaction.reply({ content: 'Should be all set! (removed announcements for ' + thisChannel.toString() + ')', ephemeral: true });
                 }
-                interaction.reply({ content: 'Should be all set! (changed announcements channel value of ' + thisChannel.toString() + ' to ' + announcements_channel.toString() + ')', ephemeral: true });
             } else {
                 interaction.reply({ content: 'Looks like this channel isn\'t a valid location. Try adding it via `/addlocation`. :revolving_hearts:', ephemeral: true });
             }
