@@ -1721,19 +1721,22 @@ client.on('interactionCreate', async (interaction) => {
                     }
                     currentRound = await connection.promise().query('select * from duels_rounds where duel_id = ? order by round_id desc limit 1', [duel_id]);
                     if (currentRound[0][0].player_throw && currentRound[0][0].target_throw) {
+                        var player = await connection.promise().query('select c.* from characters c where id = ?', [duelInfo.player_id]);
+                        var target = await connection.promise().query('select c.* from characters c where id = ?', [duelInfo.target_id]);
                         if ((currentRound[0][0].player_throw == 'R' && currentRound[0][0].target_throw == 'S') || (currentRound[0][0].player_throw == 'P' && currentRound[0][0].target_throw == 'R') || (currentRound[0][0].player_throw == 'S' && currentRound[0][0].target_throw == 'P')) {
                             await connection.promise().query('update duels_rounds set winner_id = ? where id = ?', [duelInfo.player_id, currentRound[0][0].id]);
+                            interaction.channel.send(`${player.name} defeats ${target.name} (${currentRound[0][0].player_throw} > ${currentRound[0][0].target_throw})`);
                         } else if ((currentRound[0][0].target_throw == 'R' && currentRound[0][0].player_throw == 'S') || (currentRound[0][0].target_throw == 'P' && currentRound[0][0].player_throw == 'R') || (currentRound[0][0].target_throw == 'S' && currentRound[0][0].player_throw == 'P')) {
                             await connection.promise().query('update duels_rounds set winner_id = ? where id = ?', [duelInfo.target_id, currentRound[0][0].id]);
+                            interaction.channel.send(`${target.name} defeats ${player.name} (${currentRound[0][0].target_throw} > ${currentRound[0][0].player_throw})`);
                         } else {
                             await connection.promise().query('update duels_rounds set winner_id = -1 where id = ?', [currentRound[0][0].id]);
+                            interaction.channel.send(`${target.name} and ${player.name} tie! (${currentRound[0][0].target_throw} = ${currentRound[0][0].player_throw})`)
                         }
                         rounds = await connection.promise().query('select * from duels_rounds where duel_id = ? order by round_id asc', [duel_id]);
 
                         // BEGIN DUEL REDRAW BLOCK
                         var healthStat = await connection.promise().query('select * from stats join stats_specialstats sps on stats.id = sps.stat_id where stats.guild_id = ? and sps.special_type = "health"', [interaction.guildId]);
-                        var player = await connection.promise().query('select c.* from characters c where id = ?', [duelInfo.player_id]);
-                        var target = await connection.promise().query('select c.* from characters c where id = ?', [duelInfo.target_id]);
                         var isCustomPlayerHealth = await connection.promise().query('select override_value from characters_stats where character_id = ? and stat_id = ?', [player[0][0].id, healthStat[0][0].id]);
                         var isCustomTargetHealth = await connection.promise().query('select override_value from characters_stats where character_id = ? and stat_id = ?', [target[0][0].id, healthStat[0][0].id]);
                         var results = await connection.promise().query('select * from duels_rounds where duel_id = ? order by round_id desc limit 1', [duel_id]);
