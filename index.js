@@ -1597,6 +1597,7 @@ client.on('interactionCreate', async (interaction) => {
                                         await connection.promise().query('update duels_rounds set skill_used = ? where id = ?', [skill_id, lastRound[0][0].id - 1]);
                                     }
                                     await interaction_second.channel.send({ content: `${activeCharacter.name} uses ${skill[0][0].name}: ${skill[0][0].description}` });
+                                    await interaction_second.update({ content: 'Thanks!', components: [] });
                                     await collector.stop();
                                 });
                                 // - Give a SpAtk dropdown.
