@@ -68,6 +68,18 @@ var locationvisibility = new SlashCommandBuilder().setName('locationvisibility')
             .setRequired(true)
     ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
+    var locationglobalwrite = new SlashCommandBuilder().setName('locationglobalwrite')
+    .setDescription('Enable or disable the ability for players to send messages when not in a location ("global write" mode)')
+    .addChannelOption(option =>
+        option.setName('location')
+            .setDescription('Channel to designate as "writable when not present / global write". New locations default this to OFF.')
+            .setRequired(true)
+    ).addBooleanOption(option =>
+        option.setName('enabled')
+            .setDescription('Simple true/false toggle')
+            .setRequired(true)
+    ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
 var resetlocationvis = new SlashCommandBuilder().setName('resetlocationvis')
     .setDescription('Re-run location visibility permissions for all locations for all players.')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
@@ -296,6 +308,7 @@ client.on('ready', async () => {
         locationannouncements.toJSON(),
         addlocation.toJSON(),
         locationvisibility.toJSON(),
+        locationglobalwrite.toJSON(),
         resetlocationvis.toJSON(),
         playercreate.toJSON(),
         characterlocation.toJSON(),
@@ -400,7 +413,7 @@ client.on('interactionCreate', async (interaction) => {
                             console.log(thisPlayer);
                             var user = await client.users.fetch(thisPlayer.user_id);
                             await channel.permissionOverwrites.edit(user, { ViewChannel: true });
-                            if (thisPlayer.location_id == thisLocation.id) {
+                            if (thisPlayer.location_id == thisLocation.id || thisLocation.global_write == true) {
                                 await channel.permissionOverwrites.edit(user, { SendMessages: true });
                             } else {
                                 await channel.permissionOverwrites.edit(user, { SendMessages: false });
@@ -431,6 +444,17 @@ client.on('interactionCreate', async (interaction) => {
                 var enabled = interaction.options.getBoolean('enabled');
                 await connection.promise().query('update movement_locations set global_read = ? where channel_id = ?', [enabled, thisChannel.id]);
                 interaction.reply({ content: 'Should be all set! (changed global read value of ' + thisChannel.toString() + ' to ' + enabled + ')', ephemeral: true });
+            } else {
+                interaction.reply({ content: 'Looks like this channel isn\'t a valid location. Try adding it via `/addlocation`. :revolving_hearts:', ephemeral: true });
+            }
+        } else if (interaction.commandName == 'locationglobalwrite') {
+            var thisChannel = await interaction.options.getChannel('location');
+            console.log(thisChannel);
+            var channelexists = await connection.promise().query('select * from movement_locations where guild_id = ? and channel_id = ?', [interaction.guildId, thisChannel.id]);
+            if (channelexists[0].length > 0) {
+                var enabled = interaction.options.getBoolean('enabled');
+                await connection.promise().query('update movement_locations set global_write = ? where channel_id = ?', [enabled, thisChannel.id]);
+                interaction.reply({ content: 'Should be all set! (changed global write value of ' + thisChannel.toString() + ' to ' + enabled + ')', ephemeral: true });
             } else {
                 interaction.reply({ content: 'Looks like this channel isn\'t a valid location. Try adding it via `/addlocation`. :revolving_hearts:', ephemeral: true });
             }
