@@ -69,7 +69,7 @@ var locationvisibility = new SlashCommandBuilder().setName('locationvisibility')
     ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 var locationglobalwrite = new SlashCommandBuilder().setName('locationglobalwrite')
-    .setDescription('Enable or disable the ability for players to send messages when not in a location ("global write" mode)')
+    .setDescription('Enable or disable the ability to send messages when not in a location ("global write" mode)')
     .addChannelOption(option =>
         option.setName('location')
             .setDescription('Channel to designate as "writable when not present / global write". New locations default this to OFF.')
