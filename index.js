@@ -72,7 +72,7 @@ var locationglobalwrite = new SlashCommandBuilder().setName('locationglobalwrite
     .setDescription('Enable or disable the ability to send messages when not in a location ("global write" mode)')
     .addChannelOption(option =>
         option.setName('location')
-            .setDescription('Channel to designate as "writable when not present / global write". New locations default this to OFF.')
+            .setDescription('Channel to designate as "writable when not present / global write". New locations default to OFF.')
             .setRequired(true)
     ).addBooleanOption(option =>
         option.setName('enabled')
