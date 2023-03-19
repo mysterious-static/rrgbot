@@ -68,7 +68,7 @@ var locationvisibility = new SlashCommandBuilder().setName('locationvisibility')
             .setRequired(true)
     ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
-    var locationglobalwrite = new SlashCommandBuilder().setName('locationglobalwrite')
+var locationglobalwrite = new SlashCommandBuilder().setName('locationglobalwrite')
     .setDescription('Enable or disable the ability for players to send messages when not in a location ("global write" mode)')
     .addChannelOption(option =>
         option.setName('location')
@@ -238,6 +238,14 @@ var assignskill = new SlashCommandBuilder().setName('assignskill')
             .setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
+var unassignskill = new SlashCommandBuilder().setName('unassignskill')
+    .setDescription('Unassign a skill from a character or archetype')
+    .addBooleanOption(option =>
+        option.setName('to_character')
+            .setDescription('Set to true if you\'re unassigning from a character, false if from an archetype.')
+            .setRequired(true))
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
 var assignitem = new SlashCommandBuilder().setName('assignitem')
     .setDescription('Assign a skill to a character or archetype')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
@@ -327,6 +335,7 @@ client.on('ready', async () => {
         setstat.toJSON(),
         setarchetypestat.toJSON(),
         assignskill.toJSON(),
+        unassignskill.toJSON(),
         skill.toJSON(),
         assignitem.toJSON(),
         item.toJSON(),
@@ -982,6 +991,80 @@ client.on('interactionCreate', async (interaction) => {
             } else {
                 interaction.reply({ content: 'Please create at least one skill first. <3', ephemeral: true });
             }
+        } else if (interaction.commandName == 'unassignskill') {
+            var to_character = interaction.options.getBoolean('to_character');
+            if (to_character) {
+                var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
+                if (characters[0].length > 0) {
+                    var charactersKeyValues = [];
+                    for (const character of characters[0]) {
+                        var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
+                        charactersKeyValues.push(thisCharacterKeyValue);
+                    }
+                    const unassignSkillComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('SkillUnassignmentCharacterSelector').setMinValues(1).setMaxValues(1);
+                    var unassignSkillRow = new ActionRowBuilder().addComponents(unassignSkillComponent);
+                }
+            } else {
+                var archetypes = await connection.promise().query('select * from archetypes where guild_id = ?', [interaction.guildId]);
+                if (archetypes[0].length > 0) {
+                    var archetypesKeyValues = [];
+                    for (const archetype of archetypes[0]) {
+                        var thisArchetypeKeyValue = { label: archetype.name, value: archetype.id.toString() };
+                        archetypesKeyValues.push(thisArchetypeKeyValue);
+                    }
+                    const unassignSkillComponent = new StringSelectMenuBuilder().setOptions(archetypesKeyValues).setCustomId('SkillUnassignmentArchetypeSelector').setMinValues(1).setMaxValues(1);
+                    var unassignSkillRow = new ActionRowBuilder().addComponents(unassignSkillComponent);
+                }
+            }
+            if ((to_character && characters[0].length > 0) || archetypes.length > 0) {
+                var message = await interaction.reply({ content: 'Select the archetype/character to remove skill from.', components: [unassignSkillRow], ephemeral: true });
+                var collector = message.createMessageComponentCollector();
+                var characterSelected;
+                var archetypeSelected;
+                var skillSelected;
+                collector.on('collect', async (interaction_second) => {
+                    if (interaction_second.customId == 'SkillUnassignmentCharacterSelector') {
+                        characterSelected = interaction_second.values[0];
+                    } else if (interaction_second.customId == 'SkillUnassignmentArchetypeSelector') {
+                        archetypeSelected = interaction_second.values[0];
+                    } else {
+                        skillSelected = interaction_second.values[0];
+                    }
+                    if (!skillSelected && (characterSelected || archetypeSelected)) {
+                        if (characterSelected) {
+                            var skills = await connection.promise().query('select s.* from skills s join skills_characters sc on s.id = sc.skill_id where sc.character_id = ?', [characterSelected]);
+                        } else {
+                            var skills = await connection.promise().query('select s.* from skills s join skills_archetypes sa on s.id = sa.skill_id where sa.archetype_id = ?', [archetypeSelected]);
+                        }
+                        if (skills[0].length > 0) {
+                            var skillsKeyValues = [];
+                            for (const skill of skills[0]) {
+                                var thisSkillKeyValue = { label: skill.name, value: skill.id.toString() };
+                                skillsKeyValues.push(thisSkillKeyValue);
+                            }
+                            const unassignSkillComponent2 = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillUnassignmentSkillSelector').setMinValues(1).setMaxValues(1);
+                            var unassignSkillRow2 = new ActionRowBuilder().addComponents(unassignSkillComponent2);
+                            await interaction_second.update({ content: 'Now select a skill to unassign:', components: [unassignSkillRow2] });
+                        } else {
+                            await interaction_second.update({ content: 'Couldn\'t find any skills for this cahracter/archetype.' });
+                            collector.stop();
+                        }
+
+                    }
+                    if (skillSelected && (characterSelected || archetypeSelected)) {
+                        if (characterSelected) {
+                            await connection.promise().query('delete from skills_characters where character_id = ? and skill_id = ?', [characterSelected, skillSelected]);
+                        } else {
+                            await connection.promise().query('delete from skills_archetypes where archetype_id = ? and skill_id = ?', [archetypeSelected, skillSelected]);
+                        }
+                        await interaction_second.update({ content: "Skill removed from character or archetype.", components: [] });
+                    }
+                    collector.stop();
+                });
+            } else {
+                await interaction.reply({ content: "Couldn't find any characters (or archetypes) to unassign skills from.", ephemeral: true });
+            }
+
         } else if (interaction.commandName == 'assignitem') {
             var items = await connection.promise().query('select i.*, c.name as character_name from items i left outer join characters_items ci on i.id = ci.item_id left outer join characters c on ci.character_id = c.id where i.guild_id = ?', [interaction.guildId]);
             var itemsAlphabetical;
