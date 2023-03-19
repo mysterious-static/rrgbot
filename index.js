@@ -544,7 +544,9 @@ client.on('interactionCreate', async (interaction) => {
                                         if (location.global_read == 0) {
                                             await channel.permissionOverwrites.edit(user, { ViewChannel: false });
                                         }
-                                        await channel.permissionOverwrites.edit(user, { SendMessages: false });
+                                        if (location.global_write == 0) {
+                                            await channel.permissionOverwrites.edit(user, { SendMessages: false });
+                                        }
                                         if (location.announcements_channel) {
                                             old_announcements = await client.channels.cache.get(location.announcements_channel);
                                             old_name = location.friendly_name;
@@ -2149,7 +2151,9 @@ client.on('interactionCreate', async (interaction) => {
                         if (location.global_read == 0) {
                             await channel.permissionOverwrites.edit(interaction.member, { ViewChannel: false });
                         }
-                        await channel.permissionOverwrites.edit(interaction.member, { SendMessages: false });
+                        if (location.global_write == 0) {
+                            await channel.permissionOverwrites.edit(interaction.member, { SendMessages: false });
+                        }
                         if (location.announcements_channel) {
                             old_announcements = await client.channels.cache.get(location.announcements_channel);
                             old_name = location.friendly_name;
