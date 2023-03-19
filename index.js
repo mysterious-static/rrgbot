@@ -1058,8 +1058,8 @@ client.on('interactionCreate', async (interaction) => {
                             await connection.promise().query('delete from skills_archetypes where archetype_id = ? and skill_id = ?', [archetypeSelected, skillSelected]);
                         }
                         await interaction_second.update({ content: "Skill removed from character or archetype.", components: [] });
+                        collector.stop();
                     }
-                    collector.stop();
                 });
             } else {
                 await interaction.reply({ content: "Couldn't find any characters (or archetypes) to unassign skills from.", ephemeral: true });
