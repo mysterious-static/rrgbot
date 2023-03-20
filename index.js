@@ -258,7 +258,7 @@ var assignitem = new SlashCommandBuilder().setName('assignitem')
     .setDescription('Assign a skill to a character or archetype')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
-    var unassignitem = new SlashCommandBuilder().setName('assignitem')
+var unassignitem = new SlashCommandBuilder().setName('unassignitem')
     .setDescription('Unassign a item from a character or archetype')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
@@ -351,6 +351,7 @@ client.on('ready', async () => {
         unassignskill.toJSON(),
         skill.toJSON(),
         assignitem.toJSON(),
+        unassignitem.toJSON(),
         item.toJSON(),
         modsheet.toJSON(),
         give.toJSON(),
@@ -1223,12 +1224,10 @@ client.on('interactionCreate', async (interaction) => {
                         }
 
                     }
-                    if (skillSelected && (characterSelected || archetypeSelected)) {
-                        if (characterSelected) {
-                            await connection.promise().query('delete from skills_characters where character_id = ? and skill_id = ?', [characterSelected, skillSelected]);
-                        } else {
-                            await connection.promise().query('delete from skills_archetypes where archetype_id = ? and skill_id = ?', [archetypeSelected, skillSelected]);
-                        }
+                    if (itemSelected && characterSelected) {
+
+                        await connection.promise().query('delete from characters_items where character_id = ? and item_id = ?', [characterSelected, itemSelected]);
+
                         await interaction_second.update({ content: "Skill removed from character or archetype.", components: [] });
                         collector.stop();
                     }
