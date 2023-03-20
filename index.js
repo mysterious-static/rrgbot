@@ -19,7 +19,7 @@ client.login(process.env.app_token);
 
 /* COMNMAND STRUCTURE */
 var allowmovement = new SlashCommandBuilder().setName('allowmovement')
-    .setDescription('Lock or unlock movement globally or from a single location.')
+    .setDescription('Lock or unlock movement to/from locations globally or from a single location.')
     .addBooleanOption(option =>
         option.setName('enabled')
             .setDescription('Enabled or disabled.')
@@ -83,6 +83,14 @@ var locationglobalwrite = new SlashCommandBuilder().setName('locationglobalwrite
 var resetlocationvis = new SlashCommandBuilder().setName('resetlocationvis')
     .setDescription('Re-run location visibility permissions for all locations for all players.')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+var restrictmovement = new SlashCommandBuilder().setName('restrictmovement')
+    .setDescription('Sets a global movement restriction for all players.')
+    .addStringOption(option =>
+        option.setName('restriction_type')
+            .setDescription('either "disabled", "enabled", or "player_whitelists"')
+            .setRequired(true)
+    ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 //Create Players
 var playercreate = new SlashCommandBuilder().setName('playercreate')
@@ -250,6 +258,10 @@ var assignitem = new SlashCommandBuilder().setName('assignitem')
     .setDescription('Assign a skill to a character or archetype')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
+    var unassignitem = new SlashCommandBuilder().setName('assignitem')
+    .setDescription('Unassign a item from a character or archetype')
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
 // TODO: Items will be REWORKED ENTIRELY later, with a fully-functional system where instances of items can be created versus having all items unique.
 
 var modsheet = new SlashCommandBuilder().setName('modsheet')
@@ -318,6 +330,7 @@ client.on('ready', async () => {
         locationvisibility.toJSON(),
         locationglobalwrite.toJSON(),
         resetlocationvis.toJSON(),
+        restrictmovement.toJSON(),
         playercreate.toJSON(),
         characterlocation.toJSON(),
         rps.toJSON(),
@@ -410,6 +423,19 @@ client.on('interactionCreate', async (interaction) => {
                 await connection.promise().query('update movement_locations set movement_allowed = ? where guild_id = ? ', [interaction.guildId, enabled]);
                 interaction.reply({ content: 'Should be all set! (changed movement allowed value of ALL locations to ' + enabled + ')', ephemeral: true });
             }
+        } else if (interaction.commandName == 'restrictmovement') {
+            var setting_value = interaction.options.getString('restriction_type');
+            if (setting_value == 'disabled' || setting_value == 'enabled' || setting_value == 'player_whitelist') {
+                await connection.promise().query('replace into game_settings (setting_name, setting_value, guild_id) values (?, ?, ?)', ['restrictmovement', setting_value, interaction.guildId]);
+                interaction.reply({ content: "Movement restriction set.", ephemeral: true });
+            } else {
+                interaction.reply({ content: 'Please select a valid movement restriction type.', ephemeral: true });
+            }
+            //add to whitelist
+        } else if (interaction.commandName == 'addlocationwhitelist') {
+            // use assignskill
+        } else if (interaction.commandName == 'removelocationwhitelist') {
+            //use unassignskill
         } else if (interaction.commandName == 'resetlocationvis') {
             var locations = await connection.promise().query('select * from movement_locations where guild_id = ?', [interaction.guildId]);
             var players = await connection.promise().query('select p.user_id, c.location_id from players p join players_characters pc on p.id = pc.player_id join characters c on c.id = pc.character_id where pc.active = 1');
@@ -1155,6 +1181,62 @@ client.on('interactionCreate', async (interaction) => {
             } else {
                 interaction.reply({ content: 'Please create at least one ~~skill~~ item first. <3', ephemeral: true });
             }
+        } else if (interaction.commandName == 'unassignitem') {
+
+            var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
+            if (characters[0].length > 0) {
+                var charactersKeyValues = [];
+                for (const character of characters[0]) {
+                    var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
+                    charactersKeyValues.push(thisCharacterKeyValue);
+                }
+                const unassignItemComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ItemUnassignmentCharacterSelector').setMinValues(1).setMaxValues(1);
+                var unassignItemRow = new ActionRowBuilder().addComponents(unassignItemComponent);
+            }
+
+            if (characters[0].length > 0) {
+                var message = await interaction.reply({ content: 'Select the character to remove item from.', components: [unassignItemRow], ephemeral: true });
+                var collector = message.createMessageComponentCollector();
+                var characterSelected;
+                var archetypeSelected;
+                var itemSelected;
+                collector.on('collect', async (interaction_second) => {
+                    if (interaction_second.customId == 'ItemUnassignmentCharacterSelector') {
+                        characterSelected = interaction_second.values[0];
+                    } else {
+                        itemSelected = interaction_second.values[0];
+                    }
+                    if (!itemSelected && characterSelected) {
+                        var items = await connection.promise().query('select i.* from items i join characters_items ci on i.id = ci.item_id where ci.character_id = ?', [characterSelected]);
+                        if (items[0].length > 0) {
+                            var itemsKeyValues = [];
+                            for (const item of items[0]) {
+                                var thisItemKeyValue = { label: item.name, value: item.id.toString() };
+                                itemsKeyValues.push(thisItemKeyValue);
+                            }
+                            const unassignItemComponent2 = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemUnassignmentItemSelector').setMinValues(1).setMaxValues(1);
+                            var unassignItemRow2 = new ActionRowBuilder().addComponents(unassignItemComponent2);
+                            await interaction_second.update({ content: 'Now select a item to unassign:', components: [unassignItemRow2] });
+                        } else {
+                            await interaction_second.update({ content: 'Couldn\'t find any items for this cahracter.' });
+                            collector.stop();
+                        }
+
+                    }
+                    if (skillSelected && (characterSelected || archetypeSelected)) {
+                        if (characterSelected) {
+                            await connection.promise().query('delete from skills_characters where character_id = ? and skill_id = ?', [characterSelected, skillSelected]);
+                        } else {
+                            await connection.promise().query('delete from skills_archetypes where archetype_id = ? and skill_id = ?', [archetypeSelected, skillSelected]);
+                        }
+                        await interaction_second.update({ content: "Skill removed from character or archetype.", components: [] });
+                        collector.stop();
+                    }
+                });
+            } else {
+                await interaction.reply({ content: "Couldn't find any characters to unassign items from.", ephemeral: true });
+            }
+
         } else if (interaction.commandName == 'modsheet') {
             var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
             if (characters[0].length > 0) {
