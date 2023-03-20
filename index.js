@@ -1369,7 +1369,7 @@ client.on('interactionCreate', async (interaction) => {
                     interaction.reply({ content: 'Sorry, but you don\'t seem to be in a location that allows movement right now. Try again another time, or contact the Orchestrators. :purple_heart:', ephemeral: true });
                 }
             } else if (interaction.commandName == 'sheet') {
-                var current_character = await connection.promise().query('select character_id from players_characters join players p on p.id = players_characters.player_id where p.user_id = ? and players_characters.active = 1 and character.guild_id = ?', [interaction.user.id, interaction.guildId]);
+                var current_character = await connection.promise().query('select character_id from players_characters join players p on p.id = players_characters.player_id where p.user_id = ? and players_characters.active = 1 and p.guild_id = ?', [interaction.user.id, interaction.guildId]);
                 if (current_character[0].length > 0) {
                     var character_information = await connection.promise().query('select * from characters where id = ?', [current_character[0][0].character_id]);
                     var character_archetypes = await connection.promise().query('select * from archetypes a join characters_archetypes ca on ca.archetype_id = a.id where ca.character_id = ?', [current_character[0][0].character_id]);
