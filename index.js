@@ -434,9 +434,21 @@ client.on('interactionCreate', async (interaction) => {
             }
             //add to whitelist
         } else if (interaction.commandName == 'addlocationwhitelist') {
-            // use assignskill
+            var characters = await connection.promise().query('select * from characters c where guild_id = ?', [interaction.guildId]);
+            if (characters[0].length > 0) {
+
+            } else {
+                interaction.reply({content: 'No valid characters were found in this server.', ephemeral: true});
+            }
+
         } else if (interaction.commandName == 'removelocationwhitelist') {
-            //use unassignskill
+            var characters = await connection.promise().query('select * from characters c where guild_id = ?', [interaction.guildId]);
+            if (characters[0].length > 0) {
+
+            } else {
+                interaction.reply({content: 'No valid characters were found in this server.', ephemeral: true});
+            }
+
         } else if (interaction.commandName == 'resetlocationvis') {
             var locations = await connection.promise().query('select * from movement_locations where guild_id = ?', [interaction.guildId]);
             var players = await connection.promise().query('select p.user_id, c.location_id from players p join players_characters pc on p.id = pc.player_id join characters c on c.id = pc.character_id where pc.active = 1');
