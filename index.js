@@ -892,7 +892,7 @@ client.on('interactionCreate', async (interaction) => {
                         if (archetypeStatSelected && characterSelected) {
                             var exists = await connection.promise().query('select * from characters_archetypestats where stat_id = ? and character_id = ?', [archetypeStatSelected, characterSelected]);
                             if (exists[0].length > 0) {
-                                await connection.promise().query('update characters_archetypestats set stat_id = ? where character_id = ?', [archetypeStatSelected, characterSelected]);
+                                await connection.promise().query('update characters_archetypestats set override_value = ? where character_id = ? and stat_id = ?', [value, characterSelected, archetypeStatSelected]);
                             } else {
                                 await connection.promise().query('insert into characters_archetypestats (character_id, stat_id, override_value) values (?, ?, ?)', [characterSelected, archetypeStatSelected, value]);
                             }
