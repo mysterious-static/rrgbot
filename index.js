@@ -1675,7 +1675,7 @@ client.on('interactionCreate', async (interaction) => {
                         for (const thisTile of tiles[0]) {
                             messageText += `**${thisTile.name}**: rarity ${thisTile.rarity} (type \`/tile\` for more details)\n`;
                         }
-                        if (tiles[0].length > 5) {
+                        if (tiles[0].length >= 5) {
                             messageText += '\nRemember, you can challenge another player using `/ttchallenge`!';
                         }
                         await interaction.reply({ content: messageText, ephemeral: true });
