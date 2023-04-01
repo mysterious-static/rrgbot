@@ -1667,7 +1667,7 @@ client.on('interactionCreate', async (interaction) => {
                     await interaction.reply({ content: 'No health stat is set. Check with the Orchestrators, please!', ephemeral: true });
                 }
             } else if (interaction.commandName == 'deck') {
-                var activeCharacter = await connection.promise().query('select * from characters c join players_characters pc on c.id = pc.character_id join players p on pc.player_id = p.id where pc.active = 1 and p.user_id = ? and p.guild_id = ?', [interaction.user.id, interaction.guildId]);
+                var activeCharacter = await connection.promise().query('select c.* from characters c join players_characters pc on c.id = pc.character_id join players p on pc.player_id = p.id where pc.active = 1 and p.user_id = ? and p.guild_id = ?', [interaction.user.id, interaction.guildId]);
                 if (activeCharacter[0][0]) {
                     var tiles = await connection.promise().query('select * from characters_tiles ct join tiles t on ct.tile_id = t.id where ct.character_id = ?', [activeCharacter[0][0].id]);
                     if (tiles[0].length > 0) {
