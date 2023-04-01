@@ -309,6 +309,9 @@ var duel = new SlashCommandBuilder().setName('duel')
             .setDescription('The player you wish to challenge.')
             .setRequired(true));
 
+var deck = new SlashCommandBuilder().setName('deck')
+    .setDescription('Displays your Tiles deck.');
+
 
 //PRE-PROCESSING FUNCTIONS
 
@@ -356,7 +359,8 @@ client.on('ready', async () => {
         modsheet.toJSON(),
         give.toJSON(),
         duel.toJSON(),
-        assignspecialstat.toJSON()
+        assignspecialstat.toJSON(),
+        deck.toJSON()
     ]);
     client.user.setActivity("Infinite Magic Glories: Revolutionary Redux");
 });
@@ -1661,6 +1665,25 @@ client.on('interactionCreate', async (interaction) => {
                     }
                 } else {
                     await interaction.reply({ content: 'No health stat is set. Check with the Orchestrators, please!', ephemeral: true });
+                }
+            } else if (interaction.commandName == 'deck') {
+                var activeCharacter = await connection.promise().query('select * from characters c join players_characters pc on c.id = pc.character_id join players p on pc.player_id = p.id where pc.active = 1 and p.user_id = ? and p.guild_id = ?', [interaction.user.id, interaction.guildId]);
+                if (activeCharacter[0][0]) {
+                    var tiles = await connection.promise().query('select * from characters_tiles ct join tiles t on ct.tile_id = t.id where c.id = ?', [activeCharacter[0][0].id]);
+                    if (tiles[0].length > 0) {
+                        var messageText = '';
+                        for (const thisTile of tiles[0]) {
+                            messageText += `**${thisTile.name}**: rarity ${thisTile.rarity} (type \`/tile\` for more details)\n`;
+                        }
+                        if (tiles[0].length > 5) {
+                            messageText += '\nRemember, you can challenge another player using `/ttchallenge`!';
+                        }
+                        await interaction.reply({ content: messageText, ephemeral: true });
+                    } else {
+                        await interaction.reply({ content: 'You don\'t appear to have any tiles.', ephemeral: true });
+                    }
+                } else {
+                    await interaction.reply({ content: 'You don\'t appear to have an active character.', ephemeral: true });
                 }
             }
         }
