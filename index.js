@@ -421,7 +421,7 @@ client.on('interactionCreate', async (interaction) => {
                 }
             } else {
                 var enabled = interaction.options.getBoolean('enabled');
-                await connection.promise().query('update movement_locations set movement_allowed = ? where guild_id = ? ', [interaction.guildId, enabled]);
+                await connection.promise().query('update movement_locations set movement_allowed = ? where guild_id = ? ', [enabled, interaction.guildId]);
                 interaction.reply({ content: 'Should be all set! (changed movement allowed value of ALL locations to ' + enabled + ')', ephemeral: true });
             }
         } else if (interaction.commandName == 'restrictmovement') {
