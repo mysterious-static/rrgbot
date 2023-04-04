@@ -1522,7 +1522,7 @@ client.on('interactionCreate', async (interaction) => {
                                         var character_names = [];
                                         if (allCharacters[0].length > 1) {
                                             for (const character of allCharacters[0]) {
-                                                if (character.character_id == current_character[0][0].user_id) {
+                                                if (character.character_id == current_character[0][0].character_id) {
                                                     owner_throw = character.throw;
                                                 } else {
                                                     character_throws.push({ name: character.name, throw: character.throw });
