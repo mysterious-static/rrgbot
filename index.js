@@ -678,11 +678,24 @@ client.on('interactionCreate', async (interaction) => {
                 await interaction.reply({ content: 'The user that you selected isn\'t a valid player.', ephemeral: true });
             }
         } else if (interaction.commandName == 'active') {
-            var characters = await connection.promise().query('select c.* from characters c join players_characters pc on pc.character_id = c.id join players p on p.id = pc.player_id where p.user_id = ? and pc.active = 0', [interaction.user.id]);
+            var characters = await connection.promise().query('select c.* from characters c join players_characters pc on pc.character_id = c.id join players p on p.id = pc.player_id where p.user_id = ? and p.guild_id = ? and pc.active = 0', [interaction.user.id, interaction.guildId]);
+            var player = await connection.promise().query('select * from players where user_id = ? and server_id = ?', [interaction.user.id, interaction.guildId]);
             if (characters[0].length > 0) {
-                //dropdown
+                var charactersKeyValues = [];
+                for (const character of characters[0]) {
+                    charactersKeyValues.push({ label: character.name, value: character.id.toString() });
+                }
+                const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterAssignmentSelector').setMinValues(1).setMaxValues(1);
+                var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                var message = await interaction.reply({ content: 'Select a character', components: [characterSelectRow], ephemeral: true });
+                const collector = message.createMessageComponentCollector();
+                collector.on('collect', async (interaction_second) => {
+                    await connection.promise().query('update players_characters set active = 0 where player_id = ?; update players_characters set active = 1 where player_id = ? and character_id = ?', [player[0][0].id, player[0][0].id, interaction_second.values[0]]);
+                    interaction.update({ content: "Active character updated.", components: [] });
+                    collector.stop();
+                });
             } else {
-
+                interaction.reply({ content: "You don't have any inactive characters.", ephemeral: true });
             }
         } else if (interaction.commandName == 'addcharacterarchetype') {
             var archetype = interaction.options.getString('archetype');
