@@ -1484,9 +1484,9 @@ client.on('interactionCreate', async (interaction) => {
             } else if (interaction.commandName == 'rpsmulti') {
                 var current_character = await connection.promise().query('select pc.character_id, c.name, p.user_id from players_characters pc join players p on p.id = pc.player_id join characters c on c.id = pc.character_id where p.user_id = ? and pc.active = 1', [interaction.user.id]);
                 if (current_character[0].length > 0) {
-                    var openMultiRPS = await connection.query('select * from multirps where character_id = ? and open = 1', [current_character[0][0].id]);
+                    var openMultiRPS = await connection.promise().query('select * from multirps where character_id = ? and open = 1', [current_character[0][0].id]);
                     if (openMultiRPS[0].length == 0) {
-                        var multirps = await connection.query('insert into multirps (character_id, open) values (?, ?)', [current_character[0][0].id, 1]);
+                        var multirps = await connection.promise().query('insert into multirps (character_id, open) values (?, ?)', [current_character[0][0].id, 1]);
                         var embed = new EmbedBuilder()
                             .setTitle(`MULTIRPS: ${current_character[0][0].name} v. TBD`);
                         var duelButtonR = new ButtonBuilder().setCustomId('R').setLabel('Rapid').setStyle('Primary'); // TODO ButtonBuilder doesn't exist in Discord.js v14
@@ -1497,10 +1497,10 @@ client.on('interactionCreate', async (interaction) => {
                         var message = await interaction.reply({ embeds: [embed], components: [rpsRow] });
                         var collector = message.createMessageComponentCollector();
                         collector.on('collect', async (interaction_second) => {
-                            var thisCharacter = await connection.query('select pc.character_id, c.name from players_characters pc join players p on p.id = pc.player_id join characters c on c.id = pc.character_id where p.user_id = ? and pc.active = 1', [interaction.user.id]);
+                            var thisCharacter = await connection.promise().query('select pc.character_id, c.name from players_characters pc join players p on p.id = pc.player_id join characters c on c.id = pc.character_id where p.user_id = ? and pc.active = 1', [interaction.user.id]);
                             if (thisCharacter[0].length > 0) {
                                 if (interaction_second.customId != 'mrpsButtonEnd') {
-                                    await connection.query('replace into multirps_throws (throw, character_id, multirps_id) values (?, ?, ?)', [interaction_second.customId, thisCharacter[0][0].character_id, multirps[0].insertId]);
+                                    await connection.promise().query('replace into multirps_throws (throw, character_id, multirps_id) values (?, ?, ?)', [interaction_second.customId, thisCharacter[0][0].character_id, multirps[0].insertId]);
                                     var allCharacters = await connection.promise().query('select mt.character_id, c.name from multirps_throws mt join characters c on c.id = mt.character_id where mt.multirps_id = ?', [multirps[0].insertId]);
                                     var cNames = [];
                                     for (character in allCharacters[0]) {
