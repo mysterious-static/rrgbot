@@ -1556,6 +1556,8 @@ client.on('interactionCreate', async (interaction) => {
                                         } else {
                                             interaction_second.reply({ content: "Wait for more people to throw please.", ephemeral: true });
                                         }
+                                    } else {
+                                        interaction_second.reply({content: 'Only the multirps owner can end the multirps', ephemeral: true});
                                     }
                                 }
                             } else {
@@ -1564,10 +1566,10 @@ client.on('interactionCreate', async (interaction) => {
                         });
 
                     } else {
-                        // already an open multirps
+                        interaction.reply({ content: "you are already doing this", ephemeral: true });
                     }
                 } else {
-                    //user doesnt have character assigned
+                    interaction.reply({ content: "uhhh do you have an active character?", ephemeral: true });
                 }
             } else if (interaction.commandName == 'skill') { //TODO: Futureproof with alphabet selector.
                 var current_character = await connection.promise().query('select players_characters.character_id, c.name from players_characters join players p on p.id = players_characters.player_id join characters c on c.id = players_characters.character_id where p.user_id = ? and players_characters.active = 1', [interaction.user.id]);
