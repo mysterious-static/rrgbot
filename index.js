@@ -1498,7 +1498,7 @@ client.on('interactionCreate', async (interaction) => {
                         var message = await interaction.reply({ embeds: [embed], components: [rpsRow] });
                         var collector = message.createMessageComponentCollector();
                         collector.on('collect', async (interaction_second) => {
-                            var thisCharacter = await connection.promise().query('select pc.character_id, c.name from players_characters pc join players p on p.id = pc.player_id join characters c on c.id = pc.character_id where p.user_id = ? and pc.active = 1', [interaction_second.userId]);
+                            var thisCharacter = await connection.promise().query('select pc.character_id, c.name from players_characters pc join players p on p.id = pc.player_id join characters c on c.id = pc.character_id where p.user_id = ? and pc.active = 1', [interaction_second.user.id]);
                             if (thisCharacter[0].length > 0) {
                                 if (interaction_second.customId != 'mrpsButtonEnd') {
                                     interaction_second.deferUpdate();
