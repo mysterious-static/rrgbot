@@ -679,7 +679,7 @@ client.on('interactionCreate', async (interaction) => {
             }
         } else if (interaction.commandName == 'active') {
             var characters = await connection.promise().query('select c.* from characters c join players_characters pc on pc.character_id = c.id join players p on p.id = pc.player_id where p.user_id = ? and p.guild_id = ? and pc.active = 0', [interaction.user.id, interaction.guildId]);
-            var player = await connection.promise().query('select * from players where user_id = ? and server_id = ?', [interaction.user.id, interaction.guildId]);
+            var player = await connection.promise().query('select * from players where user_id = ? and guild_id = ?', [interaction.user.id, interaction.guildId]);
             if (characters[0].length > 0) {
                 var charactersKeyValues = [];
                 for (const character of characters[0]) {
