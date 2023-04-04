@@ -1484,9 +1484,9 @@ client.on('interactionCreate', async (interaction) => {
             } else if (interaction.commandName == 'rpsmulti') {
                 var current_character = await connection.promise().query('select pc.character_id, c.name, p.user_id from players_characters pc join players p on p.id = pc.player_id join characters c on c.id = pc.character_id where p.user_id = ? and pc.active = 1', [interaction.user.id]);
                 if (current_character[0].length > 0) {
-                    var openMultiRPS = await connection.promise().query('select * from multirps where character_id = ? and open = 1', [current_character[0][0].id]);
+                    var openMultiRPS = await connection.promise().query('select * from multirps where character_id = ? and open = 1', [current_character[0][0].character_id]);
                     if (openMultiRPS[0].length == 0) {
-                        var multirps = await connection.promise().query('insert into multirps (character_id, open) values (?, ?)', [current_character[0][0].id, 1]);
+                        var multirps = await connection.promise().query('insert into multirps (character_id, open) values (?, ?)', [current_character[0][0].character_id, 1]);
                         var embed = new EmbedBuilder()
                             .setTitle(`MULTIRPS: ${current_character[0][0].name} v. TBD`);
                         var duelButtonR = new ButtonBuilder().setCustomId('R').setLabel('Rapid').setStyle('Primary'); // TODO ButtonBuilder doesn't exist in Discord.js v14
