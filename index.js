@@ -1534,7 +1534,7 @@ client.on('interactionCreate', async (interaction) => {
                                                     .setTitle('MULTIRPS')
                                                     .setDescription(`${current_character[0][0].name} v. ${character_names.join(',')}`)
                                                     .addFields({ name: 'Boss Throw', value: `${(owner_throw == 'R' ? 'Rapid' : (owner_throw == 'S' ? 'Sweeping' : 'Precision'))}` })
-                                                var player_throws_text;
+                                                var player_throws_text = "";
                                                 for (const thisThrow of character_throws) {
                                                     player_throws_text += `${thisThrow.name}: ${thisThrow.throw}`
                                                     if (owner_throw == 'R' && thisThrow.throw == 'S' || owner_throw == 'S' && thisThrow.throw == 'P' || owner_throw == 'P' && thisThrow.throw == 'R') {
