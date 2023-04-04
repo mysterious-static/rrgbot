@@ -1535,7 +1535,7 @@ client.on('interactionCreate', async (interaction) => {
                     });
                 }
             } else if (interaction.commandName == 'rpsmulti') {
-                var current_character = await connection.promise().query('select pc.character_id, c.name from players_characters pc join players p on p.id = pc.player_id join characters c on c.id = pc.character_id where p.user_id = ? and pc.active = 1', [interaction.user.id]);
+                var current_character = await connection.promise().query('select pc.character_id, c.name from players_characters pc join players p on p.id = pc.player_id join characters c on c.id = pc.character_id where p.user_id = ? and p.guild_id = ? and pc.active = 1', [interaction.user.id, interaction.guildId]);
                 if (current_character[0].length > 0) {
                     var openMultiRPS = await connection.promise().query('select * from multirps where character_id = ? and open = 1', [current_character[0][0].character_id]);
                     if (openMultiRPS[0].length == 0) {
@@ -1551,7 +1551,7 @@ client.on('interactionCreate', async (interaction) => {
                         var message = await interaction.reply({ embeds: [embed], components: [rpsRow] });
                         var collector = message.createMessageComponentCollector();
                         collector.on('collect', async (interaction_second) => {
-                            var thisCharacter = await connection.promise().query('select pc.character_id, c.name from players_characters pc join players p on p.id = pc.player_id join characters c on c.id = pc.character_id where p.user_id = ? and pc.active = 1', [interaction_second.user.id]);
+                            var thisCharacter = await connection.promise().query('select pc.character_id, c.name from players_characters pc join players p on p.id = pc.player_id join characters c on c.id = pc.character_id where p.user_id = ? and p.guild_id = ? and pc.active = 1', [interaction_second.user.id, interaction.guildId]);
                             if (thisCharacter[0].length > 0) {
                                 if (interaction_second.customId != 'mrpsButtonEnd') {
                                     interaction_second.deferUpdate();
