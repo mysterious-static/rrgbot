@@ -1280,7 +1280,7 @@ client.on('interactionCreate', async (interaction) => {
                     }
                     characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ModSheetCharacterSelector').setMinValues(1).setMaxValues(1);
                 } else {
-                    skillsAlphabetical = true;
+                    charactersAlphabetical = true;
                     var characters = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
                     var charactersKeyValues = [];
                     for (const character of characters) {
