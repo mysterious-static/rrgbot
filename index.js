@@ -1488,7 +1488,8 @@ client.on('interactionCreate', async (interaction) => {
                     if (openMultiRPS[0].length == 0) {
                         var multirps = await connection.promise().query('insert into multirps (character_id, open) values (?, ?)', [current_character[0][0].character_id, 1]);
                         var embed = new EmbedBuilder()
-                            .setTitle(`MULTIRPS: ${current_character[0][0].name} v. TBD`);
+                            .setTitle(`MULTIRPS`)
+                            .setDescription(`${current_character[0][0].name} v. TBD`);
                         var duelButtonR = new ButtonBuilder().setCustomId('R').setLabel('Rapid').setStyle('Primary'); // TODO ButtonBuilder doesn't exist in Discord.js v14
                         var duelButtonP = new ButtonBuilder().setCustomId('P').setLabel('Precision').setStyle('Primary');
                         var duelButtonS = new ButtonBuilder().setCustomId('S').setLabel('Sweeping').setStyle('Primary');
