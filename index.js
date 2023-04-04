@@ -1503,7 +1503,7 @@ client.on('interactionCreate', async (interaction) => {
                                 if (interaction_second.customId != 'mrpsButtonEnd') {
                                     interaction_second.deferUpdate();
                                     await connection.promise().query('replace into multirps_throws (throw, character_id, multirps_id) values (?, ?, ?)', [interaction_second.customId, thisCharacter[0][0].character_id, multirps[0].insertId]);
-                                    var allCharacters = await connection.promise().query('select mt.character_id, c.name from multirps_throws mt join characters c on c.id = mt.character_id where mt.multirps_id = ? and mt.character_id is not ?', [multirps[0].insertId, current_character[0][0].character_id]);
+                                    var allCharacters = await connection.promise().query('select mt.character_id, c.name from multirps_throws mt join characters c on c.id = mt.character_id where mt.multirps_id = ? and mt.character_id != ?', [multirps[0].insertId, current_character[0][0].character_id]);
                                     if (allCharacters[0].length > 0) {
                                         var cNames = [];
                                         for (const character of allCharacters[0]) {
