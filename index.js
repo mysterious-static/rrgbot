@@ -1558,6 +1558,8 @@ client.on('interactionCreate', async (interaction) => {
                                         }
                                     }
                                 }
+                            } else {
+                                interaction_second.reply({ content: "uhhh do you have an active character?", ephemeral: true });
                             }
                         });
 
