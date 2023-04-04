@@ -1501,17 +1501,61 @@ client.on('interactionCreate', async (interaction) => {
                             var thisCharacter = await connection.promise().query('select pc.character_id, c.name from players_characters pc join players p on p.id = pc.player_id join characters c on c.id = pc.character_id where p.user_id = ? and pc.active = 1', [interaction.user.id]);
                             if (thisCharacter[0].length > 0) {
                                 if (interaction_second.customId != 'mrpsButtonEnd') {
+                                    interaction_second.deferUpdate();
                                     await connection.promise().query('replace into multirps_throws (throw, character_id, multirps_id) values (?, ?, ?)', [interaction_second.customId, thisCharacter[0][0].character_id, multirps[0].insertId]);
-                                    var allCharacters = await connection.promise().query('select mt.character_id, c.name from multirps_throws mt join characters c on c.id = mt.character_id where mt.multirps_id = ?', [multirps[0].insertId]);
-                                    var cNames = [];
-                                    for (character in allCharacters[0]) {
-                                        cNames.push(character.name);
+                                    var allCharacters = await connection.promise().query('select mt.character_id, c.name from multirps_throws mt join characters c on c.id = mt.character_id where mt.multirps_id = ? and mt.character_id is not ?', [multirps[0].insertId, current_character[0][0].character_id]);
+                                    if (allCharacters[0].length > 0) {
+                                        var cNames = [];
+                                        for (const character of allCharacters[0]) {
+                                            cNames.push(character.name);
+                                        }
+                                    } else {
+                                        var cNames = ["TBD"];
                                     }
-                                    var embed = new EmbedBuilder().setTitle(`MULTIRPS: ${current_character[0][0].name} v. ${cNames.join(',')}`);
+                                    var embed = new EmbedBuilder().setTitle(`MULTIRPS`).setDescription(`${current_character[0][0].name} v. ${cNames.join(',')}`);
                                     message.edit({ embeds: [embed] });
                                 } else {
                                     if (current_character[0][0].user_id == interaction_second.userId) {
-                                        //process
+                                        var allCharacters = await connection.promise().query('select mt.character_id, c.name, mt.throw from multirps_throws mt join characters c on c.id = mt.character_id where mt.multirps_id = ?', [multirps[0].insertId]);
+                                        var owner_throw;
+                                        var character_throws = [];
+                                        var character_names = [];
+                                        if (allCharacters[0].length > 1) {
+                                            for (const character of allCharacters[0]) {
+                                                if (character.character_id == current_character[0][0].user_id) {
+                                                    owner_throw = character.throw;
+                                                } else {
+                                                    character_throws.push({ name: character.name, throw: character.throw });
+                                                    character_names.push(character.name);
+                                                }
+                                            }
+                                            if (owner_throw) {
+                                                var embed = new EmbedBuilder()
+                                                    .setTitle('MULTIRPS')
+                                                    .setDescription(`${current_character[0][0].name} v. ${character_names.join(',')}`)
+                                                    .addFields({ name: 'Boss Throw', value: `${(owner_throw == 'R' ? 'Rapid' : (owner_throw == 'S' ? 'Sweeping' : 'Precision'))}` })
+                                                var player_throws_text;
+                                                for (const thisThrow of character_throws) {
+                                                    player_throws_text += `${thisThrow.name}: ${thisThrow.throw}`
+                                                    if (owner_throw == 'R' && thisThrow.throw == 'S' || owner_throw == 'S' && thisThrow.throw == 'P' || owner_throw == 'P' && thisThrow.throw == 'R') {
+                                                        player_throws_text += ' (LOSE)';
+                                                    } else if (owner_throw == thisThrow.throw) {
+                                                        player_throws_text += ' (TIE)';
+                                                    } else {
+                                                        player_throws_text += ' (WIN)';
+                                                    }
+                                                    player_throws_text += '\n';
+                                                }
+                                                embed.addFields({ name: 'Player Throws', value: player_throws_text });
+                                                await connection.promise().query('update multirps set open = 0 where id = ?', [multirps[0].insertId]);
+                                                await message.edit({ embeds: [embed], components: [] });
+                                                interaction_second.deferUpdate();
+                                            } else {
+                                                interaction_second.reply({ content: "Throw something please.", ephemeral: true });
+                                            }
+                                        } else {
+                                            interaction_second.reply({ content: "Wait for more people to throw please.", ephemeral: true });
+                                        }
                                     }
                                 }
                             }
