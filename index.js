@@ -1482,7 +1482,7 @@ client.on('interactionCreate', async (interaction) => {
                     });
                 }
             } else if (interaction.commandName == 'rpsmulti') {
-                var current_character = await connection.promise().query('select pc.character_id, c.name, p.user_id from players_characters pc join players p on p.id = pc.player_id join characters c on c.id = pc.character_id where p.user_id = ? and pc.active = 1', [interaction.user.id]);
+                var current_character = await connection.promise().query('select pc.character_id, c.name from players_characters pc join players p on p.id = pc.player_id join characters c on c.id = pc.character_id where p.user_id = ? and pc.active = 1', [interaction.user.id]);
                 if (current_character[0].length > 0) {
                     var openMultiRPS = await connection.promise().query('select * from multirps where character_id = ? and open = 1', [current_character[0][0].character_id]);
                     if (openMultiRPS[0].length == 0) {
@@ -1515,7 +1515,7 @@ client.on('interactionCreate', async (interaction) => {
                                     var embed = new EmbedBuilder().setTitle(`MULTIRPS`).setDescription(`${current_character[0][0].name} v. ${cNames.join(',')}`);
                                     message.edit({ embeds: [embed] });
                                 } else {
-                                    if (current_character[0][0].user_id == interaction_second.userId) {
+                                    if (interaction.user.id == interaction_second.user.id) {
                                         var allCharacters = await connection.promise().query('select mt.character_id, c.name, mt.throw from multirps_throws mt join characters c on c.id = mt.character_id where mt.multirps_id = ?', [multirps[0].insertId]);
                                         var owner_throw;
                                         var character_throws = [];
