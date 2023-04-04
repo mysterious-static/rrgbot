@@ -691,7 +691,7 @@ client.on('interactionCreate', async (interaction) => {
                 const collector = message.createMessageComponentCollector();
                 collector.on('collect', async (interaction_second) => {
                     await connection.promise().query('update players_characters set active = 0 where player_id = ?; update players_characters set active = 1 where player_id = ? and character_id = ?', [player[0][0].id, player[0][0].id, interaction_second.values[0]]);
-                    interaction.update({ content: "Active character updated.", components: [] });
+                    interaction_second.update({ content: "Active character updated.", components: [] });
                     collector.stop();
                 });
             } else {
