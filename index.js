@@ -1550,6 +1550,7 @@ client.on('interactionCreate', async (interaction) => {
                                                 await connection.promise().query('update multirps set open = 0 where id = ?', [multirps[0].insertId]);
                                                 await message.edit({ embeds: [embed], components: [] });
                                                 interaction_second.deferUpdate();
+                                                await collector.stop();
                                             } else {
                                                 interaction_second.reply({ content: "Throw something please.", ephemeral: true });
                                             }
