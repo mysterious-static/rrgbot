@@ -1533,7 +1533,7 @@ client.on('interactionCreate', async (interaction) => {
                                                 var embed = new EmbedBuilder()
                                                     .setTitle('MULTIRPS')
                                                     .setDescription(`${current_character[0][0].name} v. ${character_names.join(',')}`)
-                                                    .addFields({ name: 'Boss Throw', value: `${(owner_throw == 'R' ? 'Rapid' : (owner_throw == 'S' ? 'Sweeping' : 'Precision'))}` })
+                                                    .addFields({ name: 'Boss Throw', value: `${(owner_throw == 'R' ? 'Rapid' : (owner_throw == 'S' ? 'Sweeping' : 'Precision'))}`, inline: true })
                                                 var player_throws_text = "";
                                                 for (const thisThrow of character_throws) {
                                                     player_throws_text += `${thisThrow.name}: ${thisThrow.throw}`
@@ -1546,7 +1546,7 @@ client.on('interactionCreate', async (interaction) => {
                                                     }
                                                     player_throws_text += '\n';
                                                 }
-                                                embed.addFields({ name: 'Player Throws', value: player_throws_text });
+                                                embed.addFields({ name: 'Player Throws', value: player_throws_text, inline: true });
                                                 await connection.promise().query('update multirps set open = 0 where id = ?', [multirps[0].insertId]);
                                                 await message.edit({ embeds: [embed], components: [] });
                                                 interaction_second.deferUpdate();
@@ -1557,7 +1557,7 @@ client.on('interactionCreate', async (interaction) => {
                                             interaction_second.reply({ content: "Wait for more people to throw please.", ephemeral: true });
                                         }
                                     } else {
-                                        interaction_second.reply({content: 'Only the multirps owner can end the multirps', ephemeral: true});
+                                        interaction_second.reply({ content: 'Only the multirps owner can end the multirps', ephemeral: true });
                                     }
                                 }
                             } else {
