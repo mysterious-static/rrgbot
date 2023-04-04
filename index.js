@@ -311,6 +311,8 @@ var duel = new SlashCommandBuilder().setName('duel')
         option.setName('target')
             .setDescription('The player you wish to challenge.')
             .setRequired(true));
+var active = new SlashCommandBuilder().setName('active')
+    .setDescription('Changes your active character.');
 
 var deck = new SlashCommandBuilder().setName('deck')
     .setDescription('Displays your Tiles deck.');
@@ -364,7 +366,8 @@ client.on('ready', async () => {
         duel.toJSON(),
         assignspecialstat.toJSON(),
         deck.toJSON(),
-        rpsmulti.toJSON()
+        rpsmulti.toJSON(),
+        active.toJSON()
     ]);
     client.user.setActivity("Infinite Magic Glories: Revolutionary Redux");
 });
@@ -673,6 +676,13 @@ client.on('interactionCreate', async (interaction) => {
                 });
             } else {
                 await interaction.reply({ content: 'The user that you selected isn\'t a valid player.', ephemeral: true });
+            }
+        } else if (interaction.commandName == 'active') {
+            var characters = await connection.promise().query('select c.* from characters c join players_characters pc on pc.character_id = c.id join players p on p.id = pc.player_id where p.user_id = ? and pc.active = 0', [interaction.user.id]);
+            if (characters[0].length > 0) {
+                //dropdown
+            } else {
+
             }
         } else if (interaction.commandName == 'addcharacterarchetype') {
             var archetype = interaction.options.getString('archetype');
@@ -1259,61 +1269,91 @@ client.on('interactionCreate', async (interaction) => {
         } else if (interaction.commandName == 'modsheet') {
             var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
             if (characters[0].length > 0) {
-                var charactersKeyValues = [{ label: 'Select a character', value: '0' }];
-                for (const character of characters[0]) {
-                    var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
-                    charactersKeyValues.push(thisCharacterKeyValue);
+                var charactersAlphabetical;
+                var characterSelectComponent;
+                if (characters[0].length <= 25) {
+                    charactersAlphabetical = false;
+                    var charactersKeyValues = [{ label: 'Select a characters', value: '0' }];
+                    for (const character of characters[0]) {
+                        var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
+                        charactersKeyValues.push(thisCharacterKeyValue);
+                    }
+                    characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ModSheetCharacterSelector').setMinValues(1).setMaxValues(1);
+                } else {
+                    skillsAlphabetical = true;
+                    var characters = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
+                    var charactersKeyValues = [];
+                    for (const character of characters) {
+                        var thisCharacterKeyValue = { label: character, value: character }
+                        charactersKeyValues.push(thisCharacterKeyValue);
+                    }
+                    characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ModSheetAlphabetSelector').setMinValues(1).setMaxValues(1);
                 }
-                const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ModSheetCharacterSelector').setMinValues(1).setMaxValues(1);
                 var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
                 var message = await interaction.reply({ content: 'Please select the following options:', components: [characterSelectRow], ephemeral: true });
                 var collector = message.createMessageComponentCollector();
                 collector.on('collect', async (interaction_second) => {
                     var characterSelected = interaction_second.values[0];
-                    var character_information = await connection.promise().query('select * from characters where id = ?', [characterSelected]);
-                    var character_archetypes = await connection.promise().query('select * from archetypes a join characters_archetypes ca on ca.archetype_id = a.id where ca.character_id = ?', [characterSelected]);
-                    var character_stats = await connection.promise().query('select s.*, cs.override_value from stats s left outer join characters_stats cs on cs.stat_id = s.id and cs.character_id = ? where guild_id = ?', [characterSelected, interaction.guildId]);
-                    var archetype_stats = await connection.promise().query('select ars.*, ca2.override_value from archetypestats ars join archetypes_archetypestats aa on ars.id = aa.archetypestat_id join characters_archetypes ca on aa.archetype_id = ca.archetype_id and ca.character_id = ? left outer join characters_archetypestats ca2 on ca2.stat_id = ars.id and ca2.character_id = ?', [characterSelected, characterSelected]);
-                    var world_stats = [[]]; //TODO
-                    var msg = `**${character_information[0][0].name}** - ${character_information[0][0].description}\n`
-                    if (character_archetypes[0].length > 0) {
-                        msg = msg.concat(`\n__Archetypes__\n`);
-                        for (const thisArchetype of character_archetypes[0]) {
-                            msg = msg.concat(`**${thisArchetype.name}** - ${thisArchetype.description}\n`);
-                        }
-                    }
-                    if (character_stats[0].length > 0 || archetype_stats[0].length > 0 || world_stats[0].length > 0) {
-                        msg = msg.concat(`\n__Stats__\n`);
-                    }
-                    if (character_stats[0].length > 0) {
-                        for (const thisStat of character_stats[0]) {
-                            if (thisStat.override_value) {
-                                msg = msg.concat(`**${thisStat.name}** - ${thisStat.override_value}\n`);
-                            } else { // TODO else if thisStat has an ARCHETYPE override value
-                                msg = msg.concat(`**${thisStat.name}** - ${thisStat.default_value}\n`);
+                    if (interaction_second.customId == 'ModSheetAlphabetSelector') {
+                        var characters = await connection.promise().query('select * from characters where guild_id = ? and upper(character_name) like "?%"', [interaction.guildId, characterSelected]);
+                        if (characters[0].length > 0) {
+                            var charactersKeyValues = [{ label: 'Select a characters', value: '0' }];
+                            for (const character of characters[0]) {
+                                var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
+                                charactersKeyValues.push(thisCharacterKeyValue);
                             }
+                            var characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ModSheetCharacterSelector').setMinValues(1).setMaxValues(1);
+                            var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                            interaction.update({ components: [characterSelectRow] });
+                        } else {
+                            interaction.update({ content: 'No characters with this first letter', components: [] });
+                        }
+                    } else {
+                        var character_information = await connection.promise().query('select * from characters where id = ?', [characterSelected]);
+                        var character_archetypes = await connection.promise().query('select * from archetypes a join characters_archetypes ca on ca.archetype_id = a.id where ca.character_id = ?', [characterSelected]);
+                        var character_stats = await connection.promise().query('select s.*, cs.override_value from stats s left outer join characters_stats cs on cs.stat_id = s.id and cs.character_id = ? where guild_id = ?', [characterSelected, interaction.guildId]);
+                        var archetype_stats = await connection.promise().query('select ars.*, ca2.override_value from archetypestats ars join archetypes_archetypestats aa on ars.id = aa.archetypestat_id join characters_archetypes ca on aa.archetype_id = ca.archetype_id and ca.character_id = ? left outer join characters_archetypestats ca2 on ca2.stat_id = ars.id and ca2.character_id = ?', [characterSelected, characterSelected]);
+                        var world_stats = [[]]; //TODO
+                        var msg = `**${character_information[0][0].name}** - ${character_information[0][0].description}\n`
+                        if (character_archetypes[0].length > 0) {
+                            msg = msg.concat(`\n__Archetypes__\n`);
+                            for (const thisArchetype of character_archetypes[0]) {
+                                msg = msg.concat(`**${thisArchetype.name}** - ${thisArchetype.description}\n`);
+                            }
+                        }
+                        if (character_stats[0].length > 0 || archetype_stats[0].length > 0 || world_stats[0].length > 0) {
+                            msg = msg.concat(`\n__Stats__\n`);
+                        }
+                        if (character_stats[0].length > 0) {
+                            for (const thisStat of character_stats[0]) {
+                                if (thisStat.override_value) {
+                                    msg = msg.concat(`**${thisStat.name}** - ${thisStat.override_value}\n`);
+                                } else { // TODO else if thisStat has an ARCHETYPE override value
+                                    msg = msg.concat(`**${thisStat.name}** - ${thisStat.default_value}\n`);
+                                }
 
-                        }
-                    }
-                    if (archetype_stats[0].length > 0) {
-                        for (const thisStat of archetype_stats[0]) {
-                            if (thisStat.override_value) {
-                                msg = msg.concat(`**${thisStat.name}** - ${thisStat.override_value}\n`);
-                            } else { // TODO else if thisStat has an ARCHETYPE override value
-                                msg = msg.concat(`**${thisStat.name}** - ${thisStat.default_value}\n`);
                             }
                         }
+                        if (archetype_stats[0].length > 0) {
+                            for (const thisStat of archetype_stats[0]) {
+                                if (thisStat.override_value) {
+                                    msg = msg.concat(`**${thisStat.name}** - ${thisStat.override_value}\n`);
+                                } else { // TODO else if thisStat has an ARCHETYPE override value
+                                    msg = msg.concat(`**${thisStat.name}** - ${thisStat.default_value}\n`);
+                                }
+                            }
+                        }
+                        if (world_stats[0].length > 0) {
+                            // TODO
+                        }
+                        const buttonActionRow = new ActionRowBuilder()
+                            .addComponents(
+                                new ButtonBuilder().setCustomId(`skills-${characterSelected}`).setLabel('Skills').setStyle(ButtonStyle.Primary),
+                                new ButtonBuilder().setCustomId(`inventory-${characterSelected}`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
+                            );
+                        await interaction_second.update({ content: msg, components: [buttonActionRow] });
+                        await collector.stop();
                     }
-                    if (world_stats[0].length > 0) {
-                        // TODO
-                    }
-                    const buttonActionRow = new ActionRowBuilder()
-                        .addComponents(
-                            new ButtonBuilder().setCustomId(`skills-${characterSelected}`).setLabel('Skills').setStyle(ButtonStyle.Primary),
-                            new ButtonBuilder().setCustomId(`inventory-${characterSelected}`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
-                        );
-                    await interaction_second.update({ content: msg, components: [buttonActionRow] });
-                    await collector.stop();
                 });
             } else {
                 await interaction.reply({ content: 'There don\'t seem to be any characters, have you made any?', ephemeral: true });
@@ -1512,7 +1552,7 @@ client.on('interactionCreate', async (interaction) => {
                                     } else {
                                         var cNames = ["TBD"];
                                     }
-                                    var embed = new EmbedBuilder().setTitle(`MULTIRPS`).setDescription(`${current_character[0][0].name} v. ${cNames.join(',')}`);
+                                    var embed = new EmbedBuilder().setTitle(`MULTIRPS`).setDescription(`${current_character[0][0].name} v. ${cNames.join(', ')}`);
                                     message.edit({ embeds: [embed] });
                                 } else {
                                     if (interaction.user.id == interaction_second.user.id) {
@@ -1532,7 +1572,7 @@ client.on('interactionCreate', async (interaction) => {
                                             if (owner_throw) {
                                                 var embed = new EmbedBuilder()
                                                     .setTitle('MULTIRPS')
-                                                    .setDescription(`${current_character[0][0].name} v. ${character_names.join(',')}`)
+                                                    .setDescription(`${current_character[0][0].name} v. ${character_names.join(', ')}`)
                                                     .addFields({ name: 'Boss Throw', value: `${(owner_throw == 'R' ? 'Rapid' : (owner_throw == 'S' ? 'Sweeping' : 'Precision'))}`, inline: true })
                                                 var player_throws_text = "";
                                                 for (const thisThrow of character_throws) {
