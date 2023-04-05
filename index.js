@@ -1626,7 +1626,7 @@ client.on('interactionCreate', async (interaction) => {
                     interaction.reply({ content: "uhhh do you have an active character?", ephemeral: true });
                 }
             } else if (interaction.commandName == 'skill') { //TODO: Futureproof with alphabet selector.
-                var current_character = await connection.promise().query('select players_characters.character_id, c.name from players_characters join players p on p.id = players_characters.player_id join characters c on c.id = players_characters.character_id where p.user_id = ? and players_characters.active = 1', [interaction.user.id]);
+                var current_character = await connection.promise().query('select players_characters.character_id, c.name from players_characters join players p on p.id = players_characters.player_id join characters c on c.id = players_characters.character_id where p.user_id = ? and p.guild_id = ? and players_characters.active = 1', [interaction.user.id, interaction.guildId]);
                 if (current_character[0].length > 0) {
                     var archetypeskills = await connection.promise().query('select s.* from skills s join skills_archetypes sa on sa.skill_id = s.id join characters_archetypes ca on sa.archetype_id = ca.archetype_id where ca.character_id = ?', [current_character[0][0].character_id]);
                     var characterskills = await connection.promise().query('select s.* from skills s join skills_characters sc on sc.skill_id = s.id where sc.character_id = ?', [current_character[0][0].character_id]);
@@ -1677,7 +1677,7 @@ client.on('interactionCreate', async (interaction) => {
                 //dropdown
                 // put dropdown in thingy
             } else if (interaction.commandName == 'item') {
-                var current_character = await connection.promise().query('select pc.character_id, c.name from players_characters pc join players p on p.id = pc.player_id join characters c on c.id = pc.character_id where p.user_id = ? and pc.active = 1', [interaction.user.id]);
+                var current_character = await connection.promise().query('select pc.character_id, c.name from players_characters pc join players p on p.id = pc.player_id join characters c on c.id = pc.character_id where p.user_id = ? and p.guild_id = ? and pc.active = 1', [interaction.user.id, interaction.guildId]);
                 if (current_character[0].length > 0) {
                     var items = await connection.promise().query('select i.* from items i join characters_items ci on ci.item_id = i.id where ci.character_id = ?', [current_character[0][0].character_id]);
                     if (items[0].length > 0) {
