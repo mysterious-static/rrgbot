@@ -274,7 +274,16 @@ var assignspecialstat = new SlashCommandBuilder().setName('assignspecialstat')
 // movement, health, etc.
 
 var addquest = new SlashCommandBuilder().setName('addquest')
-    .setDescription('NYI: Add a quest for display on character sheet.');
+    .setDescription('NYI: Add a quest for display on character sheet.')
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+var whispercategory = new SlashCommandBuilder().setName('whispercategory')
+    .setDescription('Set a category for whisper creation.')
+    .addChannelOption(option =>
+        option.setName('category')
+            .setDescription('The channel category for whispers.')
+            .setRequired(true))
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 // Characters Per Player (switching system // bot echoes) - TODO
 // For now, playercreate should create a default character automatically in a separate table with the specified player_name.
@@ -367,7 +376,8 @@ client.on('ready', async () => {
         assignspecialstat.toJSON(),
         deck.toJSON(),
         rpsmulti.toJSON(),
-        active.toJSON()
+        active.toJSON(),
+        whispercategory.toJSON()
     ]);
     client.user.setActivity("Infinite Magic Glories: Revolutionary Redux");
 });
@@ -517,6 +527,16 @@ client.on('interactionCreate', async (interaction) => {
             } else {
                 interaction.reply({ content: 'Looks like this channel isn\'t a valid location. Try adding it via `/addlocation`. :revolving_hearts:', ephemeral: true });
             }
+        } else if (interaction.commandName == 'whispercategory') {
+            var channel = interaction.getChannel('category');
+            if (channel.type === 'GUILD_CATEGORY') {
+                await connection.promise().query('replace into game_settings (setting_name, setting_value, guild_id) values (?, ?, ?)', ['whisper_category', channel.id, interaction.guildId]);
+                interaction.reply({ content: "Set the whisper category for this game.", ephemeral: true });
+            } else {
+                interaction.reply({ content: 'please make sure you selected a category and not a channel', ephemeral: true });
+            }
+
+            //select character for whisper....how to multiselect when you have the letter thing?
         } else if (interaction.commandName == 'playercreate') {
             var user = interaction.options.getUser('user');
             var playerName = interaction.options.getString('player_name');
