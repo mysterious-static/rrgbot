@@ -285,6 +285,14 @@ var whispercategory = new SlashCommandBuilder().setName('whispercategory')
             .setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
+var addwhisper = new SlashCommandBuilder().setName('addwhisper')
+    .setDescription('Add a whisper.')
+    .addIntegerOption(option =>
+        option.setName('duration')
+            .setDescription('How long, in hours, the whisper should last.')
+            .setRequired(true))
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
 // Characters Per Player (switching system // bot echoes) - TODO
 // For now, playercreate should create a default character automatically in a separate table with the specified player_name.
 
@@ -377,7 +385,8 @@ client.on('ready', async () => {
         deck.toJSON(),
         rpsmulti.toJSON(),
         active.toJSON(),
-        whispercategory.toJSON()
+        whispercategory.toJSON(),
+        addwhisper.toJSON()
     ]);
     client.user.setActivity("Infinite Magic Glories: Revolutionary Redux");
 });
@@ -536,7 +545,10 @@ client.on('interactionCreate', async (interaction) => {
                 interaction.reply({ content: 'please make sure you selected a category and not a channel', ephemeral: true });
             }
 
-            //select character for whisper....how to multiselect when you have the letter thing?
+        } else if (interaction.commandName == 'addwhisper') {
+            //create channel and log in db
+        } else if (interaction.commandName == 'populatewhisper') {
+            //add character to db and adjust permissions for anyone with that character access
         } else if (interaction.commandName == 'playercreate') {
             var user = interaction.options.getUser('user');
             var playerName = interaction.options.getString('player_name');
@@ -2366,12 +2378,12 @@ client.on('interactionCreate', async (interaction) => {
                 var msg = `__Skills__\n`;
                 if (character_skills[0].length > 0) {
                     for (const thisSkill of character_skills[0]) {
-                        msg = msg.concat(`**${thisSkill.name}**: ${thisSkill.description}\n`);
+                        msg = msg.concat(`**${thisSkill.name}** (${thisSkill.type})\n`);
                     }
                 }
                 if (archetype_skills[0].length > 0) {
                     for (const thisSkill of archetype_skills[0]) {
-                        msg = msg.concat(`**${thisSkill.name}**: ${thisSkill.description}\n`);
+                        msg = msg.concat(`**${thisSkill.name}** (${thisSkill.type})\n`);
                     }
                 }
             } else {
