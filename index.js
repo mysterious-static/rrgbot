@@ -2000,7 +2000,7 @@ client.on('interactionCreate', async (interaction) => {
                                     if (lastRound[0][0].winner_id) {
                                         await connection.promise().query('update duels_rounds set skill_used = ? where id = ?', [skill_id, lastRound[0][0].id]);
                                     } else {
-                                        await connection.promise().query('update duels_rounds set skill_used = ? where id = ?', [skill_id, lastRound[0][0].id - 1]);
+                                        await connection.promise().query('update duels_rounds set skill_used = ? where duel_id = ? and round_id = ?', [skill_id, duel_id, lastRound[0][0].round_id - 1]);
                                     }
                                     await interaction_second.channel.send({ content: `${activeCharacter.name} uses ${skill[0][0].name}: ${skill[0][0].description}` });
                                     await interaction.update({ content: 'Thanks!', components: [] });
