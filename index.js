@@ -1860,7 +1860,7 @@ client.on('interactionCreate', async (interaction) => {
                         }
                         await interaction.reply({ content: messageText, ephemeral: true });
                     } else {
-                        await interaction.reply({ content: 'You don\'t appear to have any tiles, ' + activeCharacter[0][0].id, ephemeral: true });
+                        await interaction.reply({ content: 'You don\'t appear to have any tiles, ' + activeCharacter[0][0].name, ephemeral: true });
                     }
                 } else {
                     await interaction.reply({ content: 'You don\'t appear to have an active character.', ephemeral: true });
