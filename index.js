@@ -2127,7 +2127,7 @@ client.on('interactionCreate', async (interaction) => {
                             await connection.promise().query('update tickets set uid_close = ? where thread_id = ?', [interaction.member.id, interaction.channel.id]);
                             // Create embed
                             var settingvalue = await connection.promise().query('select * from game_settings where guild_id = ? and setting_name = ?', [interaction.guild.id, 'audit_channel']);
-                            var audit_channel = await client.channels.cache.get(settingvalue[0][0].value);
+                            var audit_channel = await client.channels.cache.get(settingvalue[0][0].setting_value);
                             var embed = new EmbedBuilder()
                                 .setTitle('Ticket closed!')
                                 .setDescription(ticket[0][0].title)
