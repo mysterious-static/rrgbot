@@ -1607,7 +1607,7 @@ client.on('interactionCreate', async (interaction) => {
             }
         } else if (interaction.commandName == 'sendas') {
             var parrot_text = interaction.options.getString('message');
-            if (interaction.member.hasPermission('ADMINISTRATOR')) {
+            if (interaction.member.permissions.has('ADMINISTRATOR')) {
                 var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
             } else {
                 var characters = await connection.promise().query('select c.* from players p join players_characters pc on p.id = pc.player_id join charactesr c on pc.character_id = c.id where p.user_id = ? and p.guild_id = ?', [interaction.user.id, interaction.guildId]);
@@ -1641,7 +1641,7 @@ client.on('interactionCreate', async (interaction) => {
                 collector.on('collect', async (interaction_second) => {
                     var characterSelected = interaction_second.values[0];
                     if (interaction_second.customId == 'SendAsAlphabetSelector') {
-                        if (interaction.member.hasPermission('ADMINISTRATOR')) {
+                        if (interaction.member.permissions.has('ADMINISTRATOR')) {
                             var characters = await connection.promise().query('select * from characters where guild_id = ? and upper(character_name) like "?%"', [interaction.guildId, characterSelected]);
                         } else {
                             var characters = await connection.promise().query('select c.* from players p join players_characters pc on p.id = pc.player_id join charactesr c on pc.character_id = c.id where p.user_id = ? and p.guild_id = ? and upper(c.character_name) like "?%"', [interaction.user.id, interaction.guildId, characterSelected]);
@@ -1697,7 +1697,7 @@ client.on('interactionCreate', async (interaction) => {
 
 
         // PLAYER COMMANDS
-        else if (isPlayer(interaction.user.id, interaction.guildId) || interaction.member.hasPermission("ADMINISTRATOR")) {
+        else if (isPlayer(interaction.user.id, interaction.guildId) || interaction.member.permissions.has("ADMINISTRATOR")) {
             if (interaction.commandName == 'move') {
                 var is_enabled = await connection.promise().query('select ml.movement_allowed, ml.id from players join players_characters pc on players.id = pc.player_id join characters c on pc.character_id = c.id join movement_locations ml on ml.id = c.location_id where players.user_id = ? and players.guild_id = ? and pc.active = 1', [interaction.user.id, interaction.guildId]);
                 if (is_enabled[0].length > 0 && is_enabled[0][0].movement_allowed == 1) {
