@@ -1688,7 +1688,7 @@ client.on('interactionCreate', async (interaction) => {
                                 await webhook.send({ content: parrot_text, username: character_information[0][0].name, avatarURL: character_information[0][0].avatar_url });
                             }
                         }
-                        interaction.reply({ content: 'Success', ephemeral: true });
+                        interaction.editReply({ content: 'Success', components: [], ephemeral: true });
                     }
                 });
             } else {
