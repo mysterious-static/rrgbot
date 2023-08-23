@@ -2026,7 +2026,7 @@ client.on('interactionCreate', async (interaction) => {
                             await connection.promise().query('delete from tickets_categories where guildid = ? and name = ?', [interaction.guild.id, name]);
                             interaction.reply({ content: 'You have more than 25 ticket categories. Please delete some and try adding this again.', ephemeral: true });
                         } else {
-                            var channel = await client.channels.cache.get(channel[0][0].value);
+                            var channel = await client.channels.cache.get(channel[0][0].setting_value);
                             const embeddedMessage = new EmbedBuilder()
                                 .setColor(0x770000)
                                 .setTitle('Ticket System')
