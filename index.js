@@ -293,6 +293,14 @@ var addwhisper = new SlashCommandBuilder().setName('addwhisper')
             .setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
+var populatewhisper = new SlashCommandBuilder().setName('populatewhisper')
+    .setDescription('Add a character to a whisper.')
+    .addChannelOption(option =>
+        option.setName('whisperchannel')
+            .setDescription('The channel where the whisper is assigned.')
+            .setRequired(true))
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
 // Characters Per Player (switching system // bot echoes) - TODO
 // For now, playercreate should create a default character automatically in a separate table with the specified player_name.
 
@@ -386,7 +394,8 @@ client.on('ready', async () => {
         rpsmulti.toJSON(),
         active.toJSON(),
         whispercategory.toJSON(),
-        addwhisper.toJSON()
+        addwhisper.toJSON(),
+        populatewhisper.toJSON()
     ]);
     client.user.setActivity("Infinite Magic Glories: Revolutionary Redux");
 });
@@ -546,6 +555,19 @@ client.on('interactionCreate', async (interaction) => {
             }
 
         } else if (interaction.commandName == 'addwhisper') {
+
+            // interaction.options.getInteger() = duration in hours
+            var whisper_category = await connection.promise().query('select setting_value from game_settings where guild_id = ? and setting_name = ?', [interaction.guildId, 'whisper_category']);
+            if (whisper_category[0].length > 0) {
+                var timest = new Date.now() / 1000;
+                var whisper_channel = await interaction.guild.channels.create(`whisper-${timest}`, {
+                    type: "GUILD_TEXT", parent: whisper_category[0][0].setting_value
+                });
+                await connection.promise().query('insert into whispers (guild_id, channel_id, expiration) values (?, ?, ?)', [interaction.guildId, whisper_channel.id, timest + (interaction.options.getInteger(duration) * 3600)]);
+                interaction.reply({ content: `Whisper created: ${whisper_channel}. Add characters using \`/populatewhisper\`.`, ephemeral: true });
+            } else {
+                interaction.reply({ content: "Create a whisper category first using `/whispercategory`.", ephemeral: true });
+            }
             //create channel and log in db
         } else if (interaction.commandName == 'populatewhisper') {
             //add character to db and adjust permissions for anyone with that character access
