@@ -2021,12 +2021,13 @@ client.on('interactionCreate', async (interaction) => {
                     var channel = await connection.promise().query('select * from game_settings where setting_name = "ticket_channel" and guild_id = ?', [interaction.guild.id]);
                     if (channel[0].length > 0) {
                         var message = await connection.promise().query('select * from game_settings where setting_name = "ticket_message" and guild_id = ?', [interaction.guild.id]);
-                        var categories = await connection.promise().query('select * from tickets_categories where guildid = ?', [interaction.guild.id, name]);
+                        var categories = await connection.promise().query('select * from tickets_categories where guildid = ?', [interaction.guild.id]);
                         if (categories[0].length > 25) {
                             await connection.promise().query('delete from tickets_categories where guildid = ? and name = ?', [interaction.guild.id, name]);
                             interaction.reply({ content: 'You have more than 25 ticket categories. Please delete some and try adding this again.', ephemeral: true });
                         } else {
                             var channel = await client.channels.cache.get(channel[0][0].setting_value);
+                            var categoriesKeyValues = [];
                             const embeddedMessage = new EmbedBuilder()
                                 .setColor(0x770000)
                                 .setTitle('Ticket System')
