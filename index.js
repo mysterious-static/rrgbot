@@ -2873,7 +2873,7 @@ var main_timer_loop = async () => {
     // Lock Expired Whispers
     var whispers = await connection.promise().query('select * from whispers where locked = 0 and expiration < ?', [now]);
     if (whispers[0].length > 0) {
-        for (const thisWhisper of whispers) {
+        for (const thisWhisper of whispers[0]) {
             var channel = await client.channels.fetch(thisWhisper.channel_id);
             await channel.send('Whisper closed!');
             //await channel.lockPermissions(); // Sync permissions with category
