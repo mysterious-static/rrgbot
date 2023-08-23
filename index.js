@@ -397,7 +397,7 @@ client.on('ready', async () => {
         addwhisper.toJSON(),
         populatewhisper.toJSON()
     ]);
-    client.user.setActivity("Infinite Magic Glories: Revolutionary Redux");
+    client.user.setActivity("Persona L Epiphany");
 });
 
 client.on('guildCreate', async (guild) => {
