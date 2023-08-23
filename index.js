@@ -592,7 +592,7 @@ client.on('interactionCreate', async (interaction) => {
                     var characterSelectComponent;
                     if (characters[0].length <= 25) {
                         charactersAlphabetical = false;
-                        var charactersKeyValues = [{ label: 'Select a characters', value: '0' }];
+                        var charactersKeyValues = [{ label: 'Select a character', value: '0' }];
                         for (const character of characters[0]) {
                             var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
                             charactersKeyValues.push(thisCharacterKeyValue);
@@ -635,6 +635,7 @@ client.on('interactionCreate', async (interaction) => {
                                 channel.permissionOverwrites.create(user, { ViewChannel: true, SendMessages: true });
                             }
                             channel.send(`${character_information[0][0].name} has joined the whisper!`);
+                            await connection.promise().query('insert into whispers_characters (whisper_id, character_id) values (?, ?)', [whisper[0][0].id, characterSelected]);
                             interaction.editReply({ content: 'Character added to whisper.', components: [] });
                             await collector.stop();
                         }
