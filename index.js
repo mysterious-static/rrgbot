@@ -582,6 +582,7 @@ client.on('interactionCreate', async (interaction) => {
                     for (const thisCharacter of existing_whisper_characters[0]) {
                         character_ids.push(thisCharacter.character_id);
                     }
+                    console.log(character_ids);
                     var characters = await connection.promise().query('select * from characters where guild_id = ? and id not in (?)', [interaction.guildId, character_ids.join(',')]);
                 } else {
                     var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
