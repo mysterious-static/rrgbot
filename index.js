@@ -576,7 +576,16 @@ client.on('interactionCreate', async (interaction) => {
             var channel = interaction.options.getChannel('whisperchannel');
             var whisper = await connection.promise().query('select * from whispers where channel_id = ?', [channel.id]);
             if (whisper[0].length > 0) {
-                var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
+                var existing_whisper_characters = await connection.promise.query('select * from whispers_characters where whisper_id = ?', [whisper[0][0].id]);
+                if (existing_whisper_characters[0].length > 0) {
+                    var character_ids = [];
+                    for (const thisCharacter of existing_whisper_characters[0]) {
+                        character_ids.push(thisCharacter.id);
+                    }
+                    var characters = await connection.promise().query('select * from characters where guild_id = ? and id not in (?)', [interaction.guildId, character_ids]);
+                } else {
+                    var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
+                }
                 if (characters[0].length > 0) {
                     var charactersAlphabetical;
                     var characterSelectComponent;
