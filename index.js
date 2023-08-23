@@ -2879,7 +2879,7 @@ var main_timer_loop = async () => {
             //await channel.lockPermissions(); // Sync permissions with category
             var users = await connection.promise().query('select p.user_id from whispers_characters wc join players_characters pc on wc.character_id = pc.character_id join players p on pc.player_id = p.id where whisper_id = ?', thisWhisper.id);
             if (users[0].length > 0) {
-                for (const thisUser of users) {
+                for (const thisUser of users[0]) {
                     var user = await client.users.fetch(thisUser.user_id);
                     channel.permissionOverwrites.edit(user, { SendMessages: false });
                 }
