@@ -546,7 +546,7 @@ client.on('interactionCreate', async (interaction) => {
                 interaction.reply({ content: 'Looks like this channel isn\'t a valid location. Try adding it via `/addlocation`. :revolving_hearts:', ephemeral: true });
             }
         } else if (interaction.commandName == 'whispercategory') {
-            var channel = interaction.getChannel('category');
+            var channel = interaction.options.getChannel('category');
             if (channel.type === 'GUILD_CATEGORY') {
                 await connection.promise().query('replace into game_settings (setting_name, setting_value, guild_id) values (?, ?, ?)', ['whisper_category', channel.id, interaction.guildId]);
                 interaction.reply({ content: "Set the whisper category for this game.", ephemeral: true });
