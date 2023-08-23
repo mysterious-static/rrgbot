@@ -359,7 +359,7 @@ var ticketchannel = new SlashCommandBuilder().setName('ticketchannel')
         option.setName('channel')
             .setDescription('Channel where you want the message')
             .setRequired(true))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator); // server_settings
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator); 
 
 var auditchannel = new SlashCommandBuilder().setName('auditchannel')
     .setDescription('Where the audit messages / notifications for opening and closing tickets will be.')
@@ -367,7 +367,7 @@ var auditchannel = new SlashCommandBuilder().setName('auditchannel')
         option.setName('channel')
             .setDescription('Channel where you want audit messages')
             .setRequired(true))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator); // server_settings
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator); 
 
 var setcategorygroup = new SlashCommandBuilder().setName('setcategorygroup')
     .setDescription('What role or roles should be notified when a  ticket category')
@@ -2018,9 +2018,9 @@ client.on('interactionCreate', async (interaction) => {
                     interaction.reply({ content: 'You already have a category with that name.', ephemeral: true });
                 } else {
                     await connection.promise().query('insert into tickets_categories (guildid, name) values (?, ?)', [interaction.guild.id, name]);
-                    var channel = await connection.promise().query('select * from server_settings where option_name = "ticket_channel" and server_id = ?', [interaction.guild.id]);
+                    var channel = await connection.promise().query('select * from game_settings where setting_name = "ticket_channel" and guild_id = ?', [interaction.guild.id]);
                     if (channel[0].length > 0) {
-                        var message = await connection.promise().query('select * from server_settings where option_name = "ticket_message" and server_id = ?', [interaction.guild.id]);
+                        var message = await connection.promise().query('select * from game_settings where setting_name = "ticket_message" and guild_id = ?', [interaction.guild.id]);
                         var categories = await connection.promise().query('select * from tickets_categories where guildid = ?', [interaction.guild.id, name]);
                         if (categories[0].length > 25) {
                             await connection.promise().query('delete from tickets_categories where guildid = ? and name = ?', [interaction.guild.id, name]);
@@ -2044,18 +2044,18 @@ client.on('interactionCreate', async (interaction) => {
                     }
                 }
             } else if (interaction.commandName === 'ticketchannel') {
-                var audit_channel = await connection.promise().query('select * from server_settings where option_name = "audit_channel" and server_id = ?', [interaction.guild.id]);
+                var audit_channel = await connection.promise().query('select * from game_settings where setting_name = "audit_channel" and guild_id = ?', [interaction.guild.id]);
                 if (audit_channel[0].length > 0) {
                     var categories = await connection.promise().query('select * from tickets_categories where guildid = ?', [interaction.guild.id]);
                     if (categories[0].length > 0) {
-                        var existing_channel = await connection.promise().query('select * from server_settings where option_name = "ticket_channel" and server_id = ?', [interaction.guild.id]);
+                        var existing_channel = await connection.promise().query('select * from game_settings where setting_name = "ticket_channel" and guild_id = ?', [interaction.guild.id]);
                         if (existing_channel[0].length > 0) {
-                            var channel = await client.channels.cache.get(channel[0][0].value);
-                            var existing_message = await connection.promise().query('select * from server_settings where option_name = "ticket_message" and server_id = ?', [interaction.guild.id]);
-                            var message = await channel.messages.fetch(message[0][0].value).then(msg => msg.delete());
-                            await connection.promise().query('update server_settings set value = ? where option_name = "ticket_channel" and server_id = ?', [interaction.options.getChannel('channel').id, interaction.guild.id]);
+                            var channel = await client.channels.cache.get(channel[0][0].setting_value);
+                            var existing_message = await connection.promise().query('select * from game_settings where setting_name = "ticket_message" and guild_id = ?', [interaction.guild.id]);
+                            var message = await channel.messages.fetch(message[0][0].setting_value).then(msg => msg.delete());
+                            await connection.promise().query('update game_settings set setting_value = ? where setting_name = "ticket_channel" and guild_id = ?', [interaction.options.getChannel('channel').id, interaction.guild.id]);
                         } else {
-                            await connection.promise().query('insert into server_settings (option_name, server_id, value) values (?, ?, ?)', ["ticket_channel", interaction.guild.id, interaction.options.getChannel('channel').id]) // really shouldnt we consolidate these into an replace into or whatever
+                            await connection.promise().query('insert into game_settings (setting_name, guild_id, setting_value) values (?, ?, ?)', ["ticket_channel", interaction.guild.id, interaction.options.getChannel('channel').id]) // really shouldnt we consolidate these into an replace into or whatever
                         }
                         const embeddedMessage = new EmbedBuilder()
                             .setColor(0x770000)
@@ -2068,7 +2068,7 @@ client.on('interactionCreate', async (interaction) => {
                         const categorySelectComponent = new StringSelectMenuBuilder().setOptions(categoriesKeyValues).setCustomId('TicketCategorySelector').setMinValues(1).setMaxValues(1);
                         var categorySelectRow = new ActionRowBuilder().addComponents(categorySelectComponent);
                         var message = await interaction.options.getChannel('channel').send({ embeds: [embeddedMessage], components: [categorySelectRow] });
-                        await connection.promise().query('insert into server_settings (option_name, server_id, value) values (?, ?, ?)', ["ticket_message", interaction.guild.id, message.id]);
+                        await connection.promise().query('insert into game_settings (setting_name, guild_id, setting_value) values (?, ?, ?)', ["ticket_message", interaction.guild.id, message.id]);
                         interaction.reply({ content: 'Assigned ticket channel and sent message.', ephemeral: true });
                     } else {
                         interaction.reply({ content: 'Please create at least one ticket category first, using `/addticketcategory`.', ephemeral: true })
@@ -2077,7 +2077,7 @@ client.on('interactionCreate', async (interaction) => {
                     interaction.reply({ content: 'Please create an audit channel first, using `/auditchannel`.', ephemeral: true });
                 }
             } else if (interaction.commandName === 'auditchannel') {
-                await connection.promise().query('replace into server_settings (server_id, option_name, value) values (?, ?, ?)', [interaction.guild.id, "audit_channel", interaction.options.getChannel('channel').id]);
+                await connection.promise().query('replace into game_settings (guild_id, setting_name, setting_value) values (?, ?, ?)', [interaction.guild.id, "audit_channel", interaction.options.getChannel('channel').id]);
                 interaction.reply({ content: 'Audit channel created or updated.', ephemeral: true });
             } else if (interaction.commandName === 'setcategorygroup') {
                 var categories = await connection.promise().query('select * from tickets_categories where guildid = ?', [interaction.guild.id]);
@@ -2126,7 +2126,7 @@ client.on('interactionCreate', async (interaction) => {
                             // Archive thread
                             await connection.promise().query('update tickets set uid_close = ? where thread_id = ?', [interaction.member.id, interaction.channel.id]);
                             // Create embed
-                            var settingvalue = await connection.promise().query('select * from server_settings where server_id = ? and option_name = ?', [interaction.guild.id, 'audit_channel']);
+                            var settingvalue = await connection.promise().query('select * from game_settings where guild_id = ? and setting_name = ?', [interaction.guild.id, 'audit_channel']);
                             var audit_channel = await client.channels.cache.get(settingvalue[0][0].value);
                             var embed = new EmbedBuilder()
                                 .setTitle('Ticket closed!')
@@ -2834,7 +2834,7 @@ client.on('interactionCreate', async (interaction) => {
                 await thread.send(description);
                 await thread.send('<@&' + role[0][0].role_id + '>');
                 await submitted.reply({ content: 'Ticket created, check here: <#' + thread.id + '>', ephemeral: true });
-                var settingvalue = await connection.promise().query('select * from server_settings where server_id = ? and option_name = ?', [interaction.guild.id, 'audit_channel']);
+                var settingvalue = await connection.promise().query('select * from game_settings where guild_id = ? and setting_name = ?', [interaction.guild.id, 'audit_channel']);
                 var audit_channel = await client.channels.cache.get(settingvalue[0][0].value);
                 var embed = new EmbedBuilder()
                     .setTitle('Ticket created!')
