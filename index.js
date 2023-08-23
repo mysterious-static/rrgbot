@@ -574,6 +574,7 @@ client.on('interactionCreate', async (interaction) => {
             //create channel and log in db
         } else if (interaction.commandName == 'populatewhisper') {
             var channel = interaction.options.getChannel('whisperchannel');
+            console.log(channel.id);
             var whisper = await connection.promise().query('select * from whispers where channel_id = ?', [channel.id]);
             if (whisper[0][0].length > 0) {
                 var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
