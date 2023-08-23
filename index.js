@@ -1670,7 +1670,7 @@ client.on('interactionCreate', async (interaction) => {
                         const webhooks = await webhook_channel.fetchWebhooks();
                         var webhook = webhooks.find(wh => wh.token);
                         if (!webhook) {
-                            var webhook = await webhook_channel.createWebhook('rrgbot');
+                            var webhook = await webhook_channel.createWebhook({name: 'rrgbot'});
                         }
                         if (interaction.channel.type == ChannelType.GuildPrivateThread || interaction.channel.type == ChannelType.GuildPublicThread) {
                             var attachment = interaction.options.getAttachment('attachment');
