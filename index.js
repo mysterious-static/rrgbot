@@ -625,7 +625,7 @@ client.on('interactionCreate', async (interaction) => {
                                 channel.permissionOverwrites.create(user, { ViewChannel: true, SendMessages: true });
                             }
                             channel.send(`${character_information[0][0].name} has joined the whisper!`);
-                            interaction.reply({ content: 'Character added to whisper.', ephemeral: true });
+                            interaction.editReply({ content: 'Character added to whisper.', components: [] });
                             await collector.stop();
                         }
                     });
