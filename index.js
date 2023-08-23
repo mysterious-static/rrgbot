@@ -281,7 +281,7 @@ var whispercategory = new SlashCommandBuilder().setName('whispercategory')
     .setDescription('Set a category for whisper creation.')
     .addChannelOption(option =>
         option.setName('category')
-            .setDescription('The channel category for whispers.')
+            .setDescription('The whisper category: players shouldn\'t be able to view by default')
             .setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
@@ -570,7 +570,68 @@ client.on('interactionCreate', async (interaction) => {
             }
             //create channel and log in db
         } else if (interaction.commandName == 'populatewhisper') {
-            //add character to db and adjust permissions for anyone with that character access
+            var channel = interaction.options.getChannel('whisperchannel');
+            var whisper = await connection.promise().query('select * from whispers where channel_id = ?', [channel.id]);
+            if (whisper[0][0].length > 0) {
+                var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
+                if (characters[0].length > 0) {
+                    var charactersAlphabetical;
+                    var characterSelectComponent;
+                    if (characters[0].length <= 25) {
+                        charactersAlphabetical = false;
+                        var charactersKeyValues = [{ label: 'Select a characters', value: '0' }];
+                        for (const character of characters[0]) {
+                            var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
+                            charactersKeyValues.push(thisCharacterKeyValue);
+                        }
+                        characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('WhisperPopCharacterSelector').setMinValues(1).setMaxValues(1);
+                    } else {
+                        charactersAlphabetical = true;
+                        var characters = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
+                        var charactersKeyValues = [];
+                        for (const character of characters) {
+                            var thisCharacterKeyValue = { label: character, value: character }
+                            charactersKeyValues.push(thisCharacterKeyValue);
+                        }
+                        characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('WhisperPopAlphabetSelector').setMinValues(1).setMaxValues(1);
+                    }
+                    var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                    var message = await interaction.reply({ content: 'Please select the following options:', components: [characterSelectRow], ephemeral: true });
+                    var collector = message.createMessageComponentCollector();
+                    collector.on('collect', async (interaction_second) => {
+                        var characterSelected = interaction_second.values[0];
+                        if (interaction_second.customId == 'WhisperPopAlphabetSelector') {
+                            var characters = await connection.promise().query('select * from characters where guild_id = ? and upper(character_name) like "?%"', [interaction.guildId, characterSelected]);
+                            if (characters[0].length > 0) {
+                                var charactersKeyValues = [{ label: 'Select a character', value: '0' }];
+                                for (const character of characters[0]) {
+                                    var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
+                                    charactersKeyValues.push(thisCharacterKeyValue);
+                                }
+                                var characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('WhisperPopCharacterSelector').setMinValues(1).setMaxValues(1);
+                                var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                                interaction.update({ components: [characterSelectRow] });
+                            } else {
+                                interaction.update({ content: 'No characters with this first letter', components: [] });
+                            }
+                        } else {
+                            var character_information = await connection.promise().query('select * from characters where id = ?', [characterSelected]);
+                            var players = await connection.promise().query('select pc.*, p.user_id from players_characters pc join players p on pc.player_id = p.id where pc.character_id = ?', [characterSelected]);
+                            for (const player of players[0]) {
+                                channel.permissionOverwrites.create(player.user_id, { ViewChannel: true, SendMessages: true });
+                            }
+                            channel.send(`${character_information[0][0].name} has joined the whisper!`);
+                            interaction.reply({ content: 'Character added to whisper.', ephemeral: true });
+                            await collector.stop();
+                        }
+                    });
+                } else {
+                    await interaction.reply({ content: 'There don\'t seem to be any characters, have you made any?', ephemeral: true });
+                }
+            } else {
+                await interaction.reply({ content: 'This channel doesn\'t seem to be a registered whisper.', ephemeral: true });
+            }
+
         } else if (interaction.commandName == 'playercreate') {
             var user = interaction.options.getUser('user');
             var playerName = interaction.options.getString('player_name');
@@ -2504,3 +2565,21 @@ client.on('interactionCreate', async (interaction) => {
         }
     }
 });
+
+/* MAIN TIMER LOOP */
+var main_timer_loop = async () => {
+    var now = Date.now();
+    var queryData = [(now / 1000) - 10800]; //todo: plus/minus fifteen minutes
+    // Lock Expired Whispers
+    var whispers = await connection.promise().query('select * from whispers where locked = 0');
+    if (whispers[0].length > 0) {
+        for (const thisWhisper of whispers) {
+            var channel = await client.channels.fetch(thisWhisper.channel_id)
+            await channel.lockPermissions(); // Sync permissions with category
+            await connection.promise().query('update whispers set locked = 1 where channel_id = ?', thisWhisper.channel_id);
+        }
+    }
+
+}
+
+var interval = setInterval(main_timer_loop, 1000 * 30); // Run the main timer loop once every 30 seconds, for now.
