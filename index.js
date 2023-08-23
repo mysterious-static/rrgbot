@@ -1,6 +1,6 @@
 /*jslint es6*/
 const Discord = require('discord.js');
-const { Permissions, ActionRowBuilder, ButtonBuilder, EmbedBuilder, TextInputComponent, StringSelectMenuBuilder, TextInputStyle, Modal, PermissionFlagsBits, GatewayIntentBits, SlashCommandBuilder, ButtonStyle } = require('discord.js')
+const { Permissions, ChannelType, ActionRowBuilder, ButtonBuilder, EmbedBuilder, TextInputComponent, StringSelectMenuBuilder, TextInputStyle, Modal, PermissionFlagsBits, GatewayIntentBits, SlashCommandBuilder, ButtonStyle } = require('discord.js')
 const client = new Discord.Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildWebhooks, GatewayIntentBits.GuildMessageReactions, GatewayIntentBits.GuildEmojisAndStickers, GatewayIntentBits.GuildMembers] });
 var mysql = require('mysql2');
 var connection = mysql.createConnection({
@@ -548,7 +548,7 @@ client.on('interactionCreate', async (interaction) => {
         } else if (interaction.commandName == 'whispercategory') {
             var channel = interaction.options.getChannel('category');
             console.log(channel);
-            if (channel.type === 'GUILD_CATEGORY') {
+            if (channel.type === ChannelType.GuildCategory) {
                 await connection.promise().query('replace into game_settings (setting_name, setting_value, guild_id) values (?, ?, ?)', ['whisper_category', channel.id, interaction.guildId]);
                 interaction.reply({ content: "Set the whisper category for this game.", ephemeral: true });
             } else {
@@ -562,7 +562,7 @@ client.on('interactionCreate', async (interaction) => {
             if (whisper_category[0].length > 0) {
                 var timest = new Date.now() / 1000;
                 var whisper_channel = await interaction.guild.channels.create(`whisper-${timest}`, {
-                    type: "GUILD_TEXT", parent: whisper_category[0][0].setting_value
+                    type: ChannelType.GuildText, parent: whisper_category[0][0].setting_value
                 });
                 await connection.promise().query('insert into whispers (guild_id, channel_id, expiration) values (?, ?, ?)', [interaction.guildId, whisper_channel.id, timest + (interaction.options.getInteger(duration) * 3600)]);
                 interaction.reply({ content: `Whisper created: ${whisper_channel}. Add characters using \`/populatewhisper\`.`, ephemeral: true });
