@@ -2886,7 +2886,7 @@ var main_timer_loop = async () => {
                 }
             }
             await connection.promise().query('update whispers set locked = 1 where channel_id = ?', thisWhisper.channel_id);
-            var settingvalue = await connection.promise().query('select * from game_settings where guild_id = ? and setting_name = ?', [interaction.guild.id, 'audit_channel']);
+            var settingvalue = await connection.promise().query('select * from game_settings where guild_id = ? and setting_name = ?', [channel.guild.id, 'audit_channel']);
             if (settingvalue[0].length > 0) {
                 var audit_channel = await client.channels.cache.get(settingvalue[0][0].setting_value);
                 var embed = new EmbedBuilder()
