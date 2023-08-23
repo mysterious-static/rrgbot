@@ -561,8 +561,10 @@ client.on('interactionCreate', async (interaction) => {
             var whisper_category = await connection.promise().query('select setting_value from game_settings where guild_id = ? and setting_name = ?', [interaction.guildId, 'whisper_category']);
             if (whisper_category[0].length > 0) {
                 var timest = Date.now() / 1000;
-                var whisper_channel = await interaction.guild.channels.create(`whisper-${timest}`, {
-                    type: ChannelType.GuildText, parent: whisper_category[0][0].setting_value
+                var whisper_channel = await interaction.guild.channels.create({
+                    name: `whisper-${timest}`,
+                    type: ChannelType.GuildText,
+                    parent: whisper_category[0][0].setting_value
                 });
                 await connection.promise().query('insert into whispers (guild_id, channel_id, expiration) values (?, ?, ?)', [interaction.guildId, whisper_channel.id, timest + (interaction.options.getInteger(duration) * 3600)]);
                 interaction.reply({ content: `Whisper created: ${whisper_channel}. Add characters using \`/populatewhisper\`.`, ephemeral: true });
