@@ -566,7 +566,7 @@ client.on('interactionCreate', async (interaction) => {
                     type: ChannelType.GuildText,
                     parent: whisper_category[0][0].setting_value
                 });
-                await connection.promise().query('insert into whispers (guild_id, channel_id, expiration) values (?, ?, ?)', [interaction.guildId, whisper_channel.id, timest + (interaction.options.getInteger(duration) * 3600)]);
+                await connection.promise().query('insert into whispers (guild_id, channel_id, expiration) values (?, ?, ?)', [interaction.guildId, whisper_channel.id, timest + (interaction.options.getInteger('duration') * 3600)]);
                 interaction.reply({ content: `Whisper created: ${whisper_channel}. Add characters using \`/populatewhisper\`.`, ephemeral: true });
             } else {
                 interaction.reply({ content: "Create a whisper category first using `/whispercategory`.", ephemeral: true });
