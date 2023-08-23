@@ -301,6 +301,17 @@ var populatewhisper = new SlashCommandBuilder().setName('populatewhisper')
             .setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
+var sendas = new SlashCommandBuilder().setName('sendas')
+    .setDescription('Send message as a character.')
+    .addStringOption(option =>
+        option.setName('message')
+            .setDescription('The message you wish to send.'))
+    .addAttachmentOption(option =>
+        option.setName('image')
+            .setDescription('Optional image to attach to the message.')
+    )
+
+
 // Characters Per Player (switching system // bot echoes) - TODO
 // For now, playercreate should create a default character automatically in a separate table with the specified player_name.
 
@@ -443,7 +454,8 @@ client.on('ready', async () => {
         auditchannel.toJSON(),
         setcategorygroup.toJSON(),
         closeticket.toJSON(),
-        removeticketcategory.toJSON()
+        removeticketcategory.toJSON(),
+        sendas.toJSON()
     ]);
     client.user.setActivity("Persona L Epiphany");
 });
@@ -1592,6 +1604,94 @@ client.on('interactionCreate', async (interaction) => {
                 });
             } else {
                 await interaction.reply({ content: 'There aren\'t any eligible stats for this! Please double-check and ensure that you have a stat that\'s not assigned to a special function.', ephemeral: true });
+            }
+        } else if (interaction.commandName == 'sendas') {
+            var parrot_text = interaction.options.getString('message');
+            if (interaction.member.hasPermission('ADMINISTRATOR')) {
+                var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
+            } else {
+                var characters = await connection.promise().query('select c.* from players p join players_characters pc on p.id = pc.player_id join charactesr c on pc.character_id = c.id where p.user_id = ? and p.guild_id = ?', [interaction.user.id, interaction.guildId]);
+                // Check players_characters table for available characters
+            }
+            if (characters[0].length > 0) {
+                var charactersAlphabetical;
+                var characterSelectComponent;
+                if (characters[0].length <= 25) {
+                    charactersAlphabetical = false;
+                    var charactersKeyValues = [{ label: 'Select a characters', value: '0' }];
+                    for (const character of characters[0]) {
+                        var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
+                        charactersKeyValues.push(thisCharacterKeyValue);
+                    }
+                    characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('SendAsCharacterSelector').setMinValues(1).setMaxValues(1);
+                } else {
+                    charactersAlphabetical = true;
+                    var characters = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
+                    var charactersKeyValues = [];
+                    for (const character of characters) {
+                        var thisCharacterKeyValue = { label: character, value: character }
+                        charactersKeyValues.push(thisCharacterKeyValue);
+                    }
+                    characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('SendAsAlphabetSelector').setMinValues(1).setMaxValues(1);
+                }
+
+                var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                var message = await interaction.reply({ content: 'Please select the following options:', components: [characterSelectRow], ephemeral: true });
+                var collector = message.createMessageComponentCollector();
+                collector.on('collect', async (interaction_second) => {
+                    var characterSelected = interaction_second.values[0];
+                    if (interaction_second.customId == 'SendAsAlphabetSelector') {
+                        if (interaction.member.hasPermission('ADMINISTRATOR')) {
+                            var characters = await connection.promise().query('select * from characters where guild_id = ? and upper(character_name) like "?%"', [interaction.guildId, characterSelected]);
+                        } else {
+                            var characters = await connection.promise().query('select c.* from players p join players_characters pc on p.id = pc.player_id join charactesr c on pc.character_id = c.id where p.user_id = ? and p.guild_id = ? and upper(c.character_name) like "?%"', [interaction.user.id, interaction.guildId, characterSelected]);
+                        }
+                        if (characters[0].length > 0) {
+                            var charactersKeyValues = [{ label: 'Select a characters', value: '0' }];
+                            for (const character of characters[0]) {
+                                var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
+                                charactersKeyValues.push(thisCharacterKeyValue);
+                            }
+                            var characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('SendAsCharacterSelector').setMinValues(1).setMaxValues(1);
+                            var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                            interaction.update({ components: [characterSelectRow] });
+                        } else {
+                            interaction.update({ content: 'No characters with this first letter', components: [] });
+                        }
+                    } else {
+                        var character_information = await connection.promise().query('select * from characters where id = ?', [characterSelected]);
+
+
+                        if (interaction.channel.type == ChannelType.GuildPrivateThread || interaction.channel.type == ChannelType.GuildPublicThread) {
+                            var webhook_channel = interaction.channel.parent;
+                        } else {
+                            var webhook_channel = interaction.channel;
+                        }
+                        const webhooks = await webhook_channel.fetchWebhooks();
+                        var webhook = webhooks.find(wh => wh.token);
+                        if (!webhook) {
+                            var webhook = await webhook_channel.createWebhook('rrgbot');
+                        }
+                        if (interaction.channel.type == ChannelType.GuildPrivateThread || interaction.channel.type == ChannelType.GuildPublicThread) {
+                            var attachment = interaction.options.getAttachment('attachment');
+                            if (attachment) {
+                                await webhook.send({ content: parrot_text, username: character_information[0][0].character_name, avatarURL: npc_info[0][0].avatar_url, threadId: interaction.channel.id, files: attachment });
+                            } else {
+                                await webhook.send({ content: parrot_text, username: character_information[0][0].character_name, avatarURL: npc_info[0][0].avatar_url, threadId: interaction.channel.id });
+                            }
+                        } else {
+                            var attachment = interaction.options.getAttachment('attachment');
+                            if (attachment) {
+                                await webhook.send({ content: parrot_text, username: npc_info[0][0].name, avatarURL: npc_info[0][0].avatar_url, files: attachment });
+                            } else {
+                                await webhook.send({ content: parrot_text, username: npc_info[0][0].name, avatarURL: npc_info[0][0].avatar_url });
+                            }
+                        }
+                        interaction.reply({ content: 'Success', ephemeral: true });
+                    }
+                });
+            } else {
+                interaction.reply({ content: "No characters appear to be available to you.", ephemeral: true });
             }
         }
 
