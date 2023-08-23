@@ -547,6 +547,7 @@ client.on('interactionCreate', async (interaction) => {
             }
         } else if (interaction.commandName == 'whispercategory') {
             var channel = interaction.options.getChannel('category');
+            console.log(channel);
             if (channel.type === 'GUILD_CATEGORY') {
                 await connection.promise().query('replace into game_settings (setting_name, setting_value, guild_id) values (?, ?, ?)', ['whisper_category', channel.id, interaction.guildId]);
                 interaction.reply({ content: "Set the whisper category for this game.", ephemeral: true });
