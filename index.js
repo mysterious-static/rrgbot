@@ -359,7 +359,7 @@ var ticketchannel = new SlashCommandBuilder().setName('ticketchannel')
         option.setName('channel')
             .setDescription('Channel where you want the message')
             .setRequired(true))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator); 
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 var auditchannel = new SlashCommandBuilder().setName('auditchannel')
     .setDescription('Where the audit messages / notifications for opening and closing tickets will be.')
@@ -367,7 +367,7 @@ var auditchannel = new SlashCommandBuilder().setName('auditchannel')
         option.setName('channel')
             .setDescription('Channel where you want audit messages')
             .setRequired(true))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator); 
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 var setcategorygroup = new SlashCommandBuilder().setName('setcategorygroup')
     .setDescription('What role or roles should be notified when a  ticket category')
@@ -2832,7 +2832,9 @@ client.on('interactionCreate', async (interaction) => {
                 var category = await connection.promise().query('select * from tickets_categories where id = ?', [category_id]);
                 await thread.send(`**${title}**`);
                 await thread.send(description);
-                await thread.send('<@&' + role[0][0].role_id + '>');
+                if (role[0].length > 0) {
+                    await thread.send('<@&' + role[0][0].role_id + '>');
+                }
                 await submitted.reply({ content: 'Ticket created, check here: <#' + thread.id + '>', ephemeral: true });
                 var settingvalue = await connection.promise().query('select * from game_settings where guild_id = ? and setting_name = ?', [interaction.guild.id, 'audit_channel']);
                 var audit_channel = await client.channels.cache.get(settingvalue[0][0].value);
