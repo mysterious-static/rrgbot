@@ -2877,7 +2877,8 @@ var main_timer_loop = async () => {
             var channel = await client.channels.fetch(thisWhisper.channel_id);
             await channel.send('Whisper closed!');
             //await channel.lockPermissions(); // Sync permissions with category
-            var users = await connection.promise().query('select p.user_id from whispers_characters wc join players_characters pc on wc.character_id = pc.character_id join players p on pc.player_id = p.id where whisper_id = ?', thisWhisper.id);
+            var users = await connection.promise().query('select p.user_id from whispers_characters wc join players_characters pc on wc.character_id = pc.character_id join players p on pc.player_id = p.id where whisper_id = ?', [thisWhisper.id]);
+            var characters = await connection.promise().query('select distinct c.name from whispers_characters wc join characters c on wc.character_id = c.id where whisper_id = ?', [thisWhisper.id]);
             if (users[0].length > 0) {
                 for (const thisUser of users[0]) {
                     var user = await client.users.fetch(thisUser.user_id);
@@ -2885,6 +2886,28 @@ var main_timer_loop = async () => {
                 }
             }
             await connection.promise().query('update whispers set locked = 1 where channel_id = ?', thisWhisper.channel_id);
+            var settingvalue = await connection.promise().query('select * from game_settings where guild_id = ? and setting_name = ?', [interaction.guild.id, 'audit_channel']);
+            if (settingvalue[0].length > 0) {
+                var audit_channel = await client.channels.cache.get(settingvalue[0][0].setting_value);
+                var embed = new EmbedBuilder()
+                    .setTitle('Whisper closed!')
+                    .setDescription('Auto-close notification for whisper ID ' + thisWhisper.id)
+                    .addFields(
+                        {
+                            name: 'Channel link',
+                            value: channel.toString(),
+                            inline: true
+                        },
+                        {
+                            name: 'Whisper members',
+                            value: characters[0].map(a => a.name).join('\n'),
+                            inline: true
+                        }
+                    )
+                    .setTimestamp();
+                audit_channel.send({ embeds: [embed] });
+            }
+
         }
     }
 
