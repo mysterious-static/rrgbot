@@ -305,7 +305,8 @@ var sendas = new SlashCommandBuilder().setName('sendas')
     .setDescription('Send message as a character.')
     .addStringOption(option =>
         option.setName('message')
-            .setDescription('The message you wish to send.'))
+            .setDescription('The message you wish to send.')
+            .setRequired(true))
     .addAttachmentOption(option =>
         option.setName('image')
             .setDescription('Optional image to attach to the message.')
