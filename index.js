@@ -618,7 +618,8 @@ client.on('interactionCreate', async (interaction) => {
                             var character_information = await connection.promise().query('select * from characters where id = ?', [characterSelected]);
                             var players = await connection.promise().query('select pc.*, p.user_id from players_characters pc join players p on pc.player_id = p.id where pc.character_id = ?', [characterSelected]);
                             for (const player of players[0]) {
-                                channel.permissionOverwrites.create(player.user_id, { ViewChannel: true, SendMessages: true });
+                                var user = await client.users.fetch(player.user_id);
+                                channel.permissionOverwrites.create(user, { ViewChannel: true, SendMessages: true });
                             }
                             channel.send(`${character_information[0][0].name} has joined the whisper!`);
                             interaction.reply({ content: 'Character added to whisper.', ephemeral: true });
@@ -2568,15 +2569,25 @@ client.on('interactionCreate', async (interaction) => {
 
 /* MAIN TIMER LOOP */
 var main_timer_loop = async () => {
-    var now = Date.now();
+    var now = Date.now() / 1000;
     var queryData = [(now / 1000) - 10800]; //todo: plus/minus fifteen minutes
     // Lock Expired Whispers
     var whispers = await connection.promise().query('select * from whispers where locked = 0');
     if (whispers[0].length > 0) {
         for (const thisWhisper of whispers) {
-            var channel = await client.channels.fetch(thisWhisper.channel_id)
-            await channel.lockPermissions(); // Sync permissions with category
-            await connection.promise().query('update whispers set locked = 1 where channel_id = ?', thisWhisper.channel_id);
+            if (thisWhisper.expiration < now) {
+                var channel = await client.channels.fetch(thisWhisper.channel_id);
+                await channel.send('Whisper closed!');
+                //await channel.lockPermissions(); // Sync permissions with category
+                var users = await connection.promise.query('select p.user_id from whispers_characters wc join players_characters pc on wc.character_id = pc.character_id join players p on pc.player_id = p.id where whisper_id = ?', thisWhisper.id);
+                if(users[0].length > 0) {
+                    for (const thisUser of users) {
+                        var user = await client.users.fetch(thisUser.user_id);
+                        channel.permissionOverwrites.edit(user, {SendMessages: false});
+                    }
+                }
+                await connection.promise().query('update whispers set locked = 1 where channel_id = ?', thisWhisper.channel_id);
+            }
         }
     }
 
