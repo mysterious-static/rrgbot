@@ -2036,7 +2036,7 @@ client.on('interactionCreate', async (interaction) => {
                             }
                             const categorySelectComponent = new StringSelectMenuBuilder().setOptions(categoriesKeyValues).setCustomId('TicketCategorySelector').setMinValues(1).setMaxValues(1);
                             var categorySelectRow = new ActionRowBuilder().addComponents(categorySelectComponent);
-                            var message = await channel.messages.fetch(message[0][0].value).then(msg => msg.edit({ embeds: [embeddedMessage], components: [categorySelectRow] }));
+                            var message = await channel.messages.fetch(message[0][0].setting_value).then(msg => msg.edit({ embeds: [embeddedMessage], components: [categorySelectRow] }));
                             interaction.reply({ content: 'Created category.', ephemeral: true });
                         }
                     } else {
@@ -2837,7 +2837,7 @@ client.on('interactionCreate', async (interaction) => {
                 }
                 await submitted.reply({ content: 'Ticket created, check here: <#' + thread.id + '>', ephemeral: true });
                 var settingvalue = await connection.promise().query('select * from game_settings where guild_id = ? and setting_name = ?', [interaction.guild.id, 'audit_channel']);
-                var audit_channel = await client.channels.cache.get(settingvalue[0][0].value);
+                var audit_channel = await client.channels.cache.get(settingvalue[0][0].setting_value);
                 var embed = new EmbedBuilder()
                     .setTitle('Ticket created!')
                     .setDescription(title)
