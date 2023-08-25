@@ -120,6 +120,16 @@ var charactercreate = new SlashCommandBuilder().setName('charactercreate')
         option.setName('description')
             .setDescription('The character description.')
             .setRequired(true))
+    .addStringOption(option =>
+        option.setName('avatar_url')
+            .setDescription('The URL to the character avatar, must be accessible by the bot'))
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+var characteravatar = new SlashCommandBuilder().setName('characteravatar')
+    .setDescription('Set a character avatar URL.')
+    .addStringOption(option =>
+        option.setName('avatar_url')
+            .setDescription('The URL to the character avatar, must be accessible by the bot'))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 var assigncharacter = new SlashCommandBuilder().setName('assigncharacter')
@@ -425,6 +435,7 @@ client.on('ready', async () => {
         sheet.toJSON(),
         assigncharacter.toJSON(),
         charactercreate.toJSON(),
+        characteravatar.toJSON(),
         addcharacterarchetype.toJSON(),
         assignarchetype.toJSON(),
         addstat.toJSON(),
@@ -627,6 +638,7 @@ client.on('interactionCreate', async (interaction) => {
                     type: ChannelType.GuildText,
                     parent: whisper_category[0][0].setting_value
                 });
+                whisper_channel.send('Whisper created! Expires <t:' + (interaction.options.getInteger('duration') * 3600 + timest) + ':R>');
                 await connection.promise().query('insert into whispers (guild_id, channel_id, expiration) values (?, ?, ?)', [interaction.guildId, whisper_channel.id, timest + (interaction.options.getInteger('duration') * 3600)]);
                 interaction.reply({ content: `Whisper created: ${whisper_channel}. Add characters using \`/populatewhisper\`.`, ephemeral: true });
             } else {
@@ -693,7 +705,11 @@ client.on('interactionCreate', async (interaction) => {
                             var players = await connection.promise().query('select pc.*, p.user_id from players_characters pc join players p on pc.player_id = p.id where pc.character_id = ?', [characterSelected]);
                             for (const player of players[0]) {
                                 var user = await client.users.fetch(player.user_id);
-                                channel.permissionOverwrites.create(user, { ViewChannel: true, SendMessages: true });
+                                if (whisper.locked == 1) {
+                                    channel.permissionOverwrites.create(user, { ViewChannel: true });
+                                } else {
+                                    channel.permissionOverwrites.create(user, { ViewChannel: true, SendMessages: true });
+                                }
                             }
                             channel.send(`${character_information[0][0].name} has joined the whisper!`);
                             await connection.promise().query('insert into whispers_characters (whisper_id, character_id) values (?, ?)', [whisper[0][0].id, characterSelected]);
@@ -827,11 +843,17 @@ client.on('interactionCreate', async (interaction) => {
             var description = interaction.options.getString('description');
             var character = await connection.promise().query('select * from characters where name = ? and guild_id = ?', [characterName, interaction.guildId]);
             if (character[0].length == 0) {
-                var inserted_character = await connection.promise().query('insert into characters (name, guild_id, description) values (?, ?, ?)', [characterName, interaction.guildId, description]);
+                if (interaction.options.getString('avatar_url')) {
+                    var inserted_character = await connection.promise().query('insert into characters (name, guild_id, description, avatar_url) values (?, ?, ?, ?)', [characterName, interaction.guildId, description, interaction.options.getString('avatar_url')]);
+                } else {
+                    var inserted_character = await connection.promise().query('insert into characters (name, guild_id, description) values (?, ?, ?)', [characterName, interaction.guildId, description]);
+                }
                 interaction.reply({ content: 'Created character!', ephemeral: true })
             } else {
                 interaction.reply({ content: 'A character with this name for this game already exists.', ephemeral: true });
             }
+        } else if (interaction.commandName == 'characteravatar') {
+            //alphabet selector
         } else if (interaction.commandName == 'assigncharacter') {
             var user = interaction.options.getUser('user');
             var player = await connection.promise().query('select * from players where user_id = ? and guild_id = ?', [user.id, interaction.guildId]);
@@ -1671,7 +1693,7 @@ client.on('interactionCreate', async (interaction) => {
                         const webhooks = await webhook_channel.fetchWebhooks();
                         var webhook = webhooks.find(wh => wh.token);
                         if (!webhook) {
-                            var webhook = await webhook_channel.createWebhook({name: 'rrgbot'});
+                            var webhook = await webhook_channel.createWebhook({ name: 'rrgbot' });
                         }
                         if (interaction.channel.type == ChannelType.GuildPrivateThread || interaction.channel.type == ChannelType.GuildPublicThread) {
                             var attachment = interaction.options.getAttachment('attachment');
