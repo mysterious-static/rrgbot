@@ -632,7 +632,7 @@ client.on('interactionCreate', async (interaction) => {
             // interaction.options.getInteger() = duration in hours
             var whisper_category = await connection.promise().query('select setting_value from game_settings where guild_id = ? and setting_name = ?', [interaction.guildId, 'whisper_category']);
             if (whisper_category[0].length > 0) {
-                var timest = Date.now() / 1000;
+                var timest = Math.floor(Date.now() / 1000);
                 var whisper_channel = await interaction.guild.channels.create({
                     name: `whisper-${timest}`,
                     type: ChannelType.GuildText,
