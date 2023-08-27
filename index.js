@@ -939,7 +939,7 @@ client.on('interactionCreate', async (interaction) => {
                 var characterSelectComponent;
                 if (characters[0].length <= 25) {
                     charactersAlphabetical = false;
-                    var charactersKeyValues = [{ label: 'Select a characters', value: '0' }];
+                    var charactersKeyValues = [{ label: 'Select a character', value: '0' }];
                     for (const character of characters[0]) {
                         var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
                         charactersKeyValues.push(thisCharacterKeyValue);
@@ -968,7 +968,7 @@ client.on('interactionCreate', async (interaction) => {
                             var characters = await connection.promise().query('select c.* from players p join players_characters pc on p.id = pc.player_id join charactesr c on pc.character_id = c.id where p.user_id = ? and p.guild_id = ? and upper(c.character_name) like "?%"', [interaction.user.id, interaction.guildId, characterSelected]);
                         }
                         if (characters[0].length > 0) {
-                            var charactersKeyValues = [{ label: 'Select a characters', value: '0' }];
+                            var charactersKeyValues = [{ label: 'Select a character', value: '0' }];
                             for (const character of characters[0]) {
                                 var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
                                 charactersKeyValues.push(thisCharacterKeyValue);
@@ -981,7 +981,7 @@ client.on('interactionCreate', async (interaction) => {
                         }
                     } else {
                         var character_information = await connection.promise().query('select * from characters where id = ?', [characterSelected]);
-                        await connection.promise().query('update characters set avatar_url = ? where id = ?', [interaction.options.avatar_url, character_information[0][0].id]);
+                        await connection.promise().query('update characters set avatar_url = ? where id = ?', [interaction.options.getString('avatar_url'), character_information[0][0].id]);
                         await interaction.editReply({ content: 'Character avatar url updated.', components: [] });
                     }
                 });
