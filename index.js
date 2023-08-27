@@ -2219,6 +2219,7 @@ client.on('interactionCreate', async (interaction) => {
                     collector.on('collect', async (interaction_select) => {
                         if (interaction_select.values[0]) {
                             if (interaction_select.customId == 'CategorySelector') {
+                                interaction_select.deferUpdate();
                                 categorySelected = interaction_select.values[0];
                                 const roleSelectComponent = new RoleSelectMenuBuilder().setCustomId('RoleSelector').setMinValues(1).setMaxValues(5);
                                 var roleSelectRow = new ActionRowBuilder().addComponents(roleSelectComponent);
@@ -2246,7 +2247,6 @@ client.on('interactionCreate', async (interaction) => {
                             if (!openuser.permissions.has(PermissionsBitField.Flags.Administrator)) {
                                 await interaction.channel.members.remove(openuser.id);
                             }
-                            await interaction.reply({ content: 'closing now!', ephemeral: true });
                             await interaction.channel.setArchived(true);
                             // Archive thread
                             await connection.promise().query('update tickets set uid_close = ? where thread_id = ?', [interaction.member.id, interaction.channel.id]);
