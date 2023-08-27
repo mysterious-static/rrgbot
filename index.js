@@ -2174,7 +2174,7 @@ client.on('interactionCreate', async (interaction) => {
                     if (categories[0].length > 0) {
                         var existing_channel = await connection.promise().query('select * from game_settings where setting_name = "ticket_channel" and guild_id = ?', [interaction.guild.id]);
                         if (existing_channel[0].length > 0) {
-                            var channel = await client.channels.cache.get(channel[0][0].setting_value);
+                            var channel = await client.channels.cache.get(existing_channel[0][0].setting_value);
                             var existing_message = await connection.promise().query('select * from game_settings where setting_name = "ticket_message" and guild_id = ?', [interaction.guild.id]);
                             var message = await channel.messages.fetch(message[0][0].setting_value).then(msg => msg.delete());
                             await connection.promise().query('update game_settings set setting_value = ? where setting_name = "ticket_channel" and guild_id = ?', [interaction.options.getChannel('channel').id, interaction.guild.id]);
