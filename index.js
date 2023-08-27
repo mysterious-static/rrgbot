@@ -2247,6 +2247,7 @@ client.on('interactionCreate', async (interaction) => {
                             if (!openuser.permissions.has(PermissionsBitField.Flags.Administrator)) {
                                 await interaction.channel.members.remove(openuser.id);
                             }
+                            await interaction.reply({ content: `Ticket closed by ${interaction.user}`, ephemeral: true });
                             await interaction.channel.setArchived(true);
                             // Archive thread
                             await connection.promise().query('update tickets set uid_close = ? where thread_id = ?', [interaction.member.id, interaction.channel.id]);
