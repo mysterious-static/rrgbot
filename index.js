@@ -311,6 +311,81 @@ var populatewhisper = new SlashCommandBuilder().setName('populatewhisper')
             .setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
+var addreputation = new SlashCommandBuilder().setName('addreputation')
+    .setDescription('Add a reputation.')
+    .addStringOption(option =>
+        option.setName('name')
+            .setDescription('The name of the reputation')
+            .setRequired(true))
+    .addStringOption(option =>
+        option.setName('description')
+            .setDescription('A short description of the reputation')
+            .setRequired(true))
+    .addBooleanOption(option =>
+        option.setName('playervisible')
+            .setDescription('If this reputation should be visible to players before encountering') // Or should this be set by archetype and character?
+            .setRequired(true))
+    .addIntegerOption(option =>
+        option.setName('maximum')
+            .setDescription('Maximum reputation value for this reputation.').setRequired(true))
+    .addStringOption(option =>
+        option.setName('icon')
+            .setDescription('(optional) A faction icon\'s emoji ID'))
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+var addreputationtier = new SlashCommandBuilder().setName('addreputationtier')
+    .setDescription('Add a reputation tier.')
+    .addStringOption(option => option.setName('name')
+        .setDescription('The name for this reputation tier (Revered, SL2, etc)')
+        .setRequired(true))
+    .addIntegerOption(option => option.setName('value')
+        .setDescription('The threshold minimum for this reputation tier.')
+        .setRequired(true))
+    //optional: colour hex
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+var addreputationtierreward = new SlashCommandBuilder().setName('addreputationtierreward')
+    .setDescription('Add a reputation tier reward.')
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+// Prompt for reputation, prompt for tier, prompt for item/skill/reputation/archetype/playerflag/questflag/message, prompt for whatever's chosen - should have quantity of reward available (-1 for unlimited)
+
+var addlimitedreptierreward = new SlashCommandBuilder().setName('addlimitedreptierreward')
+    .setDescription('Add an archetype or character-specific reputation tier reward.')
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+//Prompt for archetype/character, reputation, tier, item/skill/reputation/archetype/pflag/qflag/message, prompt for whatever's chosen - should have quantity of reward available (-1 for unlimited) if archetype
+
+var setreputationenabled = new SlashCommandBuilder().setName('setreputationenabled')
+    .setDescription('Enable/disable reputation system.')
+    .addBooleanOption(option => option.setName('enabled')
+        .setRequired(true))
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+var enableplayerrepup = new SlashCommandBuilder().setName('enableplayerrepup')
+    .setDescription('Allow players to manage their own reputation.')
+    .addBooleanOption(option => option.setName('enabled')
+        .setRequired(true))
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+var repup = new SlashCommandBuilder().setName('repup')
+    .setDescription('Raises character reputation with a given reputation.')
+    .addBooleanOption(option => option.setName('quantity')
+        .setDescription('How many reputation points to gain (relative value)')
+        .setRequired(true));
+
+var addreputationquantityreward = new SlashCommandBuilder().setName('addreputationquantityreward')
+    .setDescription('Add a reward for encountering a number of reputations.')
+    .addIntegerOption(option => option.setName('quantity').setDescription('How many reputations must be encountered')
+        .setRequired(true))
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+var addlimitedrepqtyreward = new SlashCommandBuilder().setName('addlimitedrepqtyreward')
+    .setDescription('Add an archetype- or character-specific reputation quantity reward.')
+    .addIntegerOption(option =>
+        option.setName('quantity')
+            .setDescription('How many reputations must be encountered')
+            .setRequired(true))
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
 var sendas = new SlashCommandBuilder().setName('sendas')
     .setDescription('Send message as a character.')
     .addStringOption(option =>
@@ -853,7 +928,66 @@ client.on('interactionCreate', async (interaction) => {
                 interaction.reply({ content: 'A character with this name for this game already exists.', ephemeral: true });
             }
         } else if (interaction.commandName == 'characteravatar') {
-            //alphabet selector
+            if (interaction.member.permissions.has('ADMINISTRATOR')) {
+                var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
+            } else {
+                var characters = await connection.promise().query('select c.* from players p join players_characters pc on p.id = pc.player_id join charactesr c on pc.character_id = c.id where p.user_id = ? and p.guild_id = ?', [interaction.user.id, interaction.guildId]);
+                // Check players_characters table for available characters
+            }
+            if (characters[0].length > 0) {
+                var charactersAlphabetical;
+                var characterSelectComponent;
+                if (characters[0].length <= 25) {
+                    charactersAlphabetical = false;
+                    var charactersKeyValues = [{ label: 'Select a characters', value: '0' }];
+                    for (const character of characters[0]) {
+                        var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
+                        charactersKeyValues.push(thisCharacterKeyValue);
+                    }
+                    characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('SendAsCharacterSelector').setMinValues(1).setMaxValues(1);
+                } else {
+                    charactersAlphabetical = true;
+                    var characters = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
+                    var charactersKeyValues = [];
+                    for (const character of characters) {
+                        var thisCharacterKeyValue = { label: character, value: character }
+                        charactersKeyValues.push(thisCharacterKeyValue);
+                    }
+                    characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('SendAsAlphabetSelector').setMinValues(1).setMaxValues(1);
+                }
+
+                var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                var message = await interaction.reply({ content: 'Please select the following options:', components: [characterSelectRow], ephemeral: true });
+                var collector = message.createMessageComponentCollector();
+                collector.on('collect', async (interaction_second) => {
+                    var characterSelected = interaction_second.values[0];
+                    if (interaction_second.customId == 'SendAsAlphabetSelector') {
+                        if (interaction.member.permissions.has('ADMINISTRATOR')) {
+                            var characters = await connection.promise().query('select * from characters where guild_id = ? and upper(character_name) like "?%"', [interaction.guildId, characterSelected]);
+                        } else {
+                            var characters = await connection.promise().query('select c.* from players p join players_characters pc on p.id = pc.player_id join charactesr c on pc.character_id = c.id where p.user_id = ? and p.guild_id = ? and upper(c.character_name) like "?%"', [interaction.user.id, interaction.guildId, characterSelected]);
+                        }
+                        if (characters[0].length > 0) {
+                            var charactersKeyValues = [{ label: 'Select a characters', value: '0' }];
+                            for (const character of characters[0]) {
+                                var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
+                                charactersKeyValues.push(thisCharacterKeyValue);
+                            }
+                            var characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('SendAsCharacterSelector').setMinValues(1).setMaxValues(1);
+                            var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                            interaction.update({ components: [characterSelectRow] });
+                        } else {
+                            interaction.update({ content: 'No characters with this first letter', components: [] });
+                        }
+                    } else {
+                        var character_information = await connection.promise().query('select * from characters where id = ?', [characterSelected]);
+                        await connection.promise().query('update characters set avatar_url = ? where id = ?', [interaction.options.avatar_url, character_information[0][0].id]);
+                        await interaction.editReply({ content: 'Character avatar url updated.', components: [] });
+                    }
+                });
+            } else {
+                interaction.reply({ content: 'no characters found!', ephemeral: true });
+            }
         } else if (interaction.commandName == 'assigncharacter') {
             var user = interaction.options.getUser('user');
             var player = await connection.promise().query('select * from players where user_id = ? and guild_id = ?', [user.id, interaction.guildId]);
