@@ -3023,7 +3023,7 @@ var main_timer_loop = async () => {
                         },
                         {
                             name: 'Whisper members',
-                            value: characters[0].map(a => a.name).join('\n'),
+                            value: (characters[0].length > 0 ? characters[0].map(a => a.name).join('\n') : '*none*'),
                             inline: true
                         }
                     )
