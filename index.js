@@ -944,7 +944,7 @@ client.on('interactionCreate', async (interaction) => {
                         var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
                         charactersKeyValues.push(thisCharacterKeyValue);
                     }
-                    characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('SendAsCharacterSelector').setMinValues(1).setMaxValues(1);
+                    characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharAvCharacterSelector').setMinValues(1).setMaxValues(1);
                 } else {
                     charactersAlphabetical = true;
                     var characters = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
@@ -953,7 +953,7 @@ client.on('interactionCreate', async (interaction) => {
                         var thisCharacterKeyValue = { label: character, value: character }
                         charactersKeyValues.push(thisCharacterKeyValue);
                     }
-                    characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('SendAsAlphabetSelector').setMinValues(1).setMaxValues(1);
+                    characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharAvAlphabetSelector').setMinValues(1).setMaxValues(1);
                 }
 
                 var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
@@ -961,7 +961,7 @@ client.on('interactionCreate', async (interaction) => {
                 var collector = message.createMessageComponentCollector();
                 collector.on('collect', async (interaction_second) => {
                     var characterSelected = interaction_second.values[0];
-                    if (interaction_second.customId == 'SendAsAlphabetSelector') {
+                    if (interaction_second.customId == 'CharAvAlphabetSelector') {
                         if (interaction.member.permissions.has('ADMINISTRATOR')) {
                             var characters = await connection.promise().query('select * from characters where guild_id = ? and upper(character_name) like "?%"', [interaction.guildId, characterSelected]);
                         } else {
@@ -973,7 +973,7 @@ client.on('interactionCreate', async (interaction) => {
                                 var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
                                 charactersKeyValues.push(thisCharacterKeyValue);
                             }
-                            var characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('SendAsCharacterSelector').setMinValues(1).setMaxValues(1);
+                            var characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharAvCharacterSelector').setMinValues(1).setMaxValues(1);
                             var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
                             interaction.update({ components: [characterSelectRow] });
                         } else {
@@ -1832,9 +1832,9 @@ client.on('interactionCreate', async (interaction) => {
                         if (interaction.channel.type == ChannelType.GuildPrivateThread || interaction.channel.type == ChannelType.GuildPublicThread) {
                             var attachment = interaction.options.getAttachment('attachment');
                             if (attachment) {
-                                await webhook.send({ content: parrot_text, username: character_information[0][0].character_name, avatarURL: character_information[0][0].avatar_url, threadId: interaction.channel.id, files: attachment });
+                                await webhook.send({ content: parrot_text, username: character_information[0][0].name, avatarURL: character_information[0][0].avatar_url, threadId: interaction.channel.id, files: attachment });
                             } else {
-                                await webhook.send({ content: parrot_text, username: character_information[0][0].character_name, avatarURL: character_information[0][0].avatar_url, threadId: interaction.channel.id });
+                                await webhook.send({ content: parrot_text, username: character_information[0][0].name, avatarURL: character_information[0][0].avatar_url, threadId: interaction.channel.id });
                             }
                         } else {
                             var attachment = interaction.options.getAttachment('attachment');
