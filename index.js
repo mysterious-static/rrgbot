@@ -441,6 +441,7 @@ var deck = new SlashCommandBuilder().setName('deck')
     .setDescription('Displays your Tiles deck.');
 
 var roll = new SlashCommandBuilder().setName('roll')
+    .setDescription('Roll a set of dice.')
     .addIntegerOption(option =>
         option.setName('dice')
             .setDescription('The number of dice to roll.')
@@ -449,11 +450,13 @@ var roll = new SlashCommandBuilder().setName('roll')
         option.setName('sides')
             .setDescription('The number of sides per die.')
             .setRequired(true))
-    .addBooleanOption(option => option.setName('public')
-        .setDescription('Whether or not the roll shoudl be shown publicly.')
-        .setRequired(true))
-    .addIntegerOption(option => option.setName('fixed_add')
-        .setDescription('Additional +/- modifier to your roll (optional).'));
+    .addBooleanOption(option =>
+        option.setName('public')
+            .setDescription('Whether or not the roll shoudl be shown publicly.')
+            .setRequired(true))
+    .addIntegerOption(option =>
+        option.setName('fixed_add')
+            .setDescription('Additional +/- modifier to your roll (optional).'));
 
 
 
