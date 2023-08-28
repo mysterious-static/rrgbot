@@ -440,6 +440,20 @@ var active = new SlashCommandBuilder().setName('active')
 var deck = new SlashCommandBuilder().setName('deck')
     .setDescription('Displays your Tiles deck.');
 
+var roll = new SlashCommandBuilder().setName('roll')
+    .addIntegerOption(option =>
+        option.setName('dice')
+            .setDescription('The number of dice to roll.')
+            .setRequired(true))
+    .addIntegerOption(option =>
+        option.setName('sides')
+            .setDescription('The number of sides per die.')
+            .setRequired(true))
+    .addBooleanOption(option => option.setName('public')
+        .setDescription('Whether or not the roll shoudl be shown publicly.')
+        .setRequired(true))
+    .addIntegerOption(option => option.setName('fixed_add')
+        .setDescription('Additional +/- modifier to your roll (optional).'));
 
 
 
@@ -543,7 +557,8 @@ client.on('ready', async () => {
         setcategorygroup.toJSON(),
         closeticket.toJSON(),
         removeticketcategory.toJSON(),
-        sendas.toJSON()
+        sendas.toJSON(),
+        roll.toJSON()
     ]);
     client.user.setActivity("Persona L Epiphany");
 });
@@ -2268,6 +2283,25 @@ client.on('interactionCreate', async (interaction) => {
                     }
                 } else {
                     await interaction.reply({ content: 'You don\'t appear to have an active character.', ephemeral: true });
+                }
+            } else if (interaction.commandName === 'roll') {
+                //dice, sides, public, fixed_add
+                var dice = interaction.options.getInteger('dice');
+                var sides = interaction.options.getInteger('sides');
+                var total = 0;
+                var indivDice = [];
+                for (i = 1; i <= dice; i++) {
+                    var thisValue = Math.floor(Math.random() * sides + 1);
+                    indivDice.push(thisValue);
+                    total += thisValue;
+                }
+                if (interaction.options.getInteger('fixedAdd')) {
+                    total += interaction.options.getInteger('fixedAdd');
+                }
+                if (interaction.options.getBoolean('public') == true) {
+                    interaction.reply({ content: '`' + dice + 'd' + sides + (interaction.options.getInteger('fixedAdd') ? ' + ' + interaction.options.getInteger('fixedAdd').toString() : '') + ' = ' + indivDice + (interaction.options.getInteger('fixedAdd') ? ' + ' + interaction.options.getInteger('fixedAdd') : '') + ' = ' + total + '`' });
+                } else {
+                    interaction.reply({ content: '`' + dice + 'd' + sides + (interaction.options.getInteger('fixedAdd') ? ' + ' + interaction.options.getInteger('fixedAdd').toString() : '') + ' = ' + indivDice + (interaction.options.getInteger('fixedAdd') ? ' + ' + interaction.options.getInteger('fixedAdd') : '') + ' = ' + total + '`', ephemeral: true });
                 }
             } else if (interaction.commandName === 'addticketcategory') {
                 var name = interaction.options.getString('name');
