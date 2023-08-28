@@ -129,7 +129,8 @@ var characteravatar = new SlashCommandBuilder().setName('characteravatar')
     .setDescription('Set a character avatar URL.')
     .addStringOption(option =>
         option.setName('avatar_url')
-            .setDescription('The URL to the character avatar, must be accessible by the bot'))
+            .setDescription('The URL to the character avatar, must be accessible by the bot')
+            .setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 var assigncharacter = new SlashCommandBuilder().setName('assigncharacter')
