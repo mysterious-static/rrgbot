@@ -455,7 +455,7 @@ var roll = new SlashCommandBuilder().setName('roll')
             .setDescription('Whether or not the roll shoudl be shown publicly.')
             .setRequired(true))
     .addIntegerOption(option =>
-        option.setName('fixedAdd')
+        option.setName('fixed_add')
             .setDescription('Additional +/- modifier to your roll (optional).'));
 
 
@@ -2298,13 +2298,13 @@ client.on('interactionCreate', async (interaction) => {
                     indivDice.push(thisValue);
                     total += thisValue;
                 }
-                if (interaction.options.getInteger('fixedAdd')) {
-                    total += interaction.options.getInteger('fixedAdd');
+                if (interaction.options.getInteger('fixed_add')) {
+                    total += interaction.options.getInteger('fixed_add');
                 }
                 if (interaction.options.getBoolean('public') == true) {
-                    interaction.reply({ content: '`' + dice + 'd' + sides + (interaction.options.getInteger('fixedAdd') ? ' + ' + interaction.options.getInteger('fixedAdd').toString() : '') + ' = ' + indivDice + (interaction.options.getInteger('fixedAdd') ? ' + ' + interaction.options.getInteger('fixedAdd') : '') + ' = ' + total + '`' });
+                    interaction.reply({ content: '`' + dice + 'd' + sides + (interaction.options.getInteger('fixed_add') ? ' + ' + interaction.options.getInteger('fixed_add').toString() : '') + ' = ' + indivDice + (interaction.options.getInteger('fixed_add') ? ' + ' + interaction.options.getInteger('fixed_add') : '') + ' = ' + total + '`' });
                 } else {
-                    interaction.reply({ content: '`' + dice + 'd' + sides + (interaction.options.getInteger('fixedAdd') ? ' + ' + interaction.options.getInteger('fixedAdd').toString() : '') + ' = ' + indivDice + (interaction.options.getInteger('fixedAdd') ? ' + ' + interaction.options.getInteger('fixedAdd') : '') + ' = ' + total + '`', ephemeral: true });
+                    interaction.reply({ content: '`' + dice + 'd' + sides + (interaction.options.getInteger('fixed_add') ? ' + ' + interaction.options.getInteger('fixed_add').toString() : '') + ' = ' + indivDice + (interaction.options.getInteger('fixed_add') ? ' + ' + interaction.options.getInteger('fixed_add') : '') + ' = ' + total + '`', ephemeral: true });
                 }
             } else if (interaction.commandName === 'addticketcategory') {
                 var name = interaction.options.getString('name');
