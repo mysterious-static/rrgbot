@@ -455,7 +455,7 @@ var roll = new SlashCommandBuilder().setName('roll')
             .setDescription('Whether or not the roll shoudl be shown publicly.')
             .setRequired(true))
     .addIntegerOption(option =>
-        option.setName('fixed_add')
+        option.setName('fixedAdd')
             .setDescription('Additional +/- modifier to your roll (optional).'));
 
 
