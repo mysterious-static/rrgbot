@@ -2266,7 +2266,7 @@ client.on('interactionCreate', async (interaction) => {
                                                 var item = items[0].find(i => i.id == itemSelected);
                                                 var character_destination = characters[0].find(c => c.id == characterSelected);
                                                 await interaction_second.update({ content: "Interaction processed.", components: [] });
-                                                await interaction_second.reply({ content: `${current_character[0][0].name} gives ${character_destination.name} their **${item.name}**!` });
+                                                await interaction_second.channel.send({ content: `${current_character[0][0].name} gives ${character_destination.name} their **${item.name}**!` });
                                                 await collector.stop();
                                             } else {
                                                 await interaction_second.update({ content: "You don't have enough of that item to give that quantity.", components: [] });
