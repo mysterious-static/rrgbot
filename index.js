@@ -2252,9 +2252,9 @@ client.on('interactionCreate', async (interaction) => {
                                                 //check if recipient has any of that item yet, and insert or update as needed
                                                 var recipient_has = await connection.promise().query('select * from characters_items where character_id = ? and item_id = ?', [characterSelected, itemSelected]);
                                                 if (recipient_has[0].length > 0) {
-                                                    await connection.promise.query('update characters_items set quantity = ? where character_id = ? and item_id = ?', [quantity + recipient_has[0][0].quantity, characterSelected, itemSelected]);
+                                                    await connection.promise().query('update characters_items set quantity = ? where character_id = ? and item_id = ?', [quantity + recipient_has[0][0].quantity, characterSelected, itemSelected]);
                                                 } else {
-                                                    await connection.promise.query('insert into characters_items (character_id, item_id, quantity) values (?, ?, ?)', [characterSelected, itemSelected, quantity]);
+                                                    await connection.promise().query('insert into characters_items (character_id, item_id, quantity) values (?, ?, ?)', [characterSelected, itemSelected, quantity]);
                                                 }
                                                 //check if giver quantity = number given, and delete or update as needed
                                                 var giver_has = await connection.promise().query('select * from characters_items where character_id = ? and item_id = ?', [current_character[0][0].id, itemSelected]);
