@@ -202,7 +202,7 @@ var addskill = new SlashCommandBuilder().setName('addskill')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 var additem = new SlashCommandBuilder().setName('additem')
-    .setDescription('Add an item for display on character sheet. Items can be assigned to one character.')
+    .setDescription('Add an item for display on character sheet.')
     .addStringOption(option =>
         option.setName('itemname')
             .setDescription('The name of the item')
@@ -273,8 +273,12 @@ var assignitem = new SlashCommandBuilder().setName('assignitem')
             .setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
-var unassignitem = new SlashCommandBuilder().setName('unassignitem')
-    .setDescription('Unassign a item from a character')
+var transferitem = new SlashCommandBuilder().setName('transferitem')
+    .setDescription('Transfer a item from a character to another character')
+    .addIntegerOption(option =>
+        option.setName('quantity')
+            .setDescription('The quantity of the item to transfer')
+            .setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 // TODO: Items will be REWORKED ENTIRELY later, with a fully-functional system where instances of items can be created versus having all items unique.
@@ -558,7 +562,7 @@ client.on('ready', async () => {
         unassignskill.toJSON(),
         skill.toJSON(),
         assignitem.toJSON(),
-        unassignitem.toJSON(),
+        transferitem.toJSON(),
         item.toJSON(),
         modsheet.toJSON(),
         give.toJSON(),
@@ -1624,8 +1628,8 @@ client.on('interactionCreate', async (interaction) => {
             } else {
                 interaction.reply({ content: 'Please create at least one ~~skill~~ item first. <3', ephemeral: true });
             }
-        } else if (interaction.commandName == 'unassignitem') {
-
+        } else if (interaction.commandName == 'transferitem') {
+            var quantity = interaction.options.getInteger('quantity');
             var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
             if (characters[0].length > 0) {
                 var charactersKeyValues = [];
@@ -2201,7 +2205,7 @@ client.on('interactionCreate', async (interaction) => {
             } else if (interaction.commandName == 'give') { //TODO: Futureproof this with the alphabet selector.)
                 var quantity = interaction.options.getInteger('quantity');
                 if (quantity > 0) {
-                    var current_character = await connection.promise().query('select c.location_id, pc.character_id, c.name, c.id from players_characters pc join characters c on c.id = pc.character_id join players p on p.id = pc.player_id where p.user_id = ? and pc.active = 1', [interaction.user.id]);
+                    var current_character = await connection.promise().query('select c.location_id, pc.character_id, c.name, c.id from players_characters pc join characters c on c.id = pc.character_id join players p on p.id = pc.player_id where p.user_id = ? and p.guild_id = ? and pc.active = 1', [interaction.user.id, interaction.guildId]);
                     if (current_character[0].length > 0) {
                         var items = await connection.promise().query('select i.* from items i join characters_items ci on ci.item_id = i.id where ci.character_id = ?', [current_character[0][0].id]);
                         if (items[0].length > 0) {
