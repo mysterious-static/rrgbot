@@ -1888,14 +1888,14 @@ client.on('interactionCreate', async (interaction) => {
                         if (interaction.channel.type == ChannelType.GuildPrivateThread || interaction.channel.type == ChannelType.GuildPublicThread) {
                             var attachment = interaction.options.getAttachment('attachment');
                             if (attachment) {
-                                await webhook.send({ content: parrot_text, username: character_information[0][0].name, avatarURL: character_information[0][0].avatar_url, threadId: interaction.channel.id, files: attachment });
+                                await webhook.send({ content: parrot_text, username: character_information[0][0].name, avatarURL: character_information[0][0].avatar_url, threadId: interaction.channel.id, files: [attachment] });
                             } else {
                                 await webhook.send({ content: parrot_text, username: character_information[0][0].name, avatarURL: character_information[0][0].avatar_url, threadId: interaction.channel.id });
                             }
                         } else {
                             var attachment = interaction.options.getAttachment('attachment');
                             if (attachment) {
-                                await webhook.send({ content: parrot_text, username: character_information[0][0].name, avatarURL: character_information[0][0].avatar_url, files: attachment });
+                                await webhook.send({ content: parrot_text, username: character_information[0][0].name, avatarURL: character_information[0][0].avatar_url, files: [attachment] });
                             } else {
                                 await webhook.send({ content: parrot_text, username: character_information[0][0].name, avatarURL: character_information[0][0].avatar_url });
                             }
