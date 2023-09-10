@@ -402,7 +402,7 @@ var sendas = new SlashCommandBuilder().setName('sendas')
             .setDescription('The message you wish to send.')
             .setRequired(true))
     .addAttachmentOption(option =>
-        option.setName('image')
+        option.setName('attachment')
             .setDescription('Optional image to attach to the message.')
     )
 
