@@ -353,13 +353,11 @@ var addreputationtier = new SlashCommandBuilder().setName('addreputationtier')
     //optional: colour hex
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
-var addreputationtierreward = new SlashCommandBuilder().setName('addreputationtierreward')
-    .setDescription('Add a reputation tier reward.')
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-// Prompt for reputation, prompt for tier, prompt for item/skill/reputation/archetype/playerflag/questflag/message, prompt for whatever's chosen - should have quantity of reward available (-1 for unlimited)
-
-var addlimitedreptierreward = new SlashCommandBuilder().setName('addlimitedreptierreward')
-    .setDescription('Add an archetype or character-specific reputation tier reward.')
+var reward = new SlashCommandBuilder().setName('reward')
+    .setDescription('Commands to manage rewards.')
+    .addSubcommand(subcommand =>
+        subcommand.setName('add')
+            .setDescription('Add a reward'))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 //Prompt for archetype/character, reputation, tier, item/skill/reputation/archetype/pflag/qflag/message, prompt for whatever's chosen - should have quantity of reward available (-1 for unlimited) if archetype
 
@@ -380,20 +378,6 @@ var repup = new SlashCommandBuilder().setName('repup')
     .addBooleanOption(option => option.setName('quantity')
         .setDescription('How many reputation points to gain (relative value)')
         .setRequired(true));
-
-var addreputationquantityreward = new SlashCommandBuilder().setName('addreputationquantityreward')
-    .setDescription('Add a reward for encountering a number of reputations.')
-    .addIntegerOption(option => option.setName('quantity').setDescription('How many reputations must be encountered')
-        .setRequired(true))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-var addlimitedrepqtyreward = new SlashCommandBuilder().setName('addlimitedrepqtyreward')
-    .setDescription('Add an archetype- or character-specific reputation quantity reward.')
-    .addIntegerOption(option =>
-        option.setName('quantity')
-            .setDescription('How many reputations must be encountered')
-            .setRequired(true))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 var sendas = new SlashCommandBuilder().setName('sendas')
     .setDescription('Send message as a character.')
@@ -1253,7 +1237,7 @@ client.on('interactionCreate', async (interaction) => {
                                 } else {
                                     await connection.promise().query('insert into characters_stats (character_id, stat_id, override_value) values (?, ?, ?)', [characterSelected, statSelected, value]);
                                 }
-                                await interaction.update({ content: 'Successfully updated character stat value.', components: [] });
+                                await interaction.editReply({ content: 'Successfully updated character stat value.', components: [] });
                                 await collector.stop();
                             } else {
                                 await interaction_second.deferUpdate();
