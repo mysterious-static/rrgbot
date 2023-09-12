@@ -1726,7 +1726,7 @@ client.on('interactionCreate', async (interaction) => {
                         }
                         if (character_stats[0].length > 0) {
                             for (const thisStat of character_stats[0]) {
-                                if (typeof thisStat.override_value !== 'undefined' && thisStat.override_value != 'null') {
+                                if (typeof thisStat.override_value !== 'undefined' && thisStat.override_value != null) {
                                     msg = msg.concat(`**${thisStat.name}** - ${thisStat.override_value}\n`);
                                 } else { // TODO else if thisStat has an ARCHETYPE override value
                                     msg = msg.concat(`**${thisStat.name}** - ${thisStat.default_value}\n`);
@@ -1736,7 +1736,7 @@ client.on('interactionCreate', async (interaction) => {
                         }
                         if (archetype_stats[0].length > 0) {
                             for (const thisStat of archetype_stats[0]) {
-                                if (typeof thisStat.override_value !== 'undefined' && thisStat.override_value != 'null') {
+                                if (typeof thisStat.override_value !== 'undefined' && thisStat.override_value != null) {
                                     msg = msg.concat(`**${thisStat.name}** - ${thisStat.override_value}\n`);
                                 } else { // TODO else if thisStat has an ARCHETYPE override value
                                     msg = msg.concat(`**${thisStat.name}** - ${thisStat.default_value}\n`);
@@ -1936,7 +1936,7 @@ client.on('interactionCreate', async (interaction) => {
                     }
                     if (character_stats[0].length > 0) {
                         for (const thisStat of character_stats[0]) {
-                            if (typeof thisStat.override_value !== 'undefined' && thisStat.override_value != 'null') {
+                            if (typeof thisStat.override_value !== 'undefined' && thisStat.override_value != null) {
                                 msg = msg.concat(`**${thisStat.name}** - ${thisStat.override_value}\n`);
                             } else { // TODO else if thisStat has an ARCHETYPE override value
                                 msg = msg.concat(`**${thisStat.name}** - ${thisStat.default_value}\n`);
@@ -1946,7 +1946,7 @@ client.on('interactionCreate', async (interaction) => {
                     }
                     if (archetype_stats[0].length > 0) {
                         for (const thisStat of archetype_stats[0]) {
-                            if (typeof thisStat.override_value !== 'undefined' && thisStat.override_value != 'null') {
+                            if (typeof thisStat.override_value !== 'undefined' && thisStat.override_value != null) {
                                 msg = msg.concat(`**${thisStat.name}** - ${thisStat.override_value}\n`);
                             } else { // TODO else if thisStat has an ARCHETYPE override value
                                 msg = msg.concat(`**${thisStat.name}** - ${thisStat.default_value}\n`);
@@ -2994,7 +2994,7 @@ client.on('interactionCreate', async (interaction) => {
             }
             if (character_stats[0].length > 0) {
                 for (const thisStat of character_stats[0]) {
-                    if (typeof thisStat.override_value !== 'undefined' && thisStat.override_value != 'null') {
+                    if (typeof thisStat.override_value !== 'undefined' && thisStat.override_value != null) {
                         msg = msg.concat(`**${thisStat.name}** - ${thisStat.override_value}\n`);
                     } else { // TODO else if thisStat has an ARCHETYPE override value
                         msg = msg.concat(`**${thisStat.name}** - ${thisStat.default_value}\n`);
@@ -3004,7 +3004,7 @@ client.on('interactionCreate', async (interaction) => {
             }
             if (archetype_stats[0].length > 0) {
                 for (const thisStat of archetype_stats[0]) {
-                    if (typeof thisStat.override_value !== 'undefined' && thisStat.override_value != 'null') {
+                    if (typeof thisStat.override_value !== 'undefined' && thisStat.override_value != null) {
                         msg = msg.concat(`**${thisStat.name}** - ${thisStat.override_value}\n`);
                     } else { // TODO else if thisStat has an ARCHETYPE override value
                         msg = msg.concat(`**${thisStat.name}** - ${thisStat.default_value}\n`);
