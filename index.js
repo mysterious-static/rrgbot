@@ -199,6 +199,15 @@ var addskill = new SlashCommandBuilder().setName('addskill')
         option.setName('description')
             .setDescription('The description or flavor text of the skill.')
             .setRequired(true))
+    .addStringOption(option =>
+        option.setName('type')
+            .setDescription('The type of skill')
+            .setRequired(true)
+            .addChoices(
+                { name: 'combat', value: 'combat' },
+                { name: 'noncombat', value: 'noncombat' },
+                { name: 'innate', value: 'innate' },
+                { name: 'profession', value: 'profession' }))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 var additem = new SlashCommandBuilder().setName('additem')
@@ -1167,11 +1176,12 @@ client.on('interactionCreate', async (interaction) => {
                 interaction.reply({ content: 'Stat with this name already exists!', ephemeral: true });
             }
         } else if (interaction.commandName == 'addskill') {
-            var name = interaction.options.getString('name')
+            var name = interaction.options.getString('name');
+            var type = interaction.options.getString('type');
             var description = interaction.options.getString('description');
             var exists = await connection.promise().query('select * from skills where guild_id = ? and name = ?', [interaction.guildId, name]);
             if (exists[0].length == 0) {
-                await connection.promise().query('insert into skills (name, description, guild_id) values (?, ?, ?)', [name, description, interaction.guildId]);
+                await connection.promise().query('insert into skills (name, description, type, guild_id) values (?, ?, ?, ?)', [name, description, type, interaction.guildId]);
                 interaction.reply({ content: 'Skill added!', ephemeral: true });
             } else {
                 interaction.reply({ content: 'Skill with this name already exists!', ephemeral: true });
