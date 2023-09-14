@@ -3062,7 +3062,7 @@ client.on('interactionCreate', async (interaction) => {
             if (character_items[0].length > 0) {
                 var msg = '__Items__\n';
                 for (const thisItem of character_items[0]) {
-                    msg = msg.concat(`**${thisItem.name}**: ${thisItem.description}\n`);
+                    msg = msg.concat(`**${thisItem.name}**: ${thisItem.description} *(x${thisItem.quantity})*\n`);
                 }
             } else {
                 var msg = `Your inventory is empty. If you believe you have received this message in error, please contact an Orchestrator.`;
