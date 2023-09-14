@@ -3057,7 +3057,7 @@ client.on('interactionCreate', async (interaction) => {
             await interaction.update({ content: msg, components: [buttonActionRow] });
         } else if (interaction.customId.startsWith('inventory-')) {
             var character_id = interaction.customId.split('-')[1];
-            var character_items = await connection.promise().query('select i.* from items i join characters_items ci on i.id = ci.item_id where ci.character_id = ?', [character_id]);
+            var character_items = await connection.promise().query('select i.*, ci.quantity from items i join characters_items ci on i.id = ci.item_id where ci.character_id = ?', [character_id]);
 
             if (character_items[0].length > 0) {
                 var msg = '__Items__\n';
