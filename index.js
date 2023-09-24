@@ -1920,11 +1920,12 @@ client.on('interactionCreate', async (interaction) => {
                                 var cwflags = await connection.promise().query('select * from worldflags where lower(name) like lower("%?%") and guild_id = ?', [cwflag_name, interaction.guildId]);
                                 console.log(cwflags);
                             }
+                            await submittedModal.reply({content: 'Checking for flags...', ephemeral: true});
                             if (cwflags[0].length < 1) {
-                                submittedModal.reply({ content: "No flags with that name exist.", ephemeral: true });
+                                submittedModal.editReply({ content: "No flags with that name exist.", ephemeral: true });
                             } else if (cwflags[0].length == 1) {
                                 await connection.promise().query('insert into reputations (name, guild_id, description, visibility, maximum, start_value, cwflag_id, cwflag_value) values (?, ?, ?, ?, ?, ?, ?, ?)', [name, interaction.guildId, description, visibility, maximum, start_value, cwflags[0][0].id, value]);
-                                await submittedModal.reply({ content: "Reputation added.", ephemeral: true });
+                                await submittedModal.editReply({ content: "Reputation added.", ephemeral: true });
                             } else {
                                 var cwflagSelectComponent;
                                 if (cwflags[0].length <= 25) {
@@ -1966,9 +1967,9 @@ client.on('interactionCreate', async (interaction) => {
                                             }
                                             cwflagSelectComponent = new StringSelectMenuBuilder().setOptions(cwflagsKeyValues).setCustomId('RepVisCwflagSelector').setMinValues(1).setMaxValues(1);
                                             var cwflagSelectRow = new ActionRowBuilder().addComponents(cwflagSelectComponent);
-                                            submittedModal.update({ components: [cwflagSelectRow] });
+                                            submittedModal.editReply({ components: [cwflagSelectRow] });
                                         } else {
-                                            submittedModal.update({ content: 'No flags with this first letter', components: [] });
+                                            submittedModal.editReply({ content: 'No flags with this first letter', components: [] });
                                         }
                                     }
                                 });
