@@ -1870,7 +1870,7 @@ client.on('interactionCreate', async (interaction) => {
             if (interaction.options.getSubcommand() === 'add') {
                 var name = interaction.options.getString('name');
                 var description = interaction.options.getString('description');
-                var visibility = interaction.options.getBoolean('visibility');
+                var visibility = interaction.options.getString('visibility');
                 var maximum = interaction.options.getInteger('maximum');
                 var icon = interaction.options.getString('icon');
                 var start_value = interaction.options.getInteger('start_value');
