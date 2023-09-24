@@ -1946,7 +1946,7 @@ client.on('interactionCreate', async (interaction) => {
                                     cwflagSelectComponent = new StringSelectMenuBuilder().setOptions(cwflagsKeyValues).setCustomId('RepVisCwAlphaSelector').setMinValues(1).setMaxValues(1);
                                 }
                                 var cwflagSelectRow = new ActionRowBuilder().addComponents(cwflagSelectComponent);
-                                var message = await submittedModal.reply({ content: 'Please select the following options:', components: [cwflagSelectRow], ephemeral: true });
+                                var message = await submittedModal.editReply({ content: 'Please select the following options:', components: [cwflagSelectRow], ephemeral: true });
                                 collector = message.createMessageComponentCollector();
                                 collector.on('collect', async (interaction_third) => {
                                     if (interaction_third.customId == 'RepVisCwflagSelector') {
