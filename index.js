@@ -1914,17 +1914,17 @@ client.on('interactionCreate', async (interaction) => {
                             var cwflag_name = submittedModal.fields.getTextInputValue('flagName');
                             var value = submittedModal.fields.getTextInputValue('flagValue');
                             if (visibility == 'cflag') {
-                                var cwflags = await connection.promise().query('select * from characterflags where lower(name) like lower("%?%")', cwflag_name); // where lower(name) like lower("%?%") and guild_id = ?', [cwflag_name, interaction.guildId]);
+                                var cwflags = await connection.promise().query('select * from characterflags where lower(name) like lower("%?%") and guild_id = ?', [cwflag_name, submittedModal.guildId]); // where lower(name) like lower("%?%") and guild_id = ?', [cwflag_name, interaction.guildId]);
                                 console.log(cwflags);
                             } else {
-                                var cwflags = await connection.promise().query('select * from worldflags where lower(name) like lower("%?%") and guild_id = ?', [cwflag_name, interaction.guildId]);
+                                var cwflags = await connection.promise().query('select * from worldflags where lower(name) like lower("%?%") and guild_id = ?', [cwflag_name, submittedModal.guildId]);
                                 console.log(cwflags);
                             }
                             await submittedModal.reply({ content: 'Checking for flags...', ephemeral: true });
                             if (cwflags[0].length < 1) {
                                 await submittedModal.editReply({ content: "No flags with that name exist.", ephemeral: true });
                             } else if (cwflags[0].length == 1) {
-                                await connection.promise().query('insert into reputations (name, guild_id, description, visibility, maximum, start_value, cwflag_id, cwflag_value) values (?, ?, ?, ?, ?, ?, ?, ?)', [name, interaction.guildId, description, visibility, maximum, start_value, cwflags[0][0].id, value]);
+                                await connection.promise().query('insert into reputations (name, guild_id, description, visibility, maximum, start_value, cwflag_id, cwflag_value) values (?, ?, ?, ?, ?, ?, ?, ?)', [name, submittedModal.guildId, description, visibility, maximum, start_value, cwflags[0][0].id, value]);
                                 await submittedModal.editReply({ content: "Reputation added.", ephemeral: true });
                             } else {
                                 var cwflagSelectComponent;
