@@ -373,10 +373,10 @@ var reputation = new SlashCommandBuilder().setName('reputation')
                     .setDescription('If this reputation should be visible to players before encountering') // Or should this be set by archetype and character?
                     .setRequired(true)
                     .addChoices(
-                        { name: 'Always On', value: always },
-                        { name: 'Character Flag', value: cflag },
-                        { name: 'World Flag', value: wflag },
-                        { name: 'Never', value: never }
+                        { name: 'Always On', value: 'always' },
+                        { name: 'Character Flag', value: 'cflag' },
+                        { name: 'World Flag', value: 'wflag' },
+                        { name: 'Never', value: 'never' }
                     ))
             .addIntegerOption(option =>
                 option.setName('maximum')
