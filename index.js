@@ -1913,6 +1913,7 @@ client.on('interactionCreate', async (interaction) => {
                             .then(async (interaction_second) => {
                                 var title = interaction_second.fields.getTextInputValue('flagTitle');
                                 var value = interaction_second.fields.getTextInputValue('flagValue');
+                                console.log(title);
                                 if (visibility == 'cflag') {
                                     var cwflags = await connection.promise().query('select * from characterflags where name LIKE "?%" and guild_id = ?', [title, interaction.guildId]);
                                 } else {
