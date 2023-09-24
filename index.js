@@ -1914,10 +1914,10 @@ client.on('interactionCreate', async (interaction) => {
                             var title = submittedModal.fields.getTextInputValue('flagTitle');
                             var value = submittedModal.fields.getTextInputValue('flagValue');
                             if (visibility == 'cflag') {
-                                var cwflags = await connection.promise().query('select * from characterflags where name LIKE "?%" and guild_id = ?', [title, interaction.guildId]);
+                                var cwflags = await connection.promise().query('select * from characterflags where lower(name) like lower("%?%") and guild_id = ?', [title, interaction.guildId]);
                                 console.log(cwflags);
                             } else {
-                                var cwflags = await connection.promise().query('select * from worldflags where name LIKE "?%" and guild_id = ?', [title, interaction.guildId]);
+                                var cwflags = await connection.promise().query('select * from worldflags where lower(name) like lower("%?%") and guild_id = ?', [title, interaction.guildId]);
                                 console.log(cwflags);
                             }
                             if (cwflags[0].length < 1) {
@@ -1954,9 +1954,9 @@ client.on('interactionCreate', async (interaction) => {
                                         // create modal
                                     } else if (submittedModal.customId == 'RepVisCwAlphaSelector') {
                                         if (visibility == 'cflag') {
-                                            var cwflags = await connection.promise().query('select * from characterflags where guild_id = ? and name like "?%" and upper(name) like "?%"', [interaction.guildId, title, characterSelected]);
+                                            var cwflags = await connection.promise().query('select * from characterflags where guild_id = ? and lower(name) like lower("?%") and upper(name) like "?%"', [interaction.guildId, title, characterSelected]);
                                         } else {
-                                            var cwflags = await connection.promise().query('select * from worldflags where guild_id = ? and name like "?%" and upper(name) like "?%"', [interaction.guildId, title, characterSelected]);
+                                            var cwflags = await connection.promise().query('select * from worldflags where guild_id = ? and lower(name) like lower("?%") and upper(name) like "?%"', [interaction.guildId, title, characterSelected]);
                                         }
                                         if (cwflags[0].length > 0) {
                                             var cwflagsKeyValues = [];
