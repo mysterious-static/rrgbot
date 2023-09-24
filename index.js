@@ -1899,7 +1899,7 @@ client.on('interactionCreate', async (interaction) => {
                         }
                         var flagTitleInput = new TextInputBuilder()
                             .setCustomId('flagTitle')
-                            .setLabel('Name of the flag (bot will autocomplete partial name)')
+                            .setLabel('Name of flag (bot will autocomplete)')
                             .setStyle(TextInputStyle.Short);
                         var flagValueInput = new TextInputBuilder()
                             .setCustomId('flagValue')
