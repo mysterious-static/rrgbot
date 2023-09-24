@@ -1897,27 +1897,27 @@ client.on('interactionCreate', async (interaction) => {
                         } else {
                             modal.setTitle('World Flag Selection');
                         }
-                        var flagTitleInput = new TextInputBuilder()
-                            .setCustomId('flagTitle')
+                        var flagNameInput = new TextInputBuilder()
+                            .setCustomId('flagName')
                             .setLabel('Name of flag (bot will autocomplete)')
                             .setStyle(TextInputStyle.Short);
                         var flagValueInput = new TextInputBuilder()
                             .setCustomId('flagValue')
                             .setLabel('Minimum value of the flag')
                             .setStyle(TextInputStyle.Short);
-                        var titleActionRow = new ActionRowBuilder().addComponents(flagTitleInput);
+                        var nameActionRow = new ActionRowBuilder().addComponents(flagNameInput);
                         var valueActionRow = new ActionRowBuilder().addComponents(flagValueInput);
-                        modal.addComponents(titleActionRow, valueActionRow);
+                        modal.addComponents(nameActionRow, valueActionRow);
                         await interaction.showModal(modal);
                         var submittedModal = await interaction.awaitModalSubmit({ time: 60_000 });
                         if (submittedModal) {
-                            var title = submittedModal.fields.getTextInputValue('flagTitle');
+                            var cwflag_name = submittedModal.fields.getTextInputValue('flagName');
                             var value = submittedModal.fields.getTextInputValue('flagValue');
                             if (visibility == 'cflag') {
-                                var cwflags = await connection.promise().query('select * from characterflags where lower(name) like lower("%?%") and guild_id = ?', [title, interaction.guildId]);
+                                var cwflags = await connection.promise().query('select * from characterflags where lower(name) like lower("%?%") and guild_id = ?', [cwflag_name, interaction.guildId]);
                                 console.log(cwflags);
                             } else {
-                                var cwflags = await connection.promise().query('select * from worldflags where lower(name) like lower("%?%") and guild_id = ?', [title, interaction.guildId]);
+                                var cwflags = await connection.promise().query('select * from worldflags where lower(name) like lower("%?%") and guild_id = ?', [cwflag_name, interaction.guildId]);
                                 console.log(cwflags);
                             }
                             if (cwflags[0].length < 1) {
@@ -1954,9 +1954,9 @@ client.on('interactionCreate', async (interaction) => {
                                         // create modal
                                     } else if (submittedModal.customId == 'RepVisCwAlphaSelector') {
                                         if (visibility == 'cflag') {
-                                            var cwflags = await connection.promise().query('select * from characterflags where guild_id = ? and lower(name) like lower("?%") and upper(name) like "?%"', [interaction.guildId, title, characterSelected]);
+                                            var cwflags = await connection.promise().query('select * from characterflags where guild_id = ? and lower(name) like lower("?%") and upper(name) like "?%"', [interaction.guildId, cwflag_name, characterSelected]);
                                         } else {
-                                            var cwflags = await connection.promise().query('select * from worldflags where guild_id = ? and lower(name) like lower("?%") and upper(name) like "?%"', [interaction.guildId, title, characterSelected]);
+                                            var cwflags = await connection.promise().query('select * from worldflags where guild_id = ? and lower(name) like lower("?%") and upper(name) like "?%"', [interaction.guildId, cwflag_name, characterSelected]);
                                         }
                                         if (cwflags[0].length > 0) {
                                             var cwflagsKeyValues = [];
