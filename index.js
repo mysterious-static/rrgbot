@@ -1914,10 +1914,14 @@ client.on('interactionCreate', async (interaction) => {
                                 var title = interaction_second.fields.getTextInputValue('flagTitle');
                                 var value = interaction_second.fields.getTextInputValue('flagValue');
                                 console.log(title);
+                                console.log(interaction.guildId);
+                                console.log(visibility);
                                 if (visibility == 'cflag') {
                                     var cwflags = await connection.promise().query('select * from characterflags where name LIKE "?%" and guild_id = ?', [title, interaction.guildId]);
+                                    console.log(cwflags[0]);
                                 } else {
                                     var cwflags = await connection.promise().query('select * from worldflags where name LIKE "?%" and guild_id = ?', [title, interaction.guildId]);
+                                    console.log(cwflags[0]);
                                 }
                                 if (cwflags[0].length < 1) {
                                     interaction_second.reply({ content: "No flags with that name exist.", ephemeral: true });
