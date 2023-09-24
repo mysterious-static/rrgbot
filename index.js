@@ -1909,20 +1909,20 @@ client.on('interactionCreate', async (interaction) => {
                         var valueActionRow = new ActionRowBuilder().addComponents(flagValueInput);
                         modal.addComponents(nameActionRow, valueActionRow);
                         await interaction.showModal(modal);
-                        var submittedModal = await interaction.awaitModalSubmit({ time: 60_000 });
+                        let submittedModal = await interaction.awaitModalSubmit({ time: 60000 });
                         if (submittedModal) {
-                            var cwflag_name = submittedModal.fields.getTextInputValue('flagName');
-                            var value = submittedModal.fields.getTextInputValue('flagValue');
+                            let cwflag_name = submittedModal.fields.getTextInputValue('flagName');
+                            let value = submittedModal.fields.getTextInputValue('flagValue');
                             if (visibility == 'cflag') {
-                                var cwflags = await connection.promise().query('select * from characterflags where guild_id = ?', [cwflag_name, interaction.guildId]);
+                                let cwflags = await connection.promise().query('select * from characterflags where lower(name) like lower("%?%") and guild_id = ?', [cwflag_name, interaction.guildId]);
                                 console.log(cwflags);
                             } else {
-                                var cwflags = await connection.promise().query('select * from worldflags where lower(name) like lower("%?%") and guild_id = ?', [cwflag_name, interaction.guildId]);
+                                let cwflags = await connection.promise().query('select * from worldflags where lower(name) like lower("%?%") and guild_id = ?', [cwflag_name, interaction.guildId]);
                                 console.log(cwflags);
                             }
-                            await submittedModal.reply({content: 'Checking for flags...', ephemeral: true});
+                            await submittedModal.reply({ content: 'Checking for flags...', ephemeral: true });
                             if (cwflags[0].length < 1) {
-                                submittedModal.editReply({ content: "No flags with that name exist.", ephemeral: true });
+                                await submittedModal.editReply({ content: "No flags with that name exist.", ephemeral: true });
                             } else if (cwflags[0].length == 1) {
                                 await connection.promise().query('insert into reputations (name, guild_id, description, visibility, maximum, start_value, cwflag_id, cwflag_value) values (?, ?, ?, ?, ?, ?, ?, ?)', [name, interaction.guildId, description, visibility, maximum, start_value, cwflags[0][0].id, value]);
                                 await submittedModal.editReply({ content: "Reputation added.", ephemeral: true });
