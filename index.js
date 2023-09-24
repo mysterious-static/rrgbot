@@ -1914,10 +1914,10 @@ client.on('interactionCreate', async (interaction) => {
                             let cwflag_name = submittedModal.fields.getTextInputValue('flagName');
                             let value = submittedModal.fields.getTextInputValue('flagValue');
                             if (visibility == 'cflag') {
-                                let cwflags = await connection.promise().query('select * from characterflags where lower(name) like lower("%?%") and guild_id = ?', [cwflag_name, interaction.guildId]);
+                                var cwflags = await connection.promise().query('select * from characterflags where lower(name) like lower("%?%") and guild_id = ?', [cwflag_name, interaction.guildId]);
                                 console.log(cwflags);
                             } else {
-                                let cwflags = await connection.promise().query('select * from worldflags where lower(name) like lower("%?%") and guild_id = ?', [cwflag_name, interaction.guildId]);
+                                var cwflags = await connection.promise().query('select * from worldflags where lower(name) like lower("%?%") and guild_id = ?', [cwflag_name, interaction.guildId]);
                                 console.log(cwflags);
                             }
                             await submittedModal.reply({ content: 'Checking for flags...', ephemeral: true });
