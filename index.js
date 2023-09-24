@@ -208,6 +208,10 @@ var addskill = new SlashCommandBuilder().setName('addskill')
                 { name: 'noncombat', value: 'noncombat' },
                 { name: 'innate', value: 'innate' },
                 { name: 'profession', value: 'profession' }))
+    .addBooleanOption(option =>
+        option.setName('targetable')
+            .setDescription('Whether skill can target another character')
+            .setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 var additem = new SlashCommandBuilder().setName('additem')
@@ -329,44 +333,89 @@ var populatewhisper = new SlashCommandBuilder().setName('populatewhisper')
             .setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
-var addreputation = new SlashCommandBuilder().setName('addreputation')
-    .setDescription('Add a reputation.')
-    .addStringOption(option =>
-        option.setName('name')
-            .setDescription('The name of the reputation')
-            .setRequired(true))
-    .addStringOption(option =>
-        option.setName('description')
-            .setDescription('A short description of the reputation')
-            .setRequired(true))
-    .addBooleanOption(option =>
-        option.setName('playervisible')
-            .setDescription('If this reputation should be visible to players before encountering') // Or should this be set by archetype and character?
-            .setRequired(true))
-    .addIntegerOption(option =>
-        option.setName('maximum')
-            .setDescription('Maximum reputation value for this reputation.').setRequired(true))
-    .addStringOption(option =>
-        option.setName('icon')
-            .setDescription('(optional) A faction icon\'s emoji ID'))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-var addreputationtier = new SlashCommandBuilder().setName('addreputationtier')
-    .setDescription('Add a reputation tier.')
-    .addStringOption(option => option.setName('name')
-        .setDescription('The name for this reputation tier (Revered, SL2, etc)')
-        .setRequired(true))
-    .addIntegerOption(option => option.setName('value')
-        .setDescription('The threshold minimum for this reputation tier.')
-        .setRequired(true))
-    //optional: colour hex
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-var reward = new SlashCommandBuilder().setName('reward')
-    .setDescription('Commands to manage rewards.')
+var characterflag = new SlashCommandBuilder().setName('characterflag')
+    .setDescription('Character flag management.')
     .addSubcommand(subcommand =>
         subcommand.setName('add')
-            .setDescription('Add a reward'))
+            .setDescription('Add a character flag.')
+            .addStringOption(option =>
+                option.setName('name')
+                    .setDescription('A searchable name for this flag.')
+                    .setRequired(true)))
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+var worldflag = new SlashCommandBuilder().setName('worldflag')
+    .setDescription('World flag management.')
+    .addSubcommand(subcommand =>
+        subcommand.setName('add')
+            .setDescription('Add a world flag with starting value 0.')
+            .addStringOption(option =>
+                option.setName('name')
+                    .setDescription('A searchable name for this flag.')
+                    .setRequired(true)))
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+var reputation = new SlashCommandBuilder().setName('reputation')
+    .setDescription('Reputation management tools')
+    .addSubcommand(subcommand =>
+        subcommand.setName('add')
+            .setDescription('Add a reputation')
+            .addStringOption(option =>
+                option.setName('name')
+                    .setDescription('The name of the reputation')
+                    .setRequired(true))
+            .addStringOption(option =>
+                option.setName('description')
+                    .setDescription('A short description of the reputation')
+                    .setRequired(true))
+            .addStringOption(option =>
+                option.setName('visibility')
+                    .setDescription('If this reputation should be visible to players before encountering') // Or should this be set by archetype and character?
+                    .setRequired(true)
+                    .addChoices(
+                        { name: 'Always On', value: always },
+                        { name: 'Character Flag', value: cflag },
+                        { name: 'World Flag', value: wflag },
+                        { name: 'Never', value: never }
+                    ))
+            .addIntegerOption(option =>
+                option.setName('maximum')
+                    .setDescription('Maximum reputation value for this reputation.')
+                    .setRequired(true))
+            .addIntegerOption(option =>
+                option.setName('start_value')
+                    .setDescription('Starting reputation value for this reputation.')
+                    .setRequired(true))
+            .addStringOption(option =>
+                option.setName('icon')
+                    .setDescription('(optional) A faction icon\'s emoji ID')))
+    .addSubcommand(subcommand =>
+        subcommand.setName('tieradd')
+            .setDescription('Add a tier to a reputation.')
+            .addStringOption(option =>
+                option.setName('name')
+                    .setDescription('The name of the reputation tier (Neutral, Exalted, etc.)')
+                    .setRequired(true))
+            .addIntegerOption(option =>
+                option.setName('value')
+                    .setDescription('The threshold minimum for this reputation tier.')
+                    .setRequired(true)))
+    .addSubcommand(subcommand =>
+        subcommand.setName('tiereffect')
+            .setDescription('Add an effect to a tier.'))
+    .addSubcommand(subcommand =>
+        subcommand.setName('vieweffects')
+            .setDescription('List effects on a given reputation tier.'))
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+var effect = new SlashCommandBuilder().setName('effect')
+    .setDescription('Commands to manage effects.')
+    .addSubcommand(subcommand =>
+        subcommand.setName('addprereq')
+            .setDescription('Add a prerequisite to an effect')) // Prompt for what type of reward it is - quest, reputation tier, dialog, skill, etc
+    .addSubcommand(subcommand =>
+        subcommand.setName('remove')
+            .setDescription('Remove an effect.'))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 //Prompt for archetype/character, reputation, tier, item/skill/reputation/archetype/pflag/qflag/message, prompt for whatever's chosen - should have quantity of reward available (-1 for unlimited) if archetype
 
@@ -375,18 +424,6 @@ var setreputationenabled = new SlashCommandBuilder().setName('setreputationenabl
     .addBooleanOption(option => option.setName('enabled')
         .setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-var enableplayerrepup = new SlashCommandBuilder().setName('enableplayerrepup')
-    .setDescription('Allow players to manage their own reputation.')
-    .addBooleanOption(option => option.setName('enabled')
-        .setRequired(true))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-var repup = new SlashCommandBuilder().setName('repup')
-    .setDescription('Raises character reputation with a given reputation.')
-    .addBooleanOption(option => option.setName('quantity')
-        .setDescription('How many reputation points to gain (relative value)')
-        .setRequired(true));
 
 var sendas = new SlashCommandBuilder().setName('sendas')
     .setDescription('Send message as a character.')
@@ -575,9 +612,13 @@ client.on('ready', async () => {
         removeticketcategory.toJSON(),
         sendas.toJSON(),
         roll.toJSON(),
-        locationawaretrading.toJSON()
+        locationawaretrading.toJSON(),
+        reputation.toJSON(),
+        effect.toJSON(),
+        characterflag.toJSON(),
+        worldflag.toJSON()
     ]);
-    client.user.setActivity("Persona L Epiphany");
+    client.user.setActivity("Reality Roleplaying Games");
 });
 
 client.on('guildCreate', async (guild) => {
@@ -1178,10 +1219,11 @@ client.on('interactionCreate', async (interaction) => {
         } else if (interaction.commandName == 'addskill') {
             var name = interaction.options.getString('name');
             var type = interaction.options.getString('type');
+            var targetable = interaction.options.getBoolean('targetable')
             var description = interaction.options.getString('description');
             var exists = await connection.promise().query('select * from skills where guild_id = ? and name = ?', [interaction.guildId, name]);
             if (exists[0].length == 0) {
-                await connection.promise().query('insert into skills (name, description, type, guild_id) values (?, ?, ?, ?)', [name, description, type, interaction.guildId]);
+                await connection.promise().query('insert into skills (name, description, type, guild_id, targetable) values (?, ?, ?, ?, ?)', [name, description, type, interaction.guildId, targetable]);
                 interaction.reply({ content: 'Skill added!', ephemeral: true });
             } else {
                 interaction.reply({ content: 'Skill with this name already exists!', ephemeral: true });
@@ -1811,6 +1853,140 @@ client.on('interactionCreate', async (interaction) => {
                 });
             } else {
                 await interaction.reply({ content: 'There aren\'t any eligible stats for this! Please double-check and ensure that you have a stat that\'s not assigned to a special function.', ephemeral: true });
+            }
+        } else if (interaction.commandName == 'characterflag') {
+            if (interaction.options.getSubcommand() === 'add') {
+                var name = interaction.options.getString('name');
+                await connection.promise().query('insert into characterflags (name, guild_id) values (?, ?)', [name, interaction.guildId]);
+                await interaction.reply({ content: 'Character flag added.', ephemeral: true });
+            }
+        } else if (interaction.commandName == 'worldflag') {
+            if (interaction.options.getSubcommand() === 'add') {
+                var name = interaction.options.getString('name');
+                await connection.promise().query('insert into worldflags (name, guild_id) values (?, ?)', [name, interaction.guildId]);
+                await interaction.reply({ content: 'World flag added.', ephemeral: true });
+            }
+        } else if (interaction.commandName == 'reputation') {
+            if (interaction.options.getSubcommand() === 'add') {
+                var name = interaction.options.getString('name');
+                var description = interaction.options.getString('description');
+                var playervisible = interaction.options.getBoolean('visible');
+                var maximum = interaction.options.getInteger('maximum');
+                var icon = interaction.options.getString('icon');
+                var start_value = interaction.options.getInteger('start_value');
+                var reputations = await connection.promise().query('select * from reputations where name = ? and guild_id = ?', [name, interaction.guildId]);
+                if (reputations[0].length > 0) {
+                    await interaction.reply({ content: `You've already added a reputation with name ${name}.`, ephemeral: true });
+                } else {
+                    if (visibility == 'cflag') {
+                        var cflags = await connection.promise().query('select * from characterflags where guild_id = ?', [interaction.guildId]);
+                    } else if (visibility == 'wflag') {
+                        var wflags = await connection.promise().query('select * from worldflags where guild_id = ?', [interaction.guildId]);
+                    }
+                    if ((visibility == 'cflag' && cflags[0].length == 0) || (visibility == 'wflag' && wflags[0].length == 0)) {
+                        await interaction.reply({ mescontentsage: 'No flags of the specified type exist in this game yet.', ephemeral: true });
+                    } else if (visibility == 'always' || visibility == 'never') {
+                        await connection.promise().query('insert into reputations (name, guild_id, description, visibility, maximum, start_value) values (?, ?, ?, ?, ?, ?)', [name, interaction.guildId, description, visiblity, maximum, start_value]);
+                        await interaction.reply({ content: 'Reputation added.', ephemeral: true });
+                    } else {
+                        // build modal
+                        var modal = new ModalBuilder()
+                            .setCustomId('RepCWFlagModal');
+                        if (visibility == 'cflag') {
+                            modal.setTitle('Character Flag Selection');
+                        } else {
+                            modal.setTitle('World Flag Selection');
+                        }
+                        var flagTitleInput = new TextInputBuilder()
+                            .setCustomId('flagTitle')
+                            .setLabel('Name of the flag (partial okay)')
+                            .setStyle(TextInputStyle.Short);
+                        var flagValueInput = new TextInputBuilder()
+                            .setCustomId('flagValue')
+                            .setLabel('Minimum value of the flag')
+                            .setStyle(TextInputStyle.Short);
+                        var titleActionRow = new ActionRowBuilder().addComponents(flagTitleInput);
+                        var valueActionRow = new ActionRowBuilder().addComponents(flagValueInput);
+                        modal.addComponents(titleActionRow, valueActionRow);
+                        await interaction.showModal(modal);
+                        interaction.awaitModalSubmit({ time: 60_000 })
+                            .then(async (interaction_second) => {
+                                var title = interaction_second.fields.getTextInputValue('flagTitle');
+                                var value = interaction_second.fields.getTextInputValue('flagValue');
+                                if (visibility == 'cflag') {
+                                    var cwflags = await connection.promise().query('select * from characterflags where name LIKE "%?%" and guild_id = ?', [title, interaction.guildId]);
+                                } else {
+                                    var cwflags = await connection.promise().query('select * from worldflags where name LIKE "%?%" and guild_id = ?', [title, interaction.guildId]);
+                                }
+                                if (cwflags[0].length < 1) {
+                                    interaction_second.reply({ content: "No flags with that name exist.", ephemeral: true });
+                                } else if (cwflags[0].length == 1) {
+                                    await connection.promise().query('insert into reputations (name, guild_id, description, visibility, maximum, start_value, cwflag_id, cwflag_value) values (?, ?, ?, ?, ?, ?, ?, ?)', [name, interaction.guildId, description, visibility, maximum, start_value, cwflags[0][0].id, value]);
+                                    await interaction_second.reply({ content: "Reputation added.", ephemeral: true });
+                                } else {
+                                    var cwflagSelectComponent;
+                                    if (cwflags[0].length <= 25) {
+                                        var cwflagsKeyValues = [];
+                                        for (const cwflag of cwflags[0]) {
+                                            var thisCwflagKeyValue = { label: cwflag.name, value: cwflag.id.toString() };
+                                            cwflagsKeyValues.push(thisCwflagKeyValue);
+                                        }
+                                        cwflagSelectComponent = new StringSelectMenuBuilder().setOptions(cwflagsKeyValues).setCustomId('RepVisCwflagSelector').setMinValues(1).setMaxValues(1);
+                                    } else {
+                                        var cwflags = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
+                                        var cwflagsKeyValues = [];
+                                        for (const cwflag of cwflags) {
+                                            var thisCwflagKeyValue = { label: cwflag, value: cwflag }
+                                            cwflagsKeyValues.push(thisCflagKeyValue);
+                                        }
+                                        cwflagSelectComponent = new StringSelectMenuBuilder().setOptions(cwflagsKeyValues).setCustomId('RepVisCwAlphaSelector').setMinValues(1).setMaxValues(1);
+                                    }
+                                    var cwflagSelectRow = new ActionRowBuilder().addComponents(cwflagSelectComponent);
+                                    var message = await interaction_second.reply({ content: 'Please select the following options:', components: [cwflagSelectRow], ephemeral: true });
+                                    collector = message.createMessageComponentCollector();
+                                    collector.on('collect', async (interaction_third) => {
+                                        if (interaction_third.customId == 'RepVisCwflagSelector') {
+                                            var cwflag_id = interaction_third.values[0];
+                                            await connection.promise().query('insert into reputations (name, guild_id, description, visibility, maximum, start_value, cwflag_id, cwflag_value) values (?, ?, ?, ?, ?, ?, ?, ?)', [name, interaction.guildId, description, visibility, maximum, start_value, cwflag_id, value]);
+                                            interaction_second.editReply({ content: 'Reputation added.', ephemeral: true });
+                                            // create modal
+                                        } else if (interaction_second.customId == 'RepVisCwAlphaSelector') {
+                                            if (visibility == 'cflag') {
+                                                var cwflags = await connection.promise().query('select * from characterflags where guild_id = ? and name like "%?%" and upper(name) like "?%"', [interaction.guildId, title, characterSelected]);
+                                            } else {
+                                                var cwflags = await connection.promise().query('select * from worldflags where guild_id = ? and name like "%?%" and upper(name) like "?%"', [interaction.guildId, title, characterSelected]);
+                                            }
+                                            if (cwflags[0].length > 0) {
+                                                var cwflagsKeyValues = [];
+                                                for (const cwflag of cwflags[0]) {
+                                                    var thisCwflagKeyValue = { label: cwflag.name, value: cwflag.id.toString() };
+                                                    cwflagsKeyValues.push(thisCwflagKeyValue);
+                                                }
+                                                cwflagSelectComponent = new StringSelectMenuBuilder().setOptions(cwflagsKeyValues).setCustomId('RepVisCwflagSelector').setMinValues(1).setMaxValues(1);
+                                                var cwflagSelectRow = new ActionRowBuilder().addComponents(cwflagSelectComponent);
+                                                interaction.update({ components: [cwflagSelectRow] });
+                                            } else {
+                                                interaction.update({ content: 'No flags with this first letter', components: [] });
+                                            }
+                                        }
+                                    });
+                                }
+                            })
+                            .catch(err => console.log('No modal submit interaction collected.'));
+                    }
+                }
+            } else if (interaction.options.getSubcommand() === 'tieradd') {
+
+            } else if (interaction.options.getSubcommand() === 'tiereffect') {
+
+            } else if (interaction.options.getSubcommand() === 'vieweffects') {
+
+            }
+        } else if (interaction.commandName == 'effect') {
+            if (interaction.options.getSubcommand() === 'addprereq') {
+
+            } else if (interaction.options.getSubcommand() === 'remove') {
+
             }
         } else if (interaction.commandName == 'sendas') {
             var parrot_text = interaction.options.getString('message');
