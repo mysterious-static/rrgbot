@@ -1870,7 +1870,7 @@ client.on('interactionCreate', async (interaction) => {
             if (interaction.options.getSubcommand() === 'add') {
                 var name = interaction.options.getString('name');
                 var description = interaction.options.getString('description');
-                var playervisible = interaction.options.getBoolean('visible');
+                var visibility = interaction.options.getBoolean('visibility');
                 var maximum = interaction.options.getInteger('maximum');
                 var icon = interaction.options.getString('icon');
                 var start_value = interaction.options.getInteger('start_value');
@@ -1886,7 +1886,7 @@ client.on('interactionCreate', async (interaction) => {
                     if ((visibility == 'cflag' && cflags[0].length == 0) || (visibility == 'wflag' && wflags[0].length == 0)) {
                         await interaction.reply({ mescontentsage: 'No flags of the specified type exist in this game yet.', ephemeral: true });
                     } else if (visibility == 'always' || visibility == 'never') {
-                        await connection.promise().query('insert into reputations (name, guild_id, description, visibility, maximum, start_value) values (?, ?, ?, ?, ?, ?)', [name, interaction.guildId, description, visiblity, maximum, start_value]);
+                        await connection.promise().query('insert into reputations (name, guild_id, description, visibility, maximum, start_value) values (?, ?, ?, ?, ?, ?)', [name, interaction.guildId, description, visibility, maximum, start_value]);
                         await interaction.reply({ content: 'Reputation added.', ephemeral: true });
                     } else {
                         // build modal
