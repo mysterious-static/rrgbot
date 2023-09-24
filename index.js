@@ -1909,75 +1909,71 @@ client.on('interactionCreate', async (interaction) => {
                         var valueActionRow = new ActionRowBuilder().addComponents(flagValueInput);
                         modal.addComponents(titleActionRow, valueActionRow);
                         await interaction.showModal(modal);
-                        interaction.awaitModalSubmit({ time: 60_000 })
-                            .then(async (interaction_second) => {
-                                var title = interaction_second.fields.getTextInputValue('flagTitle');
-                                var value = interaction_second.fields.getTextInputValue('flagValue');
-                                console.log(title);
-                                console.log(interaction.guildId);
-                                console.log(visibility);
-                                if (visibility == 'cflag') {
-                                    var cwflags = await connection.promise().query('select * from characterflags where name LIKE "?%" and guild_id = ?', [title, interaction.guildId]);
-                                    console.log(cwflags);
-                                } else {
-                                    var cwflags = await connection.promise().query('select * from worldflags where name LIKE "?%" and guild_id = ?', [title, interaction.guildId]);
-                                    console.log(cwflags);
-                                }
-                                if (cwflags[0].length < 1) {
-                                    interaction_second.reply({ content: "No flags with that name exist.", ephemeral: true });
-                                } else if (cwflags[0].length == 1) {
-                                    await connection.promise().query('insert into reputations (name, guild_id, description, visibility, maximum, start_value, cwflag_id, cwflag_value) values (?, ?, ?, ?, ?, ?, ?, ?)', [name, interaction.guildId, description, visibility, maximum, start_value, cwflags[0][0].id, value]);
-                                    await interaction_second.reply({ content: "Reputation added.", ephemeral: true });
-                                } else {
-                                    var cwflagSelectComponent;
-                                    if (cwflags[0].length <= 25) {
-                                        var cwflagsKeyValues = [];
-                                        for (const cwflag of cwflags[0]) {
-                                            var thisCwflagKeyValue = { label: cwflag.name, value: cwflag.id.toString() };
-                                            cwflagsKeyValues.push(thisCwflagKeyValue);
-                                        }
-                                        cwflagSelectComponent = new StringSelectMenuBuilder().setOptions(cwflagsKeyValues).setCustomId('RepVisCwflagSelector').setMinValues(1).setMaxValues(1);
-                                    } else {
-                                        var cwflags = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
-                                        var cwflagsKeyValues = [];
-                                        for (const cwflag of cwflags) {
-                                            var thisCwflagKeyValue = { label: cwflag, value: cwflag }
-                                            cwflagsKeyValues.push(thisCflagKeyValue);
-                                        }
-                                        cwflagSelectComponent = new StringSelectMenuBuilder().setOptions(cwflagsKeyValues).setCustomId('RepVisCwAlphaSelector').setMinValues(1).setMaxValues(1);
+                        var submittedModal = await interaction.awaitModalSubmit({ time: 60_000 });
+                        if (submittedModal) {
+                            var title = interaction_second.fields.getTextInputValue('flagTitle');
+                            var value = interaction_second.fields.getTextInputValue('flagValue');
+                            if (visibility == 'cflag') {
+                                var cwflags = await connection.promise().query('select * from characterflags where name LIKE "?%" and guild_id = ?', [title, interaction.guildId]);
+                                console.log(cwflags);
+                            } else {
+                                var cwflags = await connection.promise().query('select * from worldflags where name LIKE "?%" and guild_id = ?', [title, interaction.guildId]);
+                                console.log(cwflags);
+                            }
+                            if (cwflags[0].length < 1) {
+                                interaction_second.reply({ content: "No flags with that name exist.", ephemeral: true });
+                            } else if (cwflags[0].length == 1) {
+                                await connection.promise().query('insert into reputations (name, guild_id, description, visibility, maximum, start_value, cwflag_id, cwflag_value) values (?, ?, ?, ?, ?, ?, ?, ?)', [name, interaction.guildId, description, visibility, maximum, start_value, cwflags[0][0].id, value]);
+                                await interaction_second.reply({ content: "Reputation added.", ephemeral: true });
+                            } else {
+                                var cwflagSelectComponent;
+                                if (cwflags[0].length <= 25) {
+                                    var cwflagsKeyValues = [];
+                                    for (const cwflag of cwflags[0]) {
+                                        var thisCwflagKeyValue = { label: cwflag.name, value: cwflag.id.toString() };
+                                        cwflagsKeyValues.push(thisCwflagKeyValue);
                                     }
-                                    var cwflagSelectRow = new ActionRowBuilder().addComponents(cwflagSelectComponent);
-                                    var message = await interaction_second.reply({ content: 'Please select the following options:', components: [cwflagSelectRow], ephemeral: true });
-                                    collector = message.createMessageComponentCollector();
-                                    collector.on('collect', async (interaction_third) => {
-                                        if (interaction_third.customId == 'RepVisCwflagSelector') {
-                                            var cwflag_id = interaction_third.values[0];
-                                            await connection.promise().query('insert into reputations (name, guild_id, description, visibility, maximum, start_value, cwflag_id, cwflag_value) values (?, ?, ?, ?, ?, ?, ?, ?)', [name, interaction.guildId, description, visibility, maximum, start_value, cwflag_id, value]);
-                                            interaction_second.editReply({ content: 'Reputation added.', ephemeral: true });
-                                            // create modal
-                                        } else if (interaction_second.customId == 'RepVisCwAlphaSelector') {
-                                            if (visibility == 'cflag') {
-                                                var cwflags = await connection.promise().query('select * from characterflags where guild_id = ? and name like "?%" and upper(name) like "?%"', [interaction.guildId, title, characterSelected]);
-                                            } else {
-                                                var cwflags = await connection.promise().query('select * from worldflags where guild_id = ? and name like "?%" and upper(name) like "?%"', [interaction.guildId, title, characterSelected]);
-                                            }
-                                            if (cwflags[0].length > 0) {
-                                                var cwflagsKeyValues = [];
-                                                for (const cwflag of cwflags[0]) {
-                                                    var thisCwflagKeyValue = { label: cwflag.name, value: cwflag.id.toString() };
-                                                    cwflagsKeyValues.push(thisCwflagKeyValue);
-                                                }
-                                                cwflagSelectComponent = new StringSelectMenuBuilder().setOptions(cwflagsKeyValues).setCustomId('RepVisCwflagSelector').setMinValues(1).setMaxValues(1);
-                                                var cwflagSelectRow = new ActionRowBuilder().addComponents(cwflagSelectComponent);
-                                                interaction.update({ components: [cwflagSelectRow] });
-                                            } else {
-                                                interaction.update({ content: 'No flags with this first letter', components: [] });
-                                            }
-                                        }
-                                    });
+                                    cwflagSelectComponent = new StringSelectMenuBuilder().setOptions(cwflagsKeyValues).setCustomId('RepVisCwflagSelector').setMinValues(1).setMaxValues(1);
+                                } else {
+                                    var cwflags = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
+                                    var cwflagsKeyValues = [];
+                                    for (const cwflag of cwflags) {
+                                        var thisCwflagKeyValue = { label: cwflag, value: cwflag }
+                                        cwflagsKeyValues.push(thisCflagKeyValue);
+                                    }
+                                    cwflagSelectComponent = new StringSelectMenuBuilder().setOptions(cwflagsKeyValues).setCustomId('RepVisCwAlphaSelector').setMinValues(1).setMaxValues(1);
                                 }
-                            })
-                            .catch(err => console.log('No modal submit interaction collected.'));
+                                var cwflagSelectRow = new ActionRowBuilder().addComponents(cwflagSelectComponent);
+                                var message = await interaction_second.reply({ content: 'Please select the following options:', components: [cwflagSelectRow], ephemeral: true });
+                                collector = message.createMessageComponentCollector();
+                                collector.on('collect', async (interaction_third) => {
+                                    if (interaction_third.customId == 'RepVisCwflagSelector') {
+                                        var cwflag_id = interaction_third.values[0];
+                                        await connection.promise().query('insert into reputations (name, guild_id, description, visibility, maximum, start_value, cwflag_id, cwflag_value) values (?, ?, ?, ?, ?, ?, ?, ?)', [name, interaction.guildId, description, visibility, maximum, start_value, cwflag_id, value]);
+                                        interaction_second.editReply({ content: 'Reputation added.', ephemeral: true });
+                                        // create modal
+                                    } else if (interaction_second.customId == 'RepVisCwAlphaSelector') {
+                                        if (visibility == 'cflag') {
+                                            var cwflags = await connection.promise().query('select * from characterflags where guild_id = ? and name like "?%" and upper(name) like "?%"', [interaction.guildId, title, characterSelected]);
+                                        } else {
+                                            var cwflags = await connection.promise().query('select * from worldflags where guild_id = ? and name like "?%" and upper(name) like "?%"', [interaction.guildId, title, characterSelected]);
+                                        }
+                                        if (cwflags[0].length > 0) {
+                                            var cwflagsKeyValues = [];
+                                            for (const cwflag of cwflags[0]) {
+                                                var thisCwflagKeyValue = { label: cwflag.name, value: cwflag.id.toString() };
+                                                cwflagsKeyValues.push(thisCwflagKeyValue);
+                                            }
+                                            cwflagSelectComponent = new StringSelectMenuBuilder().setOptions(cwflagsKeyValues).setCustomId('RepVisCwflagSelector').setMinValues(1).setMaxValues(1);
+                                            var cwflagSelectRow = new ActionRowBuilder().addComponents(cwflagSelectComponent);
+                                            interaction.update({ components: [cwflagSelectRow] });
+                                        } else {
+                                            interaction.update({ content: 'No flags with this first letter', components: [] });
+                                        }
+                                    }
+                                });
+                            }
+                        }
                     }
                 }
             } else if (interaction.options.getSubcommand() === 'tieradd') {
