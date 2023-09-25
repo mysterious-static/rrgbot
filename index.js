@@ -2056,6 +2056,8 @@ client.on('interactionCreate', async (interaction) => {
                 var reputationSelectRow = new ActionRowBuilder().addComponents(reputationSelectComponent);
                 var message = await interaction.reply({ content: 'Please select a reputation:', components: [reputationSelectRow], ephemeral: true });
                 collector = message.createMessageComponentCollector();
+                var type;
+                var visible;
                 collector.on('collect', async (interaction_second) => {
                     if (interaction_second.customId == 'RepSelector') {
                         var reputation_id = interaction_second.values[0];
@@ -2103,14 +2105,14 @@ client.on('interactionCreate', async (interaction) => {
                         var selectRow = new ActionRowBuilder().addComponents(selectComponent);
                         await interaction_second.reply({ content: 'Please select a type of effect:', components: [selectRow] });
                     } else if (interaction_second.customId == 'TypeSelector') {
-                        var type = interaction_second.values[0];
+                        type = interaction_second.values[0];
                         var visibilities = [{ label: 'Yes', value: '1' }, { label: 'No', value: '0' }];
                         var selectComponent = new StringSelectMenuBuilder().setOptions(visibilities).setCustomId('VisibilitySelector').setMinValues(1).setMaxValues(1);
                         var selectRow = new ActionRowBuilder().addComponents(selectComponent);
                         await interaction_second.reply({ content: 'Do you want this effect announced to the player?', components: [selectRow] });
 
                     } else if (interaction_second.customId == 'VisibilitySelector') {
-                        var visible = interaction_second.values[0];
+                        visible = interaction_second.values[0];
                         console.log(type);
                         var modal = new ModalBuilder()
                             .setCustomId('RepEffectModal')
