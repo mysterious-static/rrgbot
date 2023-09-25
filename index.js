@@ -2059,8 +2059,7 @@ client.on('interactionCreate', async (interaction) => {
                 collector.on('collect', async (interaction_second) => {
                     if (interaction_second.customId == 'RepSelector') {
                         var reputation_id = interaction_second.values[0];
-                        var reputations = await connection.promise().query('select * from reputations where id = ?', [reputation_id]);
-                        var result_values = connection.promise().query('select * from reputations_tiers where reputation_id = ?', [reputations[0][0].id]);
+                        var result_values = await connection.promise().query('select * from reputations_tiers where reputation_id = ?', [reputation_id]);
                         var selectComponent;
                         if (result_values[0].length > 0) {
                             if (result_values[0].length <= 25) {
