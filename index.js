@@ -2220,7 +2220,9 @@ client.on('interactionCreate', async (interaction) => {
                                     selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('TypeaheadSelector').setMinValues(1).setMaxValues(1);
                                 }
                             } else {
+                                console.log('no typeahead')
                                 if (typedata) {
+                                    console.log('insert');
                                     var insertedEffect = await connection.promise().query('insert into effects (type, charges, visible, typedata) values (?, ?, ?, ?)', [type, charges, visible, typedata]);
                                     await connection.promise().query('insert into reputations_tiers_effects (reputationtier_id, effect_id) values (?, ?)', [tier_id, insertedEffect.insertId]);
                                     await interaction_second.reply({ content: 'Effect added.', components: [] });
