@@ -2059,6 +2059,7 @@ client.on('interactionCreate', async (interaction) => {
                 var type;
                 var visible;
                 var tier_id;
+                var charges;
                 var reputation_id;
                 collector.on('collect', async (interaction_second) => {
                     if (interaction_second.customId == 'RepSelector') {
@@ -2179,7 +2180,7 @@ client.on('interactionCreate', async (interaction) => {
                             var type_qty = false;
                             var typedata = false;
                             console.log(submittedModal.fields.fields);
-                            var charges = submittedModal.fields.getTextInputValue('charges');
+                            charges = submittedModal.fields.getTextInputValue('charges');
                             if (submittedModal.fields.fields.find(field => field.customId === 'typeahead')) {
                                 typeahead = submittedModal.fields.getTextInputValue('typeahead');
                             }
