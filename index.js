@@ -1811,7 +1811,7 @@ client.on('interactionCreate', async (interaction) => {
                                         } else {
                                             insertedEffect = await connection.promise().query('insert into effects (type, type_id, charges, visible, typedata) values (?, ?, ?, ?, ?, ?)', [type, typeahead_results[0][0].id, charges, visible, typedata, target]);
                                         }
-                                        await connection.promise().query('insert into skills_effects (skill_id, effect_id) values (?, ?)', [selectedSkill, insertedEffect.insertId]);
+                                        await connection.promise().query('insert into skills_effects (skill_id, effect_id) values (?, ?)', [selectedSkill, insertedEffect[0].insertId]);
                                         await interaction_second.update({ content: 'Effect added.', components: [], ephemeral: true });
                                     } else {
                                         var keyValues = [];
@@ -1830,7 +1830,7 @@ client.on('interactionCreate', async (interaction) => {
                                     if (typedata) {
                                         console.log('insert');
                                         var insertedEffect = await connection.promise().query('insert into effects (type, charges, visible, typedata, target) values (?, ?, ?, ?, ?)', [type, charges, visible, typedata, target]);
-                                        await connection.promise().query('insert into skills_effects (skill_id, effect_id) values (?, ?)', [selectedSkill, insertedEffect.insertId]);
+                                        await connection.promise().query('insert into skills_effects (skill_id, effect_id) values (?, ?)', [selectedSkill, insertedEffect[0].insertId]);
                                         await interaction_second.update({ content: 'Effect added.', components: [], ephemeral: true });
                                     }
                                 }
@@ -1843,7 +1843,7 @@ client.on('interactionCreate', async (interaction) => {
                             } else {
                                 insertedEffect = await connection.promise().query('insert into effects (type, type_id, charges, visible, typedata) values (?, ?, ?, ?, ?, ?)', [type, typeahead_id, charges, visible, typedata, target]);
                             }
-                            await connection.promise().query('insert into skills_effects (skill_id, effect_id) values (?, ?)', [selectedSkill, insertedEffect.insertId]);
+                            await connection.promise().query('insert into skills_effects (skill_id, effect_id) values (?, ?)', [selectedSkill, insertedEffect[0].insertId]);
                             await interaction_second.update({ content: 'Effect added.', components: [] });
                         }
                     });
@@ -2642,7 +2642,7 @@ client.on('interactionCreate', async (interaction) => {
                                     } else {
                                         insertedEffect = await connection.promise().query('insert into effects (type, type_id, charges, visible, typedata) values (?, ?, ?, ?, ?)', [type, typeahead_results[0][0].id, charges, visible, typedata]);
                                     }
-                                    await connection.promise().query('insert into reputations_tiers_effects (reputationtier_id, effect_id) values (?, ?)', [tier_id, insertedEffect.insertId]);
+                                    await connection.promise().query('insert into reputations_tiers_effects (reputationtier_id, effect_id) values (?, ?)', [tier_id, insertedEffect[0].insertId]);
                                     await interaction_second.reply({ content: 'Effect added.', components: [], ephemeral: true });
                                 } else {
                                     var keyValues = [];
@@ -2661,7 +2661,7 @@ client.on('interactionCreate', async (interaction) => {
                                 if (typedata) {
                                     console.log('insert');
                                     var insertedEffect = await connection.promise().query('insert into effects (type, charges, visible, typedata) values (?, ?, ?, ?)', [type, charges, visible, typedata]);
-                                    await connection.promise().query('insert into reputations_tiers_effects (reputationtier_id, effect_id) values (?, ?)', [tier_id, insertedEffect.insertId]);
+                                    await connection.promise().query('insert into reputations_tiers_effects (reputationtier_id, effect_id) values (?, ?)', [tier_id, insertedEffect[0].insertId]);
                                     await interaction_second.update({ content: 'Effect added.', components: [], ephemeral: true });
                                 }
                             }
@@ -2674,7 +2674,7 @@ client.on('interactionCreate', async (interaction) => {
                         } else {
                             insertedEffect = await connection.promise().query('insert into effects (type, type_id, charges, visible, typedata) values (?, ?, ?, ?, ?)', [type, typeahead_id, charges, visible, typedata]);
                         }
-                        await connection.promise().query('insert into reputations_tiers_effects (reputationtier_id, effect_id) values (?, ?)', [tier_id, insertedEffect.insertId]);
+                        await connection.promise().query('insert into reputations_tiers_effects (reputationtier_id, effect_id) values (?, ?)', [tier_id, insertedEffect[0].insertId]);
                         await interaction_second.update({ content: 'Effect added.', components: [] });
                     } else if (interaction_second.customId == 'TierAlphaSelector') {
                         var reputations = await connection.promise().query('select * from reputations where id = ?', [reputation_id]);
