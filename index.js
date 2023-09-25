@@ -172,20 +172,22 @@ async function process_effect(character, effect, source, target = null) {
         }
     }
     var settingvalue = await connection.promise().query('select * from game_settings where guild_id = ? and setting_name = ?', [interaction.guild.id, 'audit_channel']);
-    var audit_channel = await client.channels.cache.get(settingvalue[0][0].setting_value);
-    var embed = new EmbedBuilder()
-        .setTitle('Effect processed!')
-        .setDescription(message)
-        .setAuthor({ name: character.name })
-        .addFields(
-            {
-                name: 'Source',
-                value: source,
-                inline: true
-            }
-        )
-        .setTimestamp();
-    audit_channel.send({ embeds: [embed] });
+    if (settingvalue[0].length > 0) {
+        var audit_channel = await client.channels.cache.get(settingvalue[0][0].setting_value);
+        var embed = new EmbedBuilder()
+            .setTitle('Effect processed!')
+            .setDescription(message)
+            .setAuthor({ name: character.name })
+            .addFields(
+                {
+                    name: 'Source',
+                    value: source,
+                    inline: true
+                }
+            )
+            .setTimestamp();
+        audit_channel.send({ embeds: [embed] });
+    }
 
 
 
