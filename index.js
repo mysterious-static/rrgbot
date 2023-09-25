@@ -16,6 +16,98 @@ connection.connect();
 client.login(process.env.app_token);
 
 
+/* Functions */
+
+async function process_effect(character, effect, target = null) {
+    if (target && effect.target == 'target') {
+        character = target;
+    }
+    switch (effect.type) {
+        case 'item':
+            var item_exists = await connection.promise().query('select * from characters_items where character_id = ? and item_id = ?', [character.id, effect.type_id]);
+            if (item_exists[0].length == 1) {
+                await connection.promise().query('update characters_items set quantity = quantity + ? where character_id = ? and item_id = ?', [effect.type_qty, character.id, effect.type_id]);
+            } else {
+                await connection.promise().query('insert into characters_items (character_id, item_id, quantity) values (?, ?, ?)', [character_id, effect.type_id, effect.type_qty]);
+            }
+            break;
+        case 'wflag_inc':
+            await connection.promise().query('update worldflags set value = value + ? where id = ?', [effect.type_qty, effect.type_id]);
+            break;
+        case 'wflag_set':
+            await connection.promise().query('update worldflags set value = ? where id = ?', [effect.type_qty, effect.type_id]);
+            break;
+        case 'cflag_inc':
+            var cflag_exists = await connection.promise().query('select * from characters_characterflags where character_id = ? and characterflag_id = ?', [character.id, effect.type_id]);
+            if (cflag_exists[0].length == 1) {
+                await connection.promise().query('update characters_characterflags set value = value + ? where character_id = ? and characterflag_id = ?', [effect.type_qty, character.id, effect.type_id]);
+            } else {
+                await connection.promise().query('insert into characters_characterflags (value, character_id, characterflag_id) values (?, ?, ?)', [effect.type_qty, character.id, effect.type_id]);
+            }
+            break;
+        case 'cflag_set':
+            await connection.promise().query('replace into characters_characterflags (value, character_id, characterflag_id) values (?, ?, ?)', [effect.type_qty, character.id, effect.type_id]);
+            break;
+        case 'skill':
+            await connection.promise().query('insert ignore into skills_characters (character_id, skill_id) values (?, ?)', [character.id, effect.type_id]);
+            break;
+        case 'archetype':
+            await connection.promise().query('insert ignore into characters_archetypes (character_id, archetype_id) values (?, ?)', [character.id, effect.type_id]);
+            break;
+        case 'reputation_inc':
+            var old_value;
+            var reputation_exists = await connection.promise().query('select * from characters_reputations where character_id = ? and reputation_id = ?', [character.id, effect.type_id]);
+            if (reputation_exists[0].length == 1) {
+                await connection.promise().query('update characters_reputations set value = value + ?, max_value = max(max_value, value + ?) where character_id = ? and reputation_id = ?', [effect.type_qty, effect.type_qty, character.id, effect.type_id]);
+                old_value = reputation_exists[0][0].max_value;
+            } else {
+                await connection.promise().query('insert into characters_reputations (character_id, reputation_id, value) values (?, ?, ?)', [character.id, effect.type_id, effect.type_qty]);
+                old_value = 0;
+            }
+            await connection.promise().query('select e.* from effects e join reputations_tiers_effects rte on e.id = rte.effect_id join reputations_tiers rt on rt.id = rte.reputationtier.id where rt.value > ? and rt.value <= ? and rt.reputation_id = ?', [old_value, old_value + effect.type_qty, effect.type_id]);
+            if (effects[0].length > 0) {
+                for (const thisEffect of effects[0]) {
+                    process_effect(character, thisEffect);
+                }
+            }
+            break;
+        case 'reputation_set':
+            var old_value;
+            var reputation_exists = await connection.promise().query('select * from characters_reputations where character_id = ? and reputation_id = ?', [character.id, effect.type_id]);
+            if (reputation_exists[0].length == 1) {
+                old_value = reputation_exists[0][0].max_value;
+            } else {
+                old_value = 0;
+            }
+            await connection.promise().query('replace into characters_reputations (character_id, reputation_id, value, max_value) values (?, ?, ?, max(max_value, ?))', [character.id, effect.type_id, effect.type_qty, effect.type_qty]);
+            var effects = await connection.promise().query('select e.* from effects e join reputations_tiers_effects rte on e.id = rte.effect_id join reputations_tiers rt on rt.id = rte.reputationtier.id where rt.value > ? and rt.value <= ? and rt.reputation_id = ?', [old_value, old_value + effect.type_qty, effect.type_id]);
+            if (effects[0].length > 0) {
+                for (const thisEffect of effects[0]) {
+                    process_effect(character, thisEffect);
+                }
+            }
+            break;
+        case 'stat_inc':
+            var stat_exists = await connection.promise().query('select * from characters_stats where character_id = ? and stat_id = ?', [character.id, effect.type_id]);
+            if (stat_exists[0].length == 1) {
+                await connection.promise().query('update characters_stats set override_value = override_value + ? where character_id = ? and stat_id = ?', [effect.type_qty, character.id, effect.type_id]);
+            } else {
+                var statdata = await connection.promise().query('select * from stats where id = ?', [effect.type_id]);
+                await connection.promise().query('insert into characters_stats (character_id, stat_id, override_value) values (?, ?, ?)', [character.id, effect.type_id, statdata[0][0].default_value + effect.type_qty]);
+                // When stats have archetype overrides, we will need t  check those first too
+            }
+            break;
+        case 'stat_set':
+            await connection.promise().query('replace into characters_stats (character_id, stat_id, override_value) values (?, ?, ?)', [character.id, effect.type_id, effect.type_qty]);
+            break;
+        case 'message':
+            break;
+
+
+
+    }
+}
+
 
 /* COMNMAND STRUCTURE */
 var allowmovement = new SlashCommandBuilder().setName('allowmovement')
@@ -28,6 +120,36 @@ var allowmovement = new SlashCommandBuilder().setName('allowmovement')
         option.setName('channel')
             .setDescription('The channel you wish to lock or unlock')
     ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+var player = new SlashCommandBuilder().setName('player')
+    .setDescription('Player management.')
+    .addSubcommand(subcommand =>
+        subcommand.setName('create')
+            .setDescription('Create a player based on a mentioned user.')
+            .addUserOption(option =>
+                option.setName('user')
+                    .setDescription('The user to associate')
+                    .setRequired(true))
+            .addStringOption(option =>
+                option.setName('player_name')
+                    .setDescription('The player name.')
+                    .setRequired(true))
+            .addBooleanOption(option =>
+                option.setName('create_character')
+                    .setDescription('Create a character? If false, be sure to assign this player a character using /assigncharacter.')
+                    .setRequired(true)))
+    .addSubcommand(subcommand =>
+        subcommand.setName('notifchannel')
+            .setDescription('Specify notification channel.')
+            .addChannelOption(option =>
+                option.setName('channel')
+                    .setDescription('The channel to assign')
+                    .setRequired(true))
+            .addUserOption(option =>
+                option.setName('player')
+                    .setDescription('The player to set this for')
+                    .setRequired(true)))
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 var addlocation = new SlashCommandBuilder().setName('addlocation')
     .setDescription('Allow movement to and from a location.')
@@ -91,23 +213,6 @@ var restrictmovement = new SlashCommandBuilder().setName('restrictmovement')
             .setDescription('either "disabled", "enabled", or "player_whitelists"')
             .setRequired(true)
     ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-//Create Players
-var playercreate = new SlashCommandBuilder().setName('playercreate')
-    .setDescription('Create a player based on a mentioned user.')
-    .addUserOption(option =>
-        option.setName('user')
-            .setDescription('The user to associate')
-            .setRequired(true))
-    .addStringOption(option =>
-        option.setName('player_name')
-            .setDescription('The player name.')
-            .setRequired(true))
-    .addBooleanOption(option =>
-        option.setName('create_character')
-            .setDescription('Create a character? If false, be sure to assign this player a character using /assigncharacter.')
-            .setRequired(true))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 
 var charactercreate = new SlashCommandBuilder().setName('charactercreate')
@@ -571,7 +676,7 @@ client.on('ready', async () => {
         locationglobalwrite.toJSON(),
         resetlocationvis.toJSON(),
         restrictmovement.toJSON(),
-        playercreate.toJSON(),
+        player.toJSON(),
         characterlocation.toJSON(),
         rps.toJSON(),
         move.toJSON(),
@@ -876,24 +981,35 @@ client.on('interactionCreate', async (interaction) => {
             } else {
                 await interaction.reply({ content: 'This channel doesn\'t seem to be a registered whisper.', ephemeral: true });
             }
-
-        } else if (interaction.commandName == 'playercreate') {
-            var user = interaction.options.getUser('user');
-            var playerName = interaction.options.getString('player_name');
-            var playerexists = await connection.promise().query('select * from players where user_id = ? and guild_id = ?', [user.id, interaction.guildId]); // Not using member id because it's a pain to get, and this way we could eventually let users look at all their characters in a web view maybe
-            if (playerexists[0].length > 0) {
-                interaction.reply({ content: 'A player entry for this user/server combo already exists! Sorry about that. :purple_heart:', ephemeral: true })
-            } else {
-                var inserted_player = await connection.promise().query('insert into players (user_id, guild_id, name) values (?, ?, ?)', [user.id, interaction.guildId, playerName]);
-                if (interaction.options.getBoolean('create_character')) {
-                    var inserted_character = await connection.promise().query('insert into characters (name, guild_id, description) values (?, ?, ?)', [playerName, interaction.guildId, '']); // This table also has "location", because all characters are in a location.
-                    await connection.promise().query('insert into players_characters (player_id, character_id, active) values (?, ?, ?)', [inserted_player[0].insertId, inserted_character[0].insertId, 1]); // Futureproofing for "multiple players can own a character".
-                    interaction.reply({ content: 'Added the player and character!', ephemeral: true });
+        } else if (interaction.commandName == 'player') {
+            if (interaction.options.getSubcommand() == 'notifchannel') {
+                var channel = interaction.options.getChannel('channel');
+                var user = interaction.options.getUser('player');
+                var player = await connection.promise().query('select * from players where guild_id = ? and user_id = ?', [interaction.guildId, user.id]);
+                if (player[0].length == 1) {
+                    await connection.promise().query('update players set notification_channel = ? where guild_id = ? and user_id = ?', [channel.id, interaction.guildId, user.id]);
+                    interaction.reply({ content: 'Notification channel set.', ephemeral: true })
                 } else {
-                    interaction.reply({ content: 'Added the player!', ephemeral: true });
+                    interaction.reply({ content: 'Please make sure you\'re tagging a player in this game. If you need to, set them up with `/player create` first.', ephemeral: true });
                 }
+            } else if (interaction.options.getSubcommand() == 'create') {
+                var user = interaction.options.getUser('user');
+                var playerName = interaction.options.getString('player_name');
+                var playerexists = await connection.promise().query('select * from players where user_id = ? and guild_id = ?', [user.id, interaction.guildId]); // Not using member id because it's a pain to get, and this way we could eventually let users look at all their characters in a web view maybe
+                if (playerexists[0].length > 0) {
+                    interaction.reply({ content: 'A player entry for this user/server combo already exists! Sorry about that. :purple_heart:', ephemeral: true })
+                } else {
+                    var inserted_player = await connection.promise().query('insert into players (user_id, guild_id, name) values (?, ?, ?)', [user.id, interaction.guildId, playerName]);
+                    if (interaction.options.getBoolean('create_character')) {
+                        var inserted_character = await connection.promise().query('insert into characters (name, guild_id, description) values (?, ?, ?)', [playerName, interaction.guildId, '']); // This table also has "location", because all characters are in a location.
+                        await connection.promise().query('insert into players_characters (player_id, character_id, active) values (?, ?, ?)', [inserted_player[0].insertId, inserted_character[0].insertId, 1]); // Futureproofing for "multiple players can own a character".
+                        interaction.reply({ content: 'Added the player and character!', ephemeral: true });
+                    } else {
+                        interaction.reply({ content: 'Added the player!', ephemeral: true });
+                    }
 
 
+                }
             }
         } else if (interaction.commandName == 'characterlocation') {
             // Two dropdowns! Ah, ah, ah!
