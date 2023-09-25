@@ -2180,13 +2180,13 @@ client.on('interactionCreate', async (interaction) => {
                             var typedata = false;
                             console.log(submittedModal.fields);
                             var charges = submittedModal.fields.getTextInputValue('charges');
-                            if (submittedModal.fields['typeahead']) {
+                            if (submittedModal.fields.find(field => field.customId === 'typeahead')) {
                                 typeahead = submittedModal.fields.getTextInputValue('typeahead');
                             }
-                            if (submittedModal.fields['type_qty']) {
+                            if (submittedModal.fields.find(field => field.customId === 'type_qty')) {
                                 type_qty = submittedModal.fields.getTextInputValue('type_qty');
                             }
-                            if (submittedModal.fields['typedata']) {
+                            if (submittedModal.fields.find(field => field.customId === 'typedata')) {
                                 typedata = submittedModal.fields.getTextInputValue('typedata');
                             }
                             if (typeahead) {
