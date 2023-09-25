@@ -2064,7 +2064,7 @@ client.on('interactionCreate', async (interaction) => {
                         if (result_values[0].length > 0) {
                             if (result_values[0].length <= 25) {
                                 var keyValues = [];
-                                for (const result_value of result_values) {
+                                for (const result_value of result_values[0]) {
                                     var thisKeyValue = { label: result_value.name, value: result_value.id.toString() };
                                     keyValues.push(thisKeyValue);
                                 }
