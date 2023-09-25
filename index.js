@@ -2114,7 +2114,7 @@ client.on('interactionCreate', async (interaction) => {
                             .setCustomId('RepEffectModal')
                             .setTitle('Add Effect');
                         let requires_typeahead = ['wflag_inc', 'wflag_set', 'cflag_inc', 'cflag_set', 'stat_inc', 'stat_set', 'reputation_inc', 'reputation_set', 'item', 'skill', 'archetype'];
-                        if (requires_typeahead.contains(type)) {
+                        if (requires_typeahead.includes(type)) {
                             var typeaheadInput = new TextInputBuilder()
                                 .setCustomId('typeahead')
                                 .setStyle(TextInputStyle.Short);
@@ -2137,7 +2137,7 @@ client.on('interactionCreate', async (interaction) => {
                             modal.addComponents(typeaheadActionRow);
                         }
                         let requires_quantity = ['wflag_inc', 'wflag_set', 'cflag_inc', 'cflag_set', 'stat_inc', 'stat_set', 'reputation_inc', 'reputation_set'];
-                        if (requires_quantity.contains(type)) {
+                        if (requires_quantity.includes(type)) {
                             var quantityInput = new TextInputBuilder()
                                 .setCustomId('type_qty')
                                 .setStyle(TextInputStyle.Short);
@@ -2156,7 +2156,7 @@ client.on('interactionCreate', async (interaction) => {
                         var chargesActionRow = new ActionRowBuilder().addComponents(chargesInput);
                         modal.addComponents(chargesActionRow);
                         let requires_typedata = ['message'];
-                        if (requires_typedata.contains(type)) {
+                        if (requires_typedata.includes(type)) {
                             var typedataInput = new TextInputBuilder()
                                 .setCustomId('typedata')
                                 .setStyle(TextInputStyle.Paragraph);
