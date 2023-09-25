@@ -2104,7 +2104,7 @@ client.on('interactionCreate', async (interaction) => {
                         await interaction_second.reply({ content: 'Please select a type of effect:', components: [selectRow] });
                     } else if (interaction_second.customId == 'TypeSelector') {
                         var type = interaction_second.values[0];
-                        var visibilities = [{ name: 'Yes', value: '1' }, { name: 'No', value: '0' }];
+                        var visibilities = [{ label: 'Yes', value: '1' }, { label: 'No', value: '0' }];
                         var selectComponent = new StringSelectMenuBuilder().setOptions(visibilities).setCustomId('VisibilitySelector').setMinValues(1).setMaxValues(1);
                         var selectRow = new ActionRowBuilder().addComponents(selectComponent);
                         await interaction_second.reply({ content: 'Do you want this effect announced to the player?', components: [selectRow] });
