@@ -634,7 +634,7 @@ var sheet = new SlashCommandBuilder().setName('sheet')
     .setDescription('Show your character sheet.');
 
 var skill = new SlashCommandBuilder().setName('skill')
-    .addDescription('Activities to perform with skills.')
+    .setDescription('Activities to perform with skills.')
     .addSubcommand(subcommand =>
         subcommand.setName('display')
             .setDescription('Posts a skill in the current chat channel.'))
