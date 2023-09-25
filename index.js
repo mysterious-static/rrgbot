@@ -2058,9 +2058,11 @@ client.on('interactionCreate', async (interaction) => {
                 collector = message.createMessageComponentCollector();
                 var type;
                 var visible;
+                var tier_id;
+                var reputation_id;
                 collector.on('collect', async (interaction_second) => {
                     if (interaction_second.customId == 'RepSelector') {
-                        var reputation_id = interaction_second.values[0];
+                        reputation_id = interaction_second.values[0];
                         var result_values = await connection.promise().query('select * from reputations_tiers where reputation_id = ?', [reputation_id]);
                         var selectComponent;
                         if (result_values[0].length > 0) {
@@ -2086,7 +2088,7 @@ client.on('interactionCreate', async (interaction) => {
                             await interaction_second.reply({ content: 'No reputation tiers available for this reputation.', components: [] });
                         }
                     } else if (interaction_second.customId == 'TierSelector') {
-                        var tier_id = interaction_second.values[0];
+                        tier_id = interaction_second.values[0];
                         var types = [
                             { label: 'Increment World Flag', value: 'wflag_inc' },
                             { label: 'Set World Flag', value: 'wflag_set' },
