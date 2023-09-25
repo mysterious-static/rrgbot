@@ -109,7 +109,7 @@ async function process_effect(character, effect, source, target = null) {
             await connection.promise().query('select e.* from effects e join reputations_tiers_effects rte on e.id = rte.effect_id join reputations_tiers rt on rt.id = rte.reputationtier.id where rt.value > ? and rt.value <= ? and rt.reputation_id = ?', [old_value, old_value + effect.type_qty, effect.type_id]);
             if (effects[0].length > 0) {
                 for (const thisEffect of effects[0]) {
-                    await process_effect(character, thisEffect);
+                    await process_effect(character, thisEffect, 'reputation');
                 }
             }
             break;
@@ -129,7 +129,7 @@ async function process_effect(character, effect, source, target = null) {
             var effects = await connection.promise().query('select e.* from effects e join reputations_tiers_effects rte on e.id = rte.effect_id join reputations_tiers rt on rt.id = rte.reputationtier.id where rt.value > ? and rt.value <= ? and rt.reputation_id = ?', [old_value, old_value + effect.type_qty, effect.type_id]);
             if (effects[0].length > 0) {
                 for (const thisEffect of effects[0]) {
-                    await process_effect(character, thisEffect);
+                    await process_effect(character, thisEffect, 'reputation');
                 }
             }
             break;
