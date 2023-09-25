@@ -1981,7 +1981,7 @@ client.on('interactionCreate', async (interaction) => {
             } else if (interaction.options.getSubcommand() === 'tieradd') {
                 var name = interaction.options.getString('name');
                 var value = interaction.options.getInteger('value');
-                var reputations = connection.promise().query('select * from reputations where guild_id = ?', [interaction.guildId]);
+                var reputations = await connection.promise().query('select * from reputations where guild_id = ?', [interaction.guildId]);
                 var reputationSelectComponent;
                 if (reputations[0].length <= 25) {
                     var reputationsKeyValues = [];
