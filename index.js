@@ -1979,7 +1979,58 @@ client.on('interactionCreate', async (interaction) => {
                     }
                 }
             } else if (interaction.options.getSubcommand() === 'tieradd') {
-
+                var name = interaction.options.getString('name');
+                var value = interaction.options.getString('value');
+                var reputations = connection.promise().query('select * from reputations where guild_id = ?', [interaction.guildId]);
+                var reputationSelectComponent;
+                if (reputations[0].length <= 25) {
+                    var reputationsKeyValues = [];
+                    for (const reputation of reputations[0]) {
+                        var thisReputationKeyValue = { label: reputation.name, value: reputation.id.toString() };
+                        reputationsKeyValues.push(thisReputationKeyValue);
+                    }
+                    reputationSelectComponent = new StringSelectMenuBuilder().setOptions(reputationsKeyValues).setCustomId('RepSelector').setMinValues(1).setMaxValues(1);
+                } else {
+                    var reputations = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
+                    var reputationsKeyValues = [];
+                    for (const reputation of reputations) {
+                        var thisReputationKeyValue = { label: reputation, value: reputation }
+                        reputationsKeyValues.push(thisReputationKeyValue);
+                    }
+                    reputationSelectComponent = new StringSelectMenuBuilder().setOptions(reputationsKeyValues).setCustomId('RepAlphaSelector').setMinValues(1).setMaxValues(1);
+                }
+                var reputationSelectRow = new ActionRowBuilder().addComponents(reputationSelectComponent);
+                var message = await submittedModal.editReply({ content: 'Please select the following options:', components: [reputationSelectRow], ephemeral: true });
+                collector = message.createMessageComponentCollector();
+                collector.on('collect', async (interaction_second) => {
+                    if (interaction_second.customId == 'RepSelector') {
+                        var reputation_id = interaction_second.values[0];
+                        var reputations = await connection.promise().query('select rt.*, r.maximum from reputations_tiers rt join reputations r on rt.reputation_id = r.id where rt.threshold_name = ? and rt.reputation_id = ?', [name, reputation_id]);
+                        if(reputations[0].length > 0) {
+                            interaction_second.editReply({content: 'A reputation tier with this name already exists for this reputation.'});
+                        } else if (reputations[0][0].maximum < value) {
+                            interaction_second.editReply({content: 'You entered a reputation tier minimum value higher than this reputation\'s maximum value.'});
+                        } else {
+                            await connection.promise().query('insert into reputations_tiers (reputation_id, threshold_name, value) values (?, ?, ?)', [reputation_id, name, value]);
+                            interaction_second.editReply({content: "Reputation tier added."});
+                        }
+                        //add tier
+                    } else if (interaction_second.customId == 'RepAlphaSelector') {
+                        var reputations = connection.promise().query('select * from reputations where name like ? and guild_id = ?', ['%' + interaction_second.values[0], interaction.guildId]);
+                        if (reputations[0].length <= 25) {
+                            var reputationsKeyValues = [];
+                            for (const reputation of reputations[0]) {
+                                var thisReputationKeyValue = { label: reputation.name, value: reputation.id.toString() };
+                                reputationsKeyValues.push(thisReputationKeyValue);
+                            }
+                            reputationSelectComponent = new StringSelectMenuBuilder().setOptions(reputationsKeyValues).setCustomId('RepSelector').setMinValues(1).setMaxValues(1);
+                            var reputationSelectRow = new ActionRowBuilder().addComponents(reputationSelectComponent);
+                            interaction_second.editReply({ components: [reputationSelectRow] });
+                        } else {
+                            interaction_second.editReply({ content: 'No reputations with this first letter', components: [] });
+                        }
+                    }
+                });
             } else if (interaction.options.getSubcommand() === 'tiereffect') {
 
             } else if (interaction.options.getSubcommand() === 'vieweffects') {
