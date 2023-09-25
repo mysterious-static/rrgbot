@@ -2086,18 +2086,18 @@ client.on('interactionCreate', async (interaction) => {
                     } else if (interaction_second.customId == 'TierSelector') {
                         var tier_id = interaction_second.values[0];
                         var types = [
-                            { name: 'Increment World Flag', value: 'wflag_inc' },
-                            { name: 'Set World Flag', value: 'wflag_set' },
-                            { name: 'Increment Character Flag', value: 'cflag_inc' },
-                            { name: 'Set Character Flag', value: 'cflag_set' },
-                            { name: 'Increment Stat', value: 'stat_inc' },
-                            { name: 'Set Stat', value: 'stat_set' },
-                            { name: 'Increment Reputation', value: 'reputation_inc' },
-                            { name: 'Set Reputation', value: 'reputation_set' },
-                            { name: 'Add Item', value: 'item' },
-                            { name: 'Add Skill', value: 'skill' },
-                            { name: 'Add Archetype', value: 'archetype' },
-                            { name: 'Send Message', value: 'message' }
+                            { label: 'Increment World Flag', value: 'wflag_inc' },
+                            { label: 'Set World Flag', value: 'wflag_set' },
+                            { label: 'Increment Character Flag', value: 'cflag_inc' },
+                            { label: 'Set Character Flag', value: 'cflag_set' },
+                            { label: 'Increment Stat', value: 'stat_inc' },
+                            { label: 'Set Stat', value: 'stat_set' },
+                            { label: 'Increment Reputation', value: 'reputation_inc' },
+                            { label: 'Set Reputation', value: 'reputation_set' },
+                            { label: 'Add Item', value: 'item' },
+                            { label: 'Add Skill', value: 'skill' },
+                            { label: 'Add Archetype', value: 'archetype' },
+                            { label: 'Send Message', value: 'message' }
                         ]
                         var selectComponent = new StringSelectMenuBuilder().setOptions(types).setCustomId('TypeSelector').setMinValues(1).setMaxValues(1);
                         var selectRow = new ActionRowBuilder().addComponents(selectComponent);
