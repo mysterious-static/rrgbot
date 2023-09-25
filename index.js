@@ -382,7 +382,11 @@ var addskill = new SlashCommandBuilder().setName('addskill')
                 { name: 'profession', value: 'profession' }))
     .addBooleanOption(option =>
         option.setName('targetable')
-            .setDescription('Whether skill can target another character')
+            .setDescription('Whether skill can be used to target (has effects)')
+            .setRequired(true))
+    .addBooleanOption(option =>
+        option.setName('self_targetable')
+            .setDescription('Whether skill can be used on the casting character.')
             .setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
@@ -630,7 +634,13 @@ var sheet = new SlashCommandBuilder().setName('sheet')
     .setDescription('Show your character sheet.');
 
 var skill = new SlashCommandBuilder().setName('skill')
-    .setDescription('Posts a skill in the current chat channel.');
+    .addDescription('Activities to perform with skills.')
+    .addSubcommand(subcommand =>
+        subcommand.setName('display')
+            .setDescription('Posts a skill in the current chat channel.'))
+    .addSubcommand(subcommand =>
+        subcommand.setName('use')
+            .setDescription('Use a targetable skill.'));
 
 var item = new SlashCommandBuilder().setName('item')
     .setDescription('Posts an item in the current chat channel.');
@@ -715,12 +725,22 @@ var removeticketcategory = new SlashCommandBuilder().setName('removeticketcatego
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 
-var locationawaretrading = new SlashCommandBuilder().setName('locationawaretrading')
-    .setDescription('Sets the location requirement for item transfers between characters. Default to ENABLED')
-    .addBooleanOption(option =>
-        option.setName('enabled')
-            .setDescription('True/false')
-            .setRequired(true))
+var locationawareness = new SlashCommandBuilder().setName('locationawareness')
+    .setDescription('Location awareness for individual systems. Defaults to ENABLED.')
+    .addSubcommand(subcommand =>
+        subcommand.setName('trading')
+            .setDescription('Sets the location requirement for item transfers between characters.')
+            .addBooleanOption(option =>
+                option.setName('enabled')
+                    .setDescription('True/false')
+                    .setRequired(true)))
+    .addSubcommand(subcommand =>
+        subcommand.setName('skilltarget')
+            .setDescription('Sets the location requirement for skill targeting.')
+            .addBooleanOption(option =>
+                option.setName('enabled')
+                    .setDescription('true/false')
+                    .setRequired(true)))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 //PRE-PROCESSING FUNCTIONS
 
@@ -784,7 +804,7 @@ client.on('ready', async () => {
         removeticketcategory.toJSON(),
         sendas.toJSON(),
         roll.toJSON(),
-        locationawaretrading.toJSON(),
+        locationawareness.toJSON(),
         reputation.toJSON(),
         effect.toJSON(),
         characterflag.toJSON(),
@@ -865,10 +885,16 @@ client.on('interactionCreate', async (interaction) => {
                 interaction.reply({ content: 'Please select a valid movement restriction type.', ephemeral: true });
             }
             //add to whitelist
-        } else if (interaction.commandName == 'locationawaretrading') {
-            var setting_value = interaction.options.getBoolean('enabled');
-            await connection.promise().query('replace into game_settings (setting_name, setting_value, guild_id) values (?, ?, ?)', ['locationawaretrading', (setting_value ? 1 : 0), interaction.guildId]);
-            interaction.reply({ content: 'Location aware trading set.', ephemeral: true });
+        } else if (interaction.commandName == 'locationawareness') {
+            if (interaction.options.getSubcommand() == 'trading') {
+                var setting_value = interaction.options.getBoolean('enabled');
+                await connection.promise().query('replace into game_settings (setting_name, setting_value, guild_id) values (?, ?, ?)', ['locationawaretrading', (setting_value ? 1 : 0), interaction.guildId]);
+                interaction.reply({ content: 'Location aware trading set.', ephemeral: true });
+            } else if (interaction.options.getSubcommand() == 'skilltarget') {
+                var setting_value = interaction.options.getBoolean('enabled');
+                await connection.promise().query('replace into game_settings (setting_name, setting_value, guild_id) values (?, ?, ?)', ['locationawareskills', (setting_value ? 1 : 0), interaction.guildId]);
+                interaction.reply({ content: 'Location aware skills set.', ephemeral: true });
+            }
         } else if (interaction.commandName == 'addlocationwhitelist') {
             var characters = await connection.promise().query('select * from characters c where guild_id = ?', [interaction.guildId]);
             if (characters[0].length > 0) {
@@ -1402,11 +1428,12 @@ client.on('interactionCreate', async (interaction) => {
         } else if (interaction.commandName == 'addskill') {
             var name = interaction.options.getString('name');
             var type = interaction.options.getString('type');
-            var targetable = interaction.options.getBoolean('targetable')
+            var targetable = interaction.options.getBoolean('targetable');
+            var self_targetable = interaction.options.getBoolean('self_targetable');
             var description = interaction.options.getString('description');
             var exists = await connection.promise().query('select * from skills where guild_id = ? and name = ?', [interaction.guildId, name]);
             if (exists[0].length == 0) {
-                await connection.promise().query('insert into skills (name, description, type, guild_id, targetable) values (?, ?, ?, ?, ?)', [name, description, type, interaction.guildId, targetable]);
+                await connection.promise().query('insert into skills (name, description, type, guild_id, targetable, self_targetable) values (?, ?, ?, ?, ?, ?)', [name, description, type, interaction.guildId, targetable, self_targetable]);
                 interaction.reply({ content: 'Skill added!', ephemeral: true });
             } else {
                 interaction.reply({ content: 'Skill with this name already exists!', ephemeral: true });
@@ -2770,54 +2797,59 @@ client.on('interactionCreate', async (interaction) => {
             } else if (interaction.commandName == 'skill') { //TODO: Futureproof with alphabet selector.
                 var current_character = await connection.promise().query('select players_characters.character_id, c.name from players_characters join players p on p.id = players_characters.player_id join characters c on c.id = players_characters.character_id where p.user_id = ? and p.guild_id = ? and players_characters.active = 1', [interaction.user.id, interaction.guildId]);
                 if (current_character[0].length > 0) {
-                    var archetypeskills = await connection.promise().query('select s.* from skills s join skills_archetypes sa on sa.skill_id = s.id join characters_archetypes ca on sa.archetype_id = ca.archetype_id where ca.character_id = ?', [current_character[0][0].character_id]);
-                    var characterskills = await connection.promise().query('select s.* from skills s join skills_characters sc on sc.skill_id = s.id where sc.character_id = ?', [current_character[0][0].character_id]);
-                    var skills;
+                    if (interaction.options.getSubcommand == 'display') {
+                        var archetypeskills = await connection.promise().query('select s.* from skills s join skills_archetypes sa on sa.skill_id = s.id join characters_archetypes ca on sa.archetype_id = ca.archetype_id where ca.character_id = ?', [current_character[0][0].character_id]);
+                        var characterskills = await connection.promise().query('select s.* from skills s join skills_characters sc on sc.skill_id = s.id where sc.character_id = ?', [current_character[0][0].character_id]);
+                        var skills;
 
-                    if (archetypeskills[0].length > 0) {
-                        console.log(archetypeskills[0]);
-                        var skillids = new Set(archetypeskills[0].map(d => d.id));
-                        if (characterskills[0].length > 0) {
-                            console.log(characterskills[0]);
-                            skills = [...archetypeskills[0], ...characterskills[0].filter(d => !skillids.has(d.id))];
-                        } else {
-                            skills = archetypeskills[0];
-                        }
-                    } else if (characterskills[0].length > 0) {
-                        console.log(characterskills[0]);
-                        skills = characterskills[0];
-                    }
-                    if (skills) {
-                        var skillsKeyValues = [];
-                        for (const skill of skills) {
-                            var thisSkillKeyValue = { label: skill.name, value: skill.id.toString() };
-                            skillsKeyValues.push(thisSkillKeyValue);
-                        }
-                        const skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
-                        var skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
-                        var message = await interaction.reply({ content: 'Select a skill to share with the channel:', components: [skillSelectRow], ephemeral: true });
-                        var collector = message.createMessageComponentCollector();
-                        collector.on('collect', async (interaction_second) => {
-                            if (interaction_second.values[0]) {
-                                skillSelected = interaction_second.values[0];
-                                var skill = skills.find(s => s.id == skillSelected);
-                                await interaction_second.reply({ content: `${current_character[0][0].name}'s **${skill.name}**: ${skill.description}` });
-                                await collector.stop();
+                        if (archetypeskills[0].length > 0) {
+                            console.log(archetypeskills[0]);
+                            var skillids = new Set(archetypeskills[0].map(d => d.id));
+                            if (characterskills[0].length > 0) {
+                                console.log(characterskills[0]);
+                                skills = [...archetypeskills[0], ...characterskills[0].filter(d => !skillids.has(d.id))];
+                            } else {
+                                skills = archetypeskills[0];
                             }
+                        } else if (characterskills[0].length > 0) {
+                            console.log(characterskills[0]);
+                            skills = characterskills[0];
+                        }
+                        if (skills) {
+                            var skillsKeyValues = [];
+                            for (const skill of skills) {
+                                var thisSkillKeyValue = { label: skill.name, value: skill.id.toString() };
+                                skillsKeyValues.push(thisSkillKeyValue);
+                            }
+                            const skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
+                            var skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
+                            var message = await interaction.reply({ content: 'Select a skill to share with the channel:', components: [skillSelectRow], ephemeral: true });
+                            var collector = message.createMessageComponentCollector();
+                            collector.on('collect', async (interaction_second) => {
+                                if (interaction_second.values[0]) {
+                                    skillSelected = interaction_second.values[0];
+                                    var skill = skills.find(s => s.id == skillSelected);
+                                    await interaction_second.reply({ content: `${current_character[0][0].name}'s **${skill.name}**: ${skill.description}` });
+                                    await collector.stop();
+                                }
 
-                        });
-                        collector.on('end', async (collected) => {
-                            console.log(collected);
-                            // How do we clean the message up?
-                        });
-                    } else {
-                        interaction.reply({ content: 'You don\'t seem to have any skills. Sorry about that.', ephemeral: true });
+                            });
+                            collector.on('end', async (collected) => {
+                                console.log(collected);
+                                // How do we clean the message up?
+                            });
+                        } else {
+                            interaction.reply({ content: 'You don\'t seem to have any skills. Sorry about that.', ephemeral: true });
+                        }
+
+                        //dropdown
+                        // put dropdown in thingy
+                    } else if (interaction.options.getSubcommand == 'use') {
+                        var skills = await connection.promise().query('select s.* from characters_skills cs join skills s on cs.skill_id = s.id where cs.character_id = ? and s.targetable = 1', [current_character[0][0].id]);
                     }
                 } else {
                     interaction.reply({ content: 'You don\'t seem to have an active character. Check in with the mods on this, please.', ephemeral: true });
                 }
-                //dropdown
-                // put dropdown in thingy
             } else if (interaction.commandName == 'item') {
                 var current_character = await connection.promise().query('select pc.character_id, c.name from players_characters pc join players p on p.id = pc.player_id join characters c on c.id = pc.character_id where p.user_id = ? and p.guild_id = ? and pc.active = 1', [interaction.user.id, interaction.guildId]);
                 if (current_character[0].length > 0) {
