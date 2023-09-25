@@ -2175,16 +2175,19 @@ client.on('interactionCreate', async (interaction) => {
                         await interaction_second.showModal(modal);
                         let submittedModal = await interaction_second.awaitModalSubmit({ time: 300000 });
                         if (submittedModal) {
+                            var typeahead = false;
+                            var type_qty = false;
+                            var typedata = false;
                             console.log(submittedModal.fields);
                             var charges = submittedModal.fields.getTextInputValue('charges');
                             if (submittedModal.fields['typeahead']) {
-                                var typeahead = submittedModal.fields.getTextInputValue('typeahead');
+                                typeahead = submittedModal.fields.getTextInputValue('typeahead');
                             }
                             if (submittedModal.fields['type_qty']) {
-                                var type_qty = submittedModal.fields.getTextInputValue('type_qty');
+                                type_qty = submittedModal.fields.getTextInputValue('type_qty');
                             }
                             if (submittedModal.fields['typedata']) {
-                                var typedata = submittedModal.fields.getTextInputValue('typedata');
+                                typedata = submittedModal.fields.getTextInputValue('typedata');
                             }
                             if (typeahead) {
                                 if (type == 'wflag_inc' || type == 'wflag_set') {
@@ -2220,7 +2223,8 @@ client.on('interactionCreate', async (interaction) => {
                                     selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('TypeaheadSelector').setMinValues(1).setMaxValues(1);
                                 }
                             } else {
-                                console.log('no typeahead')
+                                console.log('no typeahead');
+                                console.log(typedata);
                                 if (typedata) {
                                     console.log('insert');
                                     var insertedEffect = await connection.promise().query('insert into effects (type, charges, visible, typedata) values (?, ?, ?, ?)', [type, charges, visible, typedata]);
