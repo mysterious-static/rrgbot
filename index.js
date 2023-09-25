@@ -2083,9 +2083,9 @@ client.on('interactionCreate', async (interaction) => {
                                 selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('TierAlphaSelector').setMinValues(1).setMaxValues(1);
                             }
                             var selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                            await interaction.editReply({ content: 'Please select a reputation tier:', components: [selectRow] });
+                            await interaction_second.reply({ content: 'Please select a reputation tier:', components: [selectRow], ephemeral: true });
                         } else {
-                            await interaction_second.reply({ content: 'No reputation tiers available for this reputation.', components: [] });
+                            await interaction_second.reply({ content: 'No reputation tiers available for this reputation.', components: [], ephemeral: true });
                         }
                     } else if (interaction_second.customId == 'TierSelector') {
                         tier_id = interaction_second.values[0];
@@ -2105,13 +2105,13 @@ client.on('interactionCreate', async (interaction) => {
                         ]
                         var selectComponent = new StringSelectMenuBuilder().setOptions(types).setCustomId('TypeSelector').setMinValues(1).setMaxValues(1);
                         var selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                        await interaction_second.reply({ content: 'Please select a type of effect:', components: [selectRow] });
+                        await interaction_second.reply({ content: 'Please select a type of effect:', components: [selectRow], ephemeral: true });
                     } else if (interaction_second.customId == 'TypeSelector') {
                         type = interaction_second.values[0];
                         var visibilities = [{ label: 'Yes', value: '1' }, { label: 'No', value: '0' }];
                         var selectComponent = new StringSelectMenuBuilder().setOptions(visibilities).setCustomId('VisibilitySelector').setMinValues(1).setMaxValues(1);
                         var selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                        await interaction.editReply({ content: 'Do you want this effect announced to the player?', components: [selectRow] });
+                        await interaction_second.reply({ content: 'Do you want this effect announced to the player?', components: [selectRow], ephemeral: true });
 
                     } else if (interaction_second.customId == 'VisibilitySelector') {
                         visible = interaction_second.values[0];
