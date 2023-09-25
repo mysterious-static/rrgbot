@@ -15,7 +15,6 @@ var connection = mysql.createConnection({
 connection.connect();
 client.login(process.env.app_token);
 
-
 /* Functions */
 
 async function process_effect(character, effect, source, target = null) {
@@ -188,13 +187,10 @@ async function process_effect(character, effect, source, target = null) {
             .setTimestamp();
         audit_channel.send({ embeds: [embed] });
     }
-
-
-
 }
 
+/* COMMAND STRUCTURE */
 
-/* COMNMAND STRUCTURE */
 var allowmovement = new SlashCommandBuilder().setName('allowmovement')
     .setDescription('Lock or unlock movement to/from locations globally or from a single location.')
     .addBooleanOption(option =>
@@ -492,8 +488,6 @@ var transferitem = new SlashCommandBuilder().setName('transferitem')
             .setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
-// TODO: Items will be REWORKED ENTIRELY later, with a fully-functional system where instances of items can be created versus having all items unique.
-
 var modsheet = new SlashCommandBuilder().setName('modsheet')
     .setDescription('Show a character sheet.')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
@@ -764,6 +758,7 @@ var locationawareness = new SlashCommandBuilder().setName('locationawareness')
                     .setDescription('true/false')
                     .setRequired(true)))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
 //PRE-PROCESSING FUNCTIONS
 
 async function isPlayer(userid, guildid) {
