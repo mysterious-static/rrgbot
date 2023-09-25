@@ -361,33 +361,53 @@ var addarchetypestat = new SlashCommandBuilder().setName('addarchetypestat')
             .setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator); // Will give you a dropdown to select the archetype or archetypes to assign to.
 
-var addskill = new SlashCommandBuilder().setName('addskill')
+var skilladmin = new SlashCommandBuilder().setName('skilladmin')
     .setDescription('Add a character/archetype-assignable skill for view in character sheet.')
-    .addStringOption(option =>
-        option.setName('name')
-            .setDescription('The name of the skill (e.g. Vorpal Slash, 1000 Needles, Gigaton Hammer)')
-            .setRequired(true))
-    .addStringOption(option =>
-        option.setName('description')
-            .setDescription('The description or flavor text of the skill.')
-            .setRequired(true))
-    .addStringOption(option =>
-        option.setName('type')
-            .setDescription('The type of skill')
-            .setRequired(true)
-            .addChoices(
-                { name: 'combat', value: 'combat' },
-                { name: 'noncombat', value: 'noncombat' },
-                { name: 'innate', value: 'innate' },
-                { name: 'profession', value: 'profession' }))
-    .addBooleanOption(option =>
-        option.setName('targetable')
-            .setDescription('Whether skill can be used to target (has effects)')
-            .setRequired(true))
-    .addBooleanOption(option =>
-        option.setName('self_targetable')
-            .setDescription('Whether skill can be used on the casting character.')
-            .setRequired(true))
+    .addSubcommand(subcommand =>
+        subcommand.setName('add')
+            .setDescription('Add a character/archetype-assignable skill for view in character sheet.')
+            .addStringOption(option =>
+                option.setName('name')
+                    .setDescription('The name of the skill (e.g. Vorpal Slash, 1000 Needles, Gigaton Hammer)')
+                    .setRequired(true))
+            .addStringOption(option =>
+                option.setName('description')
+                    .setDescription('The description or flavor text of the skill.')
+                    .setRequired(true))
+            .addStringOption(option =>
+                option.setName('type')
+                    .setDescription('The type of skill')
+                    .setRequired(true)
+                    .addChoices(
+                        { name: 'combat', value: 'combat' },
+                        { name: 'noncombat', value: 'noncombat' },
+                        { name: 'innate', value: 'innate' },
+                        { name: 'profession', value: 'profession' }))
+            .addBooleanOption(option =>
+                option.setName('targetable')
+                    .setDescription('Whether skill can be used to target (has effects)')
+                    .setRequired(true))
+            .addBooleanOption(option =>
+                option.setName('self_targetable')
+                    .setDescription('Whether skill can be used on the casting character.')
+                    .setRequired(true)))
+    .addSubcommand(subcommand =>
+        subcommand.setName('assign')
+            .setDescription('Assign a skill to a character or archetype')
+            .addBooleanOption(option =>
+                option.setName('to_character')
+                    .setDescription('Set to true if you\'re assigning to a character, false if assigning to an archetype.')
+                    .setRequired(true)))
+    .addSubcommand(subcommand =>
+        subcommand.setName('unassign')
+            .setDescription('Unassign a skill from a character or archetype')
+            .addBooleanOption(option =>
+                option.setName('to_character')
+                    .setDescription('Set to true if you\'re unassigning from a character, false if from an archetype.')
+                    .setRequired(true)))
+    .addSubcommand(subcommand =>
+        subcommand.setName('addeffect')
+            .setDescription('Add effect to targetable skill.'))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 var additem = new SlashCommandBuilder().setName('additem')
@@ -435,22 +455,6 @@ var setarchetypestat = new SlashCommandBuilder().setName('setarchetypestat')
     .addIntegerOption(option =>
         option.setName('value')
             .setDescription('The value to which the archetype stat will be set.')
-            .setRequired(true))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-var assignskill = new SlashCommandBuilder().setName('assignskill')
-    .setDescription('Assign a skill to a character or archetype')
-    .addBooleanOption(option =>
-        option.setName('to_character')
-            .setDescription('Set to true if you\'re assigning to a character, false if assigning to an archetype.')
-            .setRequired(true))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-var unassignskill = new SlashCommandBuilder().setName('unassignskill')
-    .setDescription('Unassign a skill from a character or archetype')
-    .addBooleanOption(option =>
-        option.setName('to_character')
-            .setDescription('Set to true if you\'re unassigning from a character, false if from an archetype.')
             .setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
@@ -775,13 +779,11 @@ client.on('ready', async () => {
         assignarchetype.toJSON(),
         addstat.toJSON(),
         addarchetypestat.toJSON(),
-        addskill.toJSON(),
+        skilladmin.toJSON(),
         additem.toJSON(),
         addworldstat.toJSON(),
         setstat.toJSON(),
         setarchetypestat.toJSON(),
-        assignskill.toJSON(),
-        unassignskill.toJSON(),
         skill.toJSON(),
         assignitem.toJSON(),
         transferitem.toJSON(),
@@ -1425,29 +1427,223 @@ client.on('interactionCreate', async (interaction) => {
             } else {
                 interaction.reply({ content: 'Stat with this name already exists!', ephemeral: true });
             }
-        } else if (interaction.commandName == 'addskill') {
-            var name = interaction.options.getString('name');
-            var type = interaction.options.getString('type');
-            var targetable = interaction.options.getBoolean('targetable');
-            var self_targetable = interaction.options.getBoolean('self_targetable');
-            var description = interaction.options.getString('description');
-            var exists = await connection.promise().query('select * from skills where guild_id = ? and name = ?', [interaction.guildId, name]);
-            if (exists[0].length == 0) {
-                await connection.promise().query('insert into skills (name, description, type, guild_id, targetable, self_targetable) values (?, ?, ?, ?, ?, ?)', [name, description, type, interaction.guildId, targetable, self_targetable]);
-                interaction.reply({ content: 'Skill added!', ephemeral: true });
-            } else {
-                interaction.reply({ content: 'Skill with this name already exists!', ephemeral: true });
+        } else if (interaction.commandName == 'skilladmin') {
+            if (interaction.options.getSubcommand() == 'add') {
+                var name = interaction.options.getString('name');
+                var type = interaction.options.getString('type');
+                var targetable = interaction.options.getBoolean('targetable');
+                var self_targetable = interaction.options.getBoolean('self_targetable');
+                var description = interaction.options.getString('description');
+                var exists = await connection.promise().query('select * from skills where guild_id = ? and name = ?', [interaction.guildId, name]);
+                if (exists[0].length == 0) {
+                    await connection.promise().query('insert into skills (name, description, type, guild_id, targetable, self_targetable) values (?, ?, ?, ?, ?, ?)', [name, description, type, interaction.guildId, targetable, self_targetable]);
+                    interaction.reply({ content: 'Skill added!', ephemeral: true });
+                } else {
+                    interaction.reply({ content: 'Skill with this name already exists!', ephemeral: true });
+                }
+            } else if (interaction.options.getSubcommand() == 'assign') {
+                var to_character = interaction.options.getBoolean('to_character');
+                var skills = await connection.promise().query('select * from skills where guild_id = ?', [interaction.guildId]);
+                var skillsAlphabetical;
+                var skillSelectComponent;
+                if (skills[0].length > 0) {
+                    if (skills[0].length <= 25) {
+                        skillsAlphabetical = false;
+                        var skillsKeyValues = [{ label: 'Select a skill', value: '0' }];
+                        for (const skill of skills[0]) {
+                            var thisSkillKeyValue = { label: skill.name, value: skill.id.toString() };
+                            skillsKeyValues.push(thisSkillKeyValue);
+                        }
+                        skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillAssignmentSkillSelector').setMinValues(1).setMaxValues(1);
+                    } else {
+                        skillsAlphabetical = true;
+                        var skills = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
+                        var skillsKeyValues = [];
+                        for (const skill of skills) {
+                            var thisSkillKeyValue = { label: skill, value: skill }
+                            skillsKeyValues.push(thisSkillKeyValue);
+                        }
+                        skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillAssignmentAlphabetSelector').setMinValues(1).setMaxValues(1);
+                    }
+                    var skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
+                    if (to_character) {
+                        var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
+                        if (characters[0].length > 0) {
+                            var charactersKeyValues = [{ label: 'Select a character', value: '0' }];
+                            for (const character of characters[0]) {
+                                var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
+                                charactersKeyValues.push(thisCharacterKeyValue);
+                            }
+                            const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('SkillAssignmentCharacterSelector').setMinValues(1).setMaxValues(charactersKeyValues.length);
+                            var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                        }
+                    } else {
+                        var archetypes = await connection.promise().query('select * from archetypes where guild_id = ?', [interaction.guildId]);
+                        if (archetypes[0].length > 0) {
+                            var archetypesKeyValues = [{ label: 'Select a archetype', value: '0' }];
+                            for (const archetype of archetypes[0]) {
+                                var thisArchetypeKeyValue = { label: archetype.name, value: archetype.id.toString() };
+                                archetypesKeyValues.push(thisArchetypeKeyValue);
+                            }
+                            const archetypeSelectComponent = new StringSelectMenuBuilder().setOptions(archetypesKeyValues).setCustomId('SkillAssignmentArchetypeSelector').setMinValues(1).setMaxValues(archetypesKeyValues.length);
+                            var archetypeSelectRow = new ActionRowBuilder().addComponents(archetypeSelectComponent);
+                        }
+                    }
+                    if ((to_character && characters[0].length > 0) || (!to_character && archetypes[0].length > 0)) {
+                        if (to_character) {
+                            var message = await interaction.reply({ content: 'Please select the following options:', components: [skillSelectRow, characterSelectRow], ephemeral: true });
+                        } else {
+                            var message = await interaction.reply({ content: 'Please select the following options:', components: [skillSelectRow, archetypeSelectRow], ephemeral: true });
+                        }
+                        var collector = message.createMessageComponentCollector();
+                        var charactersSelected;
+                        var archetypesSelected;
+                        var skillSelected;
+                        collector.on('collect', async (interaction_second) => {
+                            console.log('Collected!');
+                            console.log(interaction_second.customId);
+                            console.log(interaction_second.values);
+                            if (interaction_second.values[0]) {
+                                if (interaction_second.customId == 'SkillAssignmentSkillSelector') {
+                                    skillSelected = interaction_second.values[0];
+                                } else if (interaction_second.customId == 'SkillAssignmentAlphabetSelector') {
+                                    alphabetSelected = interaction_second.values[0];
+                                } else if (interaction_second.customId == 'SkillAssignmentCharacterSelector') {
+                                    charactersSelected = interaction_second.values;
+                                } else {
+                                    archetypesSelected = interaction_second.values;
+                                }
+                                if (alphabetSelected && !skillSelected) {
+                                    if (alphabetSelected.length == 1) {
+                                        var skills = await connection.promise().query('select * from skills where guild_id = ? and name like ?', [interaction_second.guildId, alphabetSelected + '%']);
+                                    } else {
+                                        // hmm something is wrong, bail out
+                                    }
+                                    var skillsKeyValues = [{ label: 'Select a skill', value: '0' }];
+                                    for (const skill of skills[0]) {
+                                        var thisSkillKeyValue = { label: skill.name, value: skill.id.toString() };
+                                        skillsKeyValues.push(thisSkillKeyValue);
+                                    }
+                                    var skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillAssignmentSkillSelector').setMinValues(1).setMaxValues(1);
+                                    var skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
+                                    if (to_character) {
+                                        await interaction_second.update({ content: 'Please select the following options:', components: [skillSelectRow, characterSelectRow] });
+                                    } else {
+                                        await interaction_second.update({ content: 'Please select the following options:', components: [skillSelectRow, archetypeSelectRow] });
+                                    }
+                                } else if (skillSelected && (charactersSelected || archetypesSelected)) {
+                                    if (charactersSelected) {
+                                        console.log(charactersSelected);
+                                        for (const character_id of charactersSelected) {
+                                            await connection.promise().query('insert ignore into skills_characters (character_id, skill_id) values (?, ?)', [character_id, skillSelected]);
+                                        }
+                                    } else {
+                                        for (const archetype_id of archetypesSelected) {
+                                            await connection.promise().query('insert ignore into skills_archetypes (archetype_id, skill_id) values (?, ?)', [archetype_id, skillSelected]);
+                                        }
+                                    }
+                                    await interaction_second.update({ content: 'Successfully assigned skill to characters or archetypes. I\'d tell you which but Alli is lazy.', components: [] });
+                                    await collector.stop();
+                                } else {
+                                    await interaction_second.deferUpdate();
+                                }
+                            } else {
+                                await interaction_second.deferUpdate();
+                            }
+                        });
+                        collector.on('end', async (collected) => {
+                            console.log(collected);
+                            // How do we clean the message up?
+                        });
+                    } else {
+                        interaction.reply({ content: 'Couldn\'t find any characters. Or archetypes, if you wanted to assign archetypes. I can\'t be sure because Alli is lazy.', ephemeral: true });
+                    }
+                } else {
+                    interaction.reply({ content: 'Please create at least one skill first. <3', ephemeral: true });
+                }
+            } else if (interaction.options.getSubcommand() == 'unassign') {
+                var to_character = interaction.options.getBoolean('to_character');
+                if (to_character) {
+                    var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
+                    if (characters[0].length > 0) {
+                        var charactersKeyValues = [];
+                        for (const character of characters[0]) {
+                            var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
+                            charactersKeyValues.push(thisCharacterKeyValue);
+                        }
+                        const unassignSkillComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('SkillUnassignmentCharacterSelector').setMinValues(1).setMaxValues(1);
+                        var unassignSkillRow = new ActionRowBuilder().addComponents(unassignSkillComponent);
+                    }
+                } else {
+                    var archetypes = await connection.promise().query('select * from archetypes where guild_id = ?', [interaction.guildId]);
+                    if (archetypes[0].length > 0) {
+                        var archetypesKeyValues = [];
+                        for (const archetype of archetypes[0]) {
+                            var thisArchetypeKeyValue = { label: archetype.name, value: archetype.id.toString() };
+                            archetypesKeyValues.push(thisArchetypeKeyValue);
+                        }
+                        const unassignSkillComponent = new StringSelectMenuBuilder().setOptions(archetypesKeyValues).setCustomId('SkillUnassignmentArchetypeSelector').setMinValues(1).setMaxValues(1);
+                        var unassignSkillRow = new ActionRowBuilder().addComponents(unassignSkillComponent);
+                    }
+                }
+                if ((to_character && characters[0].length > 0) || archetypes.length > 0) {
+                    var message = await interaction.reply({ content: 'Select the archetype/character to remove skill from.', components: [unassignSkillRow], ephemeral: true });
+                    var collector = message.createMessageComponentCollector();
+                    var characterSelected;
+                    var archetypeSelected;
+                    var skillSelected;
+                    collector.on('collect', async (interaction_second) => {
+                        if (interaction_second.customId == 'SkillUnassignmentCharacterSelector') {
+                            characterSelected = interaction_second.values[0];
+                        } else if (interaction_second.customId == 'SkillUnassignmentArchetypeSelector') {
+                            archetypeSelected = interaction_second.values[0];
+                        } else {
+                            skillSelected = interaction_second.values[0];
+                        }
+                        if (!skillSelected && (characterSelected || archetypeSelected)) {
+                            if (characterSelected) {
+                                var skills = await connection.promise().query('select s.* from skills s join skills_characters sc on s.id = sc.skill_id where sc.character_id = ?', [characterSelected]);
+                            } else {
+                                var skills = await connection.promise().query('select s.* from skills s join skills_archetypes sa on s.id = sa.skill_id where sa.archetype_id = ?', [archetypeSelected]);
+                            }
+                            if (skills[0].length > 0) {
+                                var skillsKeyValues = [];
+                                for (const skill of skills[0]) {
+                                    var thisSkillKeyValue = { label: skill.name, value: skill.id.toString() };
+                                    skillsKeyValues.push(thisSkillKeyValue);
+                                }
+                                const unassignSkillComponent2 = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillUnassignmentSkillSelector').setMinValues(1).setMaxValues(1);
+                                var unassignSkillRow2 = new ActionRowBuilder().addComponents(unassignSkillComponent2);
+                                await interaction_second.update({ content: 'Now select a skill to unassign:', components: [unassignSkillRow2] });
+                            } else {
+                                await interaction_second.update({ content: 'Couldn\'t find any skills for this cahracter/archetype.' });
+                                collector.stop();
+                            }
+
+                        }
+                        if (skillSelected && (characterSelected || archetypeSelected)) {
+                            if (characterSelected) {
+                                await connection.promise().query('delete from skills_characters where character_id = ? and skill_id = ?', [characterSelected, skillSelected]);
+                            } else {
+                                await connection.promise().query('delete from skills_archetypes where archetype_id = ? and skill_id = ?', [archetypeSelected, skillSelected]);
+                            }
+                            await interaction_second.update({ content: "Skill removed from character or archetype.", components: [] });
+                            collector.stop();
+                        }
+                    });
+                } else {
+                    await interaction.reply({ content: "Couldn't find any characters (or archetypes) to unassign skills from.", ephemeral: true });
+                }
+            } else if (interaction.options.getSubcommand() == 'addeffect') {
+                // Look at reputation effects for this.
+                // Select skill. Then select action ,visiblity, modal as with reputation tier.
+                // Ask whether the effect will hit the caster or the target
             }
         } else if (interaction.commandName == 'additem') {
             var name = interaction.options.getString('itemname')
             var description = interaction.options.getString('description');
-            // var exists = await connection.promise().query('select * from items where guild_id = ? and name = ?', [interaction.guildId, name]);
-            // if (exists[0].length == 0) {
             await connection.promise().query('insert into items (name, description, guild_id) values (?, ?, ?)', [name, description, interaction.guildId]);
             interaction.reply({ content: 'Item added!', ephemeral: true });
-            // } else {
-            // interaction.reply({ content: 'Skill with this name already exists!', ephemeral: true });
-            // }
         } else if (interaction.commandName == 'addworldstat') {
             var name = interaction.options.getString('name');
             var description = interaction.options.getString('description');
@@ -1580,200 +1776,6 @@ client.on('interactionCreate', async (interaction) => {
             } else {
                 interaction.reply({ content: 'You haven\'t created any characters yet. Try creating a character first.', ephemeral: true });
             }
-        } else if (interaction.commandName == 'assignskill') {
-            var to_character = interaction.options.getBoolean('to_character');
-            var skills = await connection.promise().query('select * from skills where guild_id = ?', [interaction.guildId]);
-            var skillsAlphabetical;
-            var skillSelectComponent;
-            if (skills[0].length > 0) {
-                if (skills[0].length <= 25) {
-                    skillsAlphabetical = false;
-                    var skillsKeyValues = [{ label: 'Select a skill', value: '0' }];
-                    for (const skill of skills[0]) {
-                        var thisSkillKeyValue = { label: skill.name, value: skill.id.toString() };
-                        skillsKeyValues.push(thisSkillKeyValue);
-                    }
-                    skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillAssignmentSkillSelector').setMinValues(1).setMaxValues(1);
-                } else {
-                    skillsAlphabetical = true;
-                    var skills = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
-                    var skillsKeyValues = [];
-                    for (const skill of skills) {
-                        var thisSkillKeyValue = { label: skill, value: skill }
-                        skillsKeyValues.push(thisSkillKeyValue);
-                    }
-                    skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillAssignmentAlphabetSelector').setMinValues(1).setMaxValues(1);
-                }
-                var skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
-                if (to_character) {
-                    var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
-                    if (characters[0].length > 0) {
-                        var charactersKeyValues = [{ label: 'Select a character', value: '0' }];
-                        for (const character of characters[0]) {
-                            var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
-                            charactersKeyValues.push(thisCharacterKeyValue);
-                        }
-                        const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('SkillAssignmentCharacterSelector').setMinValues(1).setMaxValues(charactersKeyValues.length);
-                        var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                    }
-                } else {
-                    var archetypes = await connection.promise().query('select * from archetypes where guild_id = ?', [interaction.guildId]);
-                    if (archetypes[0].length > 0) {
-                        var archetypesKeyValues = [{ label: 'Select a archetype', value: '0' }];
-                        for (const archetype of archetypes[0]) {
-                            var thisArchetypeKeyValue = { label: archetype.name, value: archetype.id.toString() };
-                            archetypesKeyValues.push(thisArchetypeKeyValue);
-                        }
-                        const archetypeSelectComponent = new StringSelectMenuBuilder().setOptions(archetypesKeyValues).setCustomId('SkillAssignmentArchetypeSelector').setMinValues(1).setMaxValues(archetypesKeyValues.length);
-                        var archetypeSelectRow = new ActionRowBuilder().addComponents(archetypeSelectComponent);
-                    }
-                }
-                if ((to_character && characters[0].length > 0) || (!to_character && archetypes[0].length > 0)) {
-                    if (to_character) {
-                        var message = await interaction.reply({ content: 'Please select the following options:', components: [skillSelectRow, characterSelectRow], ephemeral: true });
-                    } else {
-                        var message = await interaction.reply({ content: 'Please select the following options:', components: [skillSelectRow, archetypeSelectRow], ephemeral: true });
-                    }
-                    var collector = message.createMessageComponentCollector();
-                    var charactersSelected;
-                    var archetypesSelected;
-                    var skillSelected;
-                    collector.on('collect', async (interaction_second) => {
-                        console.log('Collected!');
-                        console.log(interaction_second.customId);
-                        console.log(interaction_second.values);
-                        if (interaction_second.values[0]) {
-                            if (interaction_second.customId == 'SkillAssignmentSkillSelector') {
-                                skillSelected = interaction_second.values[0];
-                            } else if (interaction_second.customId == 'SkillAssignmentAlphabetSelector') {
-                                alphabetSelected = interaction_second.values[0];
-                            } else if (interaction_second.customId == 'SkillAssignmentCharacterSelector') {
-                                charactersSelected = interaction_second.values;
-                            } else {
-                                archetypesSelected = interaction_second.values;
-                            }
-                            if (alphabetSelected && !skillSelected) {
-                                if (alphabetSelected.length == 1) {
-                                    var skills = await connection.promise().query('select * from skills where guild_id = ? and name like ?', [interaction_second.guildId, alphabetSelected + '%']);
-                                } else {
-                                    // hmm something is wrong, bail out
-                                }
-                                var skillsKeyValues = [{ label: 'Select a skill', value: '0' }];
-                                for (const skill of skills[0]) {
-                                    var thisSkillKeyValue = { label: skill.name, value: skill.id.toString() };
-                                    skillsKeyValues.push(thisSkillKeyValue);
-                                }
-                                var skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillAssignmentSkillSelector').setMinValues(1).setMaxValues(1);
-                                var skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
-                                if (to_character) {
-                                    await interaction_second.update({ content: 'Please select the following options:', components: [skillSelectRow, characterSelectRow] });
-                                } else {
-                                    await interaction_second.update({ content: 'Please select the following options:', components: [skillSelectRow, archetypeSelectRow] });
-                                }
-                            } else if (skillSelected && (charactersSelected || archetypesSelected)) {
-                                if (charactersSelected) {
-                                    console.log(charactersSelected);
-                                    for (const character_id of charactersSelected) {
-                                        await connection.promise().query('insert ignore into skills_characters (character_id, skill_id) values (?, ?)', [character_id, skillSelected]);
-                                    }
-                                } else {
-                                    for (const archetype_id of archetypesSelected) {
-                                        await connection.promise().query('insert ignore into skills_archetypes (archetype_id, skill_id) values (?, ?)', [archetype_id, skillSelected]);
-                                    }
-                                }
-                                await interaction_second.update({ content: 'Successfully assigned skill to characters or archetypes. I\'d tell you which but Alli is lazy.', components: [] });
-                                await collector.stop();
-                            } else {
-                                await interaction_second.deferUpdate();
-                            }
-                        } else {
-                            await interaction_second.deferUpdate();
-                        }
-                    });
-                    collector.on('end', async (collected) => {
-                        console.log(collected);
-                        // How do we clean the message up?
-                    });
-                } else {
-                    interaction.reply({ content: 'Couldn\'t find any characters. Or archetypes, if you wanted to assign archetypes. I can\'t be sure because Alli is lazy.', ephemeral: true });
-                }
-            } else {
-                interaction.reply({ content: 'Please create at least one skill first. <3', ephemeral: true });
-            }
-        } else if (interaction.commandName == 'unassignskill') {
-            var to_character = interaction.options.getBoolean('to_character');
-            if (to_character) {
-                var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
-                if (characters[0].length > 0) {
-                    var charactersKeyValues = [];
-                    for (const character of characters[0]) {
-                        var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
-                        charactersKeyValues.push(thisCharacterKeyValue);
-                    }
-                    const unassignSkillComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('SkillUnassignmentCharacterSelector').setMinValues(1).setMaxValues(1);
-                    var unassignSkillRow = new ActionRowBuilder().addComponents(unassignSkillComponent);
-                }
-            } else {
-                var archetypes = await connection.promise().query('select * from archetypes where guild_id = ?', [interaction.guildId]);
-                if (archetypes[0].length > 0) {
-                    var archetypesKeyValues = [];
-                    for (const archetype of archetypes[0]) {
-                        var thisArchetypeKeyValue = { label: archetype.name, value: archetype.id.toString() };
-                        archetypesKeyValues.push(thisArchetypeKeyValue);
-                    }
-                    const unassignSkillComponent = new StringSelectMenuBuilder().setOptions(archetypesKeyValues).setCustomId('SkillUnassignmentArchetypeSelector').setMinValues(1).setMaxValues(1);
-                    var unassignSkillRow = new ActionRowBuilder().addComponents(unassignSkillComponent);
-                }
-            }
-            if ((to_character && characters[0].length > 0) || archetypes.length > 0) {
-                var message = await interaction.reply({ content: 'Select the archetype/character to remove skill from.', components: [unassignSkillRow], ephemeral: true });
-                var collector = message.createMessageComponentCollector();
-                var characterSelected;
-                var archetypeSelected;
-                var skillSelected;
-                collector.on('collect', async (interaction_second) => {
-                    if (interaction_second.customId == 'SkillUnassignmentCharacterSelector') {
-                        characterSelected = interaction_second.values[0];
-                    } else if (interaction_second.customId == 'SkillUnassignmentArchetypeSelector') {
-                        archetypeSelected = interaction_second.values[0];
-                    } else {
-                        skillSelected = interaction_second.values[0];
-                    }
-                    if (!skillSelected && (characterSelected || archetypeSelected)) {
-                        if (characterSelected) {
-                            var skills = await connection.promise().query('select s.* from skills s join skills_characters sc on s.id = sc.skill_id where sc.character_id = ?', [characterSelected]);
-                        } else {
-                            var skills = await connection.promise().query('select s.* from skills s join skills_archetypes sa on s.id = sa.skill_id where sa.archetype_id = ?', [archetypeSelected]);
-                        }
-                        if (skills[0].length > 0) {
-                            var skillsKeyValues = [];
-                            for (const skill of skills[0]) {
-                                var thisSkillKeyValue = { label: skill.name, value: skill.id.toString() };
-                                skillsKeyValues.push(thisSkillKeyValue);
-                            }
-                            const unassignSkillComponent2 = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillUnassignmentSkillSelector').setMinValues(1).setMaxValues(1);
-                            var unassignSkillRow2 = new ActionRowBuilder().addComponents(unassignSkillComponent2);
-                            await interaction_second.update({ content: 'Now select a skill to unassign:', components: [unassignSkillRow2] });
-                        } else {
-                            await interaction_second.update({ content: 'Couldn\'t find any skills for this cahracter/archetype.' });
-                            collector.stop();
-                        }
-
-                    }
-                    if (skillSelected && (characterSelected || archetypeSelected)) {
-                        if (characterSelected) {
-                            await connection.promise().query('delete from skills_characters where character_id = ? and skill_id = ?', [characterSelected, skillSelected]);
-                        } else {
-                            await connection.promise().query('delete from skills_archetypes where archetype_id = ? and skill_id = ?', [archetypeSelected, skillSelected]);
-                        }
-                        await interaction_second.update({ content: "Skill removed from character or archetype.", components: [] });
-                        collector.stop();
-                    }
-                });
-            } else {
-                await interaction.reply({ content: "Couldn't find any characters (or archetypes) to unassign skills from.", ephemeral: true });
-            }
-
         } else if (interaction.commandName == 'assignitem') {
             var quantity = interaction.options.getInteger('quantity');
             var items = await connection.promise().query('select i.* from items i where i.guild_id = ?', [interaction.guildId]);
