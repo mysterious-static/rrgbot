@@ -2101,13 +2101,13 @@ client.on('interactionCreate', async (interaction) => {
                         ]
                         var selectComponent = new StringSelectMenuBuilder().setOptions(types).setCustomId('TypeSelector').setMinValues(1).setMaxValues(1);
                         var selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                        await interaction_second.editReply({ content: 'Please select a type of effect:', components: [selectRow] });
+                        await interaction_second.reply({ content: 'Please select a type of effect:', components: [selectRow] });
                     } else if (interaction_second.customId == 'TypeSelector') {
                         var type = interaction_second.values[0];
                         var visibilities = [{ name: 'Yes', value: '1' }, { name: 'No', value: '0' }];
                         var selectComponent = new StringSelectMenuBuilder().setOptions(visibilities).setCustomId('VisibilitySelector').setMinValues(1).setMaxValues(1);
                         var selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                        await interaction_second.editReply({ content: 'Do you want this effect announced to the player?', components: [selectRow] });
+                        await interaction_second.reply({ content: 'Do you want this effect announced to the player?', components: [selectRow] });
 
                     } else if (interaction_second.customId == 'VisibilitySelector') {
                         var modal = new ModalBuilder()
@@ -2195,7 +2195,7 @@ client.on('interactionCreate', async (interaction) => {
                                 }
 
                                 if (typeahead_results[0].length == 0) {
-                                    await interaction_second.editReply({ content: 'No match was found with the autocomplete text you entered. Please try again.', components: [] });
+                                    await interaction_second.reply({ content: 'No match was found with the autocomplete text you entered. Please try again.', components: [] });
                                 } else if (typeahead_results[0].length == 1) {
                                     if (type_qty) {
                                         var insertedEffect = await connection.promise().query('insert into effects (type, type_id, type_qty, charges, visible, typedata) values (?, ?, ?, ?, ?, ?)', [type, typeahead_results[0][0].id, type_qty, charges, visible, typedata]);
@@ -2203,7 +2203,7 @@ client.on('interactionCreate', async (interaction) => {
                                         var insertedEffect = await connection.promise().query('insert into effects (type, type_id, charges, visible, typedata) values (?, ?, ?, ?, ?)', [type, typeahead_results[0][0].id, charges, visible, typedata]);
                                     }
                                     await connection.promise().query('insert into reputations_tiers_effects (reputationtier_id, effect_id) values (?, ?)', [tier_id, insertedEffect.insertId]);
-                                    await interaction_second.editReply({ content: 'Effect added.', components: [] });
+                                    await interaction_second.reply({ content: 'Effect added.', components: [] });
                                 } else {
                                     var keyValues = [];
                                     for (const result_value of typeahead_results[0]) {
@@ -2216,7 +2216,7 @@ client.on('interactionCreate', async (interaction) => {
                                 if (typedata) {
                                     var insertedEffect = await connection.promise().query('insert into effects (type, charges, visible, typedata) values (?, ?, ?, ?)', [type, charges, visible, typedata]);
                                     await connection.promise().query('insert into reputations_tiers_effects (reputationtier_id, effect_id) values (?, ?)', [tier_id, insertedEffect.insertId]);
-                                    await interaction_second.editReply({ content: 'Effect added.', components: [] });
+                                    await interaction_second.reply({ content: 'Effect added.', components: [] });
                                 }
                             }
                         }
@@ -2228,7 +2228,7 @@ client.on('interactionCreate', async (interaction) => {
                             var insertedEffect = await connection.promise().query('insert into effects (type, type_id, charges, visible, typedata) values (?, ?, ?, ?, ?)', [type, typeahead_id, charges, visible, typedata]);
                         }
                         await connection.promise().query('insert into reputations_tiers_effects (reputationtier_id, effect_id) values (?, ?)', [tier_id, insertedEffect.insertId]);
-                        await interaction_second.editReply({ content: 'Effect added.', components: [] });
+                        await interaction_second.reply({ content: 'Effect added.', components: [] });
                     } else if (interaction_second.customId == 'TierAlphaSelector') {
                         var reputations = await connection.promise().query('select * from reputations where id = ?', [reputation_id]);
                         var result_values = connection.promise().query('select * from reputations_tiers where reputation_id = ? and threshold_name like ?', [reputation_id, interaction_second.values[0] + '%']);
@@ -2240,7 +2240,7 @@ client.on('interactionCreate', async (interaction) => {
                         }
                         selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('TierSelector').setMinValues(1).setMaxValues(1);
                         var selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                        await interaction_second.editReply({ content: 'Please select a reputation tier:', components: [selectRow] });
+                        await interaction_second.reply({ content: 'Please select a reputation tier:', components: [selectRow] });
                     } else if (interaction_second.customId == 'RepAlphaSelector') {
                         var reputations = connection.promise().query('select * from reputations where name like ? and guild_id = ?', ['%' + interaction_second.values[0], interaction.guildId]);
                         if (reputations[0].length <= 25) {
@@ -2253,7 +2253,7 @@ client.on('interactionCreate', async (interaction) => {
                             var reputationSelectRow = new ActionRowBuilder().addComponents(reputationSelectComponent);
                             interaction_second.editReply({ components: [reputationSelectRow] });
                         } else {
-                            interaction_second.editReply({ content: 'No reputations with this first letter', components: [] });
+                            interaction_second.reply({ content: 'No reputations with this first letter', components: [] });
                         }
                     }
                 });
