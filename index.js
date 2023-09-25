@@ -18,7 +18,17 @@ client.login(process.env.app_token);
 
 /* Functions */
 
-async function process_effect(character, effect, target = null) {
+async function process_effect(character, effect, source, target = null) {
+    var message;
+    if (effect.visible) {
+        if (source.type == 'skill') {
+            var skill = await connection.promise().query('select s.name from effects e join skills_effects se on e.id = se.effect_id join skills s on s.id = se.skill_id where e.id = ?', [effect.id]);
+            message = `**${character.name}'s ${skill[0][0].name}**: `
+        } else if (source.type == 'reputationtier') {
+            var reputation = await connection.promise().query('select rt.name as tiername, r.name as repname from effects e join reputations_tiers_effects rte on e.id = rte.effect_id join reputations_tiers rt on rte.reputationtier_id = rt.id join reputations r on rt.reputation_id = r.id where e.id = ?', [effect.id]);
+            message = `**${reputation[0][0].repname} reaches ${reputation[0][0].tiername}:** `
+        }
+    }
     if (target && effect.target == 'target') {
         character = target;
     }
@@ -30,12 +40,24 @@ async function process_effect(character, effect, target = null) {
             } else {
                 await connection.promise().query('insert into characters_items (character_id, item_id, quantity) values (?, ?, ?)', [character_id, effect.type_id, effect.type_qty]);
             }
+            if (effect.visible) {
+                var item = await connection.promise().query('select * from items where id = ?', effect.type_id);
+                message += ` awarded ${item[0][0].name} x${effect.type_qty} to ${character.name}`;
+            }
             break;
         case 'wflag_inc':
             await connection.promise().query('update worldflags set value = value + ? where id = ?', [effect.type_qty, effect.type_id]);
+            if (effect.visible) {
+                var wflag = await connection.promise().query('select * from worldflags where id = ?', effect.type_id);
+                message += ` increased the *${wflag[0][0].name}* world flag by ${effect.type_qty}`;
+            }
             break;
         case 'wflag_set':
             await connection.promise().query('update worldflags set value = ? where id = ?', [effect.type_qty, effect.type_id]);
+            if (effect.visible) {
+                var wflag = await connection.promise().query('select * from worldflags where id = ?', effect.type_id);
+                message += ` set the *${wflag[0][0].name}* world flag to ${effect.type_qty}`;
+            }
             break;
         case 'cflag_inc':
             var cflag_exists = await connection.promise().query('select * from characters_characterflags where character_id = ? and characterflag_id = ?', [character.id, effect.type_id]);
@@ -44,15 +66,31 @@ async function process_effect(character, effect, target = null) {
             } else {
                 await connection.promise().query('insert into characters_characterflags (value, character_id, characterflag_id) values (?, ?, ?)', [effect.type_qty, character.id, effect.type_id]);
             }
+            if (effect.visible) {
+                var cflag = await connection.promise().query('select * from characterflags where id = ?', effect.type_id);
+                message += ` increased ${character.name}'s *${cflag[0][0].name}* character flag by ${effect.type_qty}`;
+            }
             break;
         case 'cflag_set':
             await connection.promise().query('replace into characters_characterflags (value, character_id, characterflag_id) values (?, ?, ?)', [effect.type_qty, character.id, effect.type_id]);
+            if (effect.visible) {
+                var cflag = await connection.promise().query('select * from characterflags where id = ?', effect.type_id);
+                message += ` set ${character.name}'s *${cflag[0][0].name}* character flag to ${effect.type_qty}`;
+            }
             break;
         case 'skill':
             await connection.promise().query('insert ignore into skills_characters (character_id, skill_id) values (?, ?)', [character.id, effect.type_id]);
+            if (effect.visible) {
+                var skill = await connection.promise().query('select * from skills where id = ?', effect.type_id);
+                message += ` added *${skill[0][0].name}* to ${character.name}`;
+            }
             break;
         case 'archetype':
             await connection.promise().query('insert ignore into characters_archetypes (character_id, archetype_id) values (?, ?)', [character.id, effect.type_id]);
+            if (effect.visible) {
+                var archetype = await connection.promise().query('select * from archetypes where id = ?', effect.type_id);
+                message += ` gave ${character.name} the *${archetype[0][0].name}* archetype`;
+            }
             break;
         case 'reputation_inc':
             var old_value;
@@ -63,6 +101,10 @@ async function process_effect(character, effect, target = null) {
             } else {
                 await connection.promise().query('insert into characters_reputations (character_id, reputation_id, value) values (?, ?, ?)', [character.id, effect.type_id, effect.type_qty]);
                 old_value = 0;
+            }
+            if (effect.visible) {
+                var reputation = await connection.promise().query('select * from reputations where id = ?', effect.type_id);
+                message += ` increased ${character.name}'s standing with *${reputation[0][0].name}* by ${effect.type_qty}`;
             }
             await connection.promise().query('select e.* from effects e join reputations_tiers_effects rte on e.id = rte.effect_id join reputations_tiers rt on rt.id = rte.reputationtier.id where rt.value > ? and rt.value <= ? and rt.reputation_id = ?', [old_value, old_value + effect.type_qty, effect.type_id]);
             if (effects[0].length > 0) {
@@ -80,6 +122,10 @@ async function process_effect(character, effect, target = null) {
                 old_value = 0;
             }
             await connection.promise().query('replace into characters_reputations (character_id, reputation_id, value, max_value) values (?, ?, ?, max(max_value, ?))', [character.id, effect.type_id, effect.type_qty, effect.type_qty]);
+            if (effect.visible) {
+                var reputation = await connection.promise().query('select * from reputations where id = ?', effect.type_id);
+                message += ` set ${character.name}'s standing with *${reputation[0][0].name}* to ${effect.type_qty}`;
+            }
             var effects = await connection.promise().query('select e.* from effects e join reputations_tiers_effects rte on e.id = rte.effect_id join reputations_tiers rt on rt.id = rte.reputationtier.id where rt.value > ? and rt.value <= ? and rt.reputation_id = ?', [old_value, old_value + effect.type_qty, effect.type_id]);
             if (effects[0].length > 0) {
                 for (const thisEffect of effects[0]) {
@@ -96,16 +142,37 @@ async function process_effect(character, effect, target = null) {
                 await connection.promise().query('insert into characters_stats (character_id, stat_id, override_value) values (?, ?, ?)', [character.id, effect.type_id, statdata[0][0].default_value + effect.type_qty]);
                 // When stats have archetype overrides, we will need t  check those first too
             }
+            if (effect.visible) {
+                var stat = await connection.promise().query('select * from stats where id = ?', effect.type_id);
+                message += ` increased ${character.name}'s ${stat[0][0].name} stat by ${effect.type_qty}`;
+            }
             break;
         case 'stat_set':
             await connection.promise().query('replace into characters_stats (character_id, stat_id, override_value) values (?, ?, ?)', [character.id, effect.type_id, effect.type_qty]);
+            if (effect.visible) {
+                var stat = await connection.promise().query('select * from stats where id = ?', effect.type_id);
+                message += ` set ${character.name}'s ${stat[0][0].name} stat to ${effect.type_qty}`;
+            }
             break;
         case 'message':
+            if (effect.visible) {
+                message += ` *Special Message:* ${effect.typedata}`;
+            }
             break;
-
-
-
     }
+
+    if (effect.visible) {
+        var players = await connection.promise().query('select p.notification_channel from characters c join players_characters pc on c.id = pc.character_id join players p on p.id = pc.player_id where c.id = ? and p.notification_channel is not null', [character.id]);
+        if (players[0].length > 0) {
+            for (const thisPlayer of players[0]) {
+                var channel = await client.channels.cache.get(thisPlayer.notification_channel);
+                await channel.send({ content: message });
+            }
+        }
+    }
+
+
+
 }
 
 
