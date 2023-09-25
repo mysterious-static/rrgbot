@@ -2175,6 +2175,7 @@ client.on('interactionCreate', async (interaction) => {
                         await interaction_second.showModal(modal);
                         let submittedModal = await interaction_second.awaitModalSubmit({ time: 300000 });
                         if (submittedModal) {
+                            console.log(submittedModal.fields);
                             var charges = submittedModal.fields.getTextInputValue('charges');
                             if (submittedModal.fields.getTextInputValue('typeahead')) {
                                 var typeahead = submittedModal.fields.getTextInputValue('typeahead');
