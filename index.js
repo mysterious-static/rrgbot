@@ -2177,13 +2177,13 @@ client.on('interactionCreate', async (interaction) => {
                         if (submittedModal) {
                             console.log(submittedModal.fields);
                             var charges = submittedModal.fields.getTextInputValue('charges');
-                            if (submittedModal.fields.getTextInputValue('typeahead')) {
+                            if (submittedModal.fields.getField('typeahead')) {
                                 var typeahead = submittedModal.fields.getTextInputValue('typeahead');
                             }
-                            if (submittedModal.fields.getTextInputValue('type_qty')) {
+                            if (submittedModal.fields.getField('type_qty')) {
                                 var type_qty = submittedModal.fields.getTextInputValue('type_qty');
                             }
-                            if (submittedModal.fields.getTextInputValue('typedata')) {
+                            if (submittedModal.fields.getField('typedata')) {
                                 var typedata = submittedModal.fields.getTextInputValue('typedata');
                             }
                             if (typeahead) {
