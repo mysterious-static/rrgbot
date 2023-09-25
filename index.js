@@ -19,6 +19,7 @@ client.login(process.env.app_token);
 /* Functions */
 
 async function process_effect(character, effect, source, target = null) {
+    //TODO: care about charges!
     var message;
     if (effect.visible) {
         if (source.type == 'skill') {
@@ -1635,8 +1636,223 @@ client.on('interactionCreate', async (interaction) => {
                     await interaction.reply({ content: "Couldn't find any characters (or archetypes) to unassign skills from.", ephemeral: true });
                 }
             } else if (interaction.options.getSubcommand() == 'addeffect') {
-                // Look at reputation effects for this.
-                // Select skill. Then select action ,visiblity, modal as with reputation tier.
+                var skills = await connection.promise().query('select * from skills where guild_id = ? and targetable = 1', [interaction.guildId]);
+                var skillsAlphabetical;
+                var skillSelectComponent;
+                if (skills[0].length > 0) {
+                    if (skills[0].length <= 25) {
+                        skillsAlphabetical = false;
+                        var skillsKeyValues = [{ label: 'Select a skill', value: '0' }];
+                        for (const skill of skills[0]) {
+                            var thisSkillKeyValue = { label: skill.name, value: skill.id.toString() };
+                            skillsKeyValues.push(thisSkillKeyValue);
+                        }
+                        skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillEffectSkillSelector').setMinValues(1).setMaxValues(1);
+                    } else {
+                        skillsAlphabetical = true;
+                        var skills = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
+                        var skillsKeyValues = [];
+                        for (const skill of skills) {
+                            var thisSkillKeyValue = { label: skill, value: skill }
+                            skillsKeyValues.push(thisSkillKeyValue);
+                        }
+                        skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillEffectAlphabetSelector').setMinValues(1).setMaxValues(1);
+                    }
+                    var skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
+                    var message = await interaction.reply({ content: 'Please select a skill to add an effect to:', components: [skillSelectRow], ephemeral: true });
+                    var collector = message.createMessageComponentCollector();
+                    var selectedSkill;
+                    var type;
+                    var visible;
+                    var target;
+                    collector.on('collect', async (interaction_second) => {
+                        if (interaction_second.customId == 'SkillEffectAlphabetSelector') {
+                            var skills = await connection.promise().query('select * from skills where guild_id = ? and targetable = 1 and name like ?', [interaction.guildId, interaction_second.values[0] + '%']);
+                            var skillsKeyValues = [{ label: 'Select a skill', value: '0' }];
+                            for (const skill of skills[0]) {
+                                var thisSkillKeyValue = { label: skill.name, value: skill.id.toString() };
+                                skillsKeyValues.push(thisSkillKeyValue);
+                            }
+                            skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillEffectSkillSelector').setMinValues(1).setMaxValues(1);
+                            var skillSelectRow = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillEffectSkillSelector').setMinValues(1).setMaxValues(1);
+                            await interaction_second.update({ content: 'Please select a skill to add an effect to:', components: [skillSelectRow] });
+                        } else if (interaction_second.customId == 'SkillEffectSkillSelector') {
+                            selectedSkill = interaction_second.values[0];
+                            var types = [
+                                { label: 'Increment World Flag', value: 'wflag_inc' },
+                                { label: 'Set World Flag', value: 'wflag_set' },
+                                { label: 'Increment Character Flag', value: 'cflag_inc' },
+                                { label: 'Set Character Flag', value: 'cflag_set' },
+                                { label: 'Increment Stat', value: 'stat_inc' },
+                                { label: 'Set Stat', value: 'stat_set' },
+                                { label: 'Increment Reputation', value: 'reputation_inc' },
+                                { label: 'Set Reputation', value: 'reputation_set' },
+                                { label: 'Add Item', value: 'item' },
+                                { label: 'Add Skill', value: 'skill' },
+                                { label: 'Add Archetype', value: 'archetype' },
+                                { label: 'Send Message', value: 'message' }
+                            ]
+                            var selectComponent = new StringSelectMenuBuilder().setOptions(types).setCustomId('TypeSelector').setMinValues(1).setMaxValues(1);
+                            var selectRow = new ActionRowBuilder().addComponents(selectComponent);
+                            await interaction_second.update({ content: 'Please select a type of effect:', components: [selectRow] });
+                        } else if (interaction_second.customId == 'TypeSelector') {
+                            type = interaction_second.values[0];
+                            var targets = [
+                                { label: 'Skill User', value: 'triggering_character' },
+                                { label: 'Skill Target', value: 'target' }
+                            ];
+                            var selectComponent = new StringSelectMenuBuilder().setOptions(targets).setCustomId('TargetSelector').setMinValues(1).setMaxValues(1);
+                            var selectRow = new ActionRowBuilder().addComponents(selectComponent);
+                            await interaction_second.update({ content: 'Please select a target for this effect:', components: [selectRow] });
+                        } else if (interaction_second.customId == 'TargetSelector') {
+                            target = interaction_second.values[0];
+                            var visibilities = [{ label: 'Yes', value: '1' }, { label: 'No', value: '0' }];
+                            var selectComponent = new StringSelectMenuBuilder().setOptions(visibilities).setCustomId('VisibilitySelector').setMinValues(1).setMaxValues(1);
+                            var selectRow = new ActionRowBuilder().addComponents(selectComponent);
+                            await interaction_second.update({ content: 'Do you want this effect announced to the player?', components: [selectRow], ephemeral: true });
+
+                        } else if (interaction_second.customId == 'VisibilitySelector') {
+                            visible = interaction_second.values[0];
+                            console.log(type);
+                            var modal = new ModalBuilder()
+                                .setCustomId('RepEffectModal')
+                                .setTitle('Add Effect');
+                            let requires_typeahead = ['wflag_inc', 'wflag_set', 'cflag_inc', 'cflag_set', 'stat_inc', 'stat_set', 'reputation_inc', 'reputation_set', 'item', 'skill', 'archetype'];
+                            if (requires_typeahead.includes(type)) {
+                                var typeaheadInput = new TextInputBuilder()
+                                    .setCustomId('typeahead')
+                                    .setStyle(TextInputStyle.Short);
+                                if (type == 'wflag_inc' || type == 'wflag_set') {
+                                    typeaheadInput.setLabel('Name of the world flag (autocompletes)');
+                                } else if (type == 'cflag_inc' || type == 'cflag_set') {
+                                    typeaheadInput.setLabel('Name of the character flag (autocompletes)');
+                                } else if (type == 'stat_inc' || type == 'stat_set') {
+                                    typeaheadInput.setLabel('Name of the stat (autocompletes)');
+                                } else if (type == 'reputation_inc' || type == 'reputation_set') {
+                                    typeaheadInput.setLabel('Name of the reputation (autocompletes)');
+                                } else if (type == 'item') {
+                                    typeaheadInput.setLabel('Name of the item (autocompletes)');
+                                } else if (type == 'skill') {
+                                    typeaheadInput.setLabel('Name of the skill (autocompletes)');
+                                } else if (type == 'archetype') {
+                                    typeaheadInput.setLabel('Name of the archetype (autocompletes)');
+                                }
+                                var typeaheadActionRow = new ActionRowBuilder().addComponents(typeaheadInput);
+                                modal.addComponents(typeaheadActionRow);
+                            }
+                            let requires_quantity = ['wflag_inc', 'wflag_set', 'cflag_inc', 'cflag_set', 'stat_inc', 'stat_set', 'reputation_inc', 'reputation_set'];
+                            if (requires_quantity.includes(type)) {
+                                var quantityInput = new TextInputBuilder()
+                                    .setCustomId('type_qty')
+                                    .setStyle(TextInputStyle.Short);
+                                if (type == 'wflag_inc' || type == 'cflag_inc' || type == 'stat_inc' || type == 'reputation_inc') {
+                                    quantityInput.setLabel('Amount to increment by');
+                                } else {
+                                    quantityInput.setLabel('Value to set to');
+                                }
+                                var qtyActionRow = new ActionRowBuilder().addComponents(quantityInput);
+                                modal.addComponents(qtyActionRow);
+                            }
+                            var chargesInput = new TextInputBuilder()
+                                .setCustomId('charges')
+                                .setStyle(TextInputStyle.Short)
+                                .setLabel('Number of charges (-1 for infinite)');
+                            var chargesActionRow = new ActionRowBuilder().addComponents(chargesInput);
+                            modal.addComponents(chargesActionRow);
+                            let requires_typedata = ['message'];
+                            if (requires_typedata.includes(type)) {
+                                var typedataInput = new TextInputBuilder()
+                                    .setCustomId('typedata')
+                                    .setStyle(TextInputStyle.Paragraph);
+                                if (type == 'message') {
+                                    typedataInput.setLabel('Message to send:');
+                                }
+                                var typedataActionRow = new ActionRowBuilder().addComponents(typedataInput);
+                                modal.addComponents(typedataActionRow);
+                            }
+                            await interaction_second.showModal(modal);
+                            let submittedModal = await interaction_second.awaitModalSubmit({ time: 300000 });
+                            if (submittedModal) {
+                                var typeahead = false;
+                                var type_qty = false;
+                                var typedata = false;
+                                console.log(submittedModal.fields.fields);
+                                charges = submittedModal.fields.getTextInputValue('charges');
+                                if (submittedModal.fields.fields.find(field => field.customId === 'typeahead')) {
+                                    typeahead = submittedModal.fields.getTextInputValue('typeahead');
+                                }
+                                if (submittedModal.fields.fields.find(field => field.customId === 'type_qty')) {
+                                    type_qty = submittedModal.fields.getTextInputValue('type_qty');
+                                }
+                                if (submittedModal.fields.fields.find(field => field.customId === 'typedata')) {
+                                    typedata = submittedModal.fields.getTextInputValue('typedata');
+                                }
+                                if (typeahead) {
+                                    if (type == 'wflag_inc' || type == 'wflag_set') {
+                                        var typeahead_results = await connection.promise().query('select * from worldflags where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
+                                    } else if (type == 'cflag_inc' || type == 'cflag_set') {
+                                        var typeahead_results = await connection.promise().query('select * from characterflags where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
+                                    } else if (type == 'stat_inc' || type == 'stat_set') {
+                                        var typeahead_results = await connection.promise().query('select * from stats where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
+                                    } else if (type == 'item') {
+                                        var typeahead_results = await connection.promise().query('select * from items where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
+                                    } else if (type == 'skill') {
+                                        var typeahead_results = await connection.promise().query('select * from skills where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
+                                    } else if (type == 'archetype') {
+                                        var typeahead_results = await connection.promise().query('select * from archetypes where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
+                                    }
+
+                                    if (typeahead_results[0].length == 0) {
+                                        await interaction_second.reply({ content: 'No match was found with the autocomplete text you entered. Please try again.', components: [], ephemeral: true });
+                                    } else if (typeahead_results[0].length == 1) {
+                                        var insertedEffect;
+                                        if (type_qty) {
+                                            insertedEffect = await connection.promise().query('insert into effects (type, type_id, type_qty, charges, visible, typedata, target) values (?, ?, ?, ?, ?, ?, ?)', [type, typeahead_results[0][0].id, type_qty, charges, visible, typedata, target]);
+                                        } else {
+                                            insertedEffect = await connection.promise().query('insert into effects (type, type_id, charges, visible, typedata) values (?, ?, ?, ?, ?, ?)', [type, typeahead_results[0][0].id, charges, visible, typedata, target]);
+                                        }
+                                        await connection.promise().query('insert into skills_effects (skill_id, effect_id) values (?, ?)', [selectedSkill, insertedEffect.insertId]);
+                                        await interaction_second.update({ content: 'Effect added.', components: [], ephemeral: true });
+                                    } else {
+                                        var keyValues = [];
+                                        for (const result_value of typeahead_results[0]) {
+                                            var thisKeyValue = { label: result_value.name, value: result_value.id.toString() };
+                                            keyValues.push(thisKeyValue);
+                                        }
+                                        selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('TypeaheadSelector').setMinValues(1).setMaxValues(1);
+                                        var selectRow = new ActionRowBuilder().addComponents(selectComponent);
+                                        await submittedModal.reply({ content: 'Select an item from the list:', components: [selectRow], ephemeral: true });
+                                    }
+
+                                } else {
+                                    console.log('no typeahead');
+                                    console.log(typedata);
+                                    if (typedata) {
+                                        console.log('insert');
+                                        var insertedEffect = await connection.promise().query('insert into effects (type, charges, visible, typedata, target) values (?, ?, ?, ?, ?)', [type, charges, visible, typedata, target]);
+                                        await connection.promise().query('insert into skills_effects (skill_id, effect_id) values (?, ?)', [selectedSkill, insertedEffect.insertId]);
+                                        await interaction_second.update({ content: 'Effect added.', components: [], ephemeral: true });
+                                    }
+                                }
+                            }
+                        } else if (interaction_second.customId == 'TypeaheadSelector') {
+                            var typeahead_id = interaction_second.values[0];
+                            var insertedEffect;
+                            if (type_qty) {
+                                insertedEffect = await connection.promise().query('insert into effects (type, type_id, type_qty, charges, visible, typedata, target) values (?, ?, ?, ?, ?, ?, ?)', [type, typeahead_id, type_qty, charges, visible, typedata, target]);
+                            } else {
+                                insertedEffect = await connection.promise().query('insert into effects (type, type_id, charges, visible, typedata) values (?, ?, ?, ?, ?, ?)', [type, typeahead_id, charges, visible, typedata, target]);
+                            }
+                            await connection.promise().query('insert into skills_effects (skill_id, effect_id) values (?, ?)', [selectedSkill, insertedEffect.insertId]);
+                            await interaction_second.update({ content: 'Effect added.', components: [] });
+                        }
+                    });
+                    collector.on('end', async (collected) => {
+                        console.log(collected);
+                        // How do we clean the message up?
+                    });
+                }
+                // Then select action ,visiblity, modal as with reputation tier.
                 // Ask whether the effect will hit the caster or the target
             }
         } else if (interaction.commandName == 'additem') {
@@ -2296,9 +2512,9 @@ client.on('interactionCreate', async (interaction) => {
                                 selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('TierAlphaSelector').setMinValues(1).setMaxValues(1);
                             }
                             var selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                            await interaction_second.reply({ content: 'Please select a reputation tier:', components: [selectRow], ephemeral: true });
+                            await interaction_second.update({ content: 'Please select a reputation tier:', components: [selectRow], ephemeral: true });
                         } else {
-                            await interaction_second.reply({ content: 'No reputation tiers available for this reputation.', components: [], ephemeral: true });
+                            await interaction_second.update({ content: 'No reputation tiers available for this reputation.', components: [], ephemeral: true });
                         }
                     } else if (interaction_second.customId == 'TierSelector') {
                         tier_id = interaction_second.values[0];
@@ -2318,13 +2534,13 @@ client.on('interactionCreate', async (interaction) => {
                         ]
                         var selectComponent = new StringSelectMenuBuilder().setOptions(types).setCustomId('TypeSelector').setMinValues(1).setMaxValues(1);
                         var selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                        await interaction_second.reply({ content: 'Please select a type of effect:', components: [selectRow], ephemeral: true });
+                        await interaction_second.update({ content: 'Please select a type of effect:', components: [selectRow], ephemeral: true });
                     } else if (interaction_second.customId == 'TypeSelector') {
                         type = interaction_second.values[0];
                         var visibilities = [{ label: 'Yes', value: '1' }, { label: 'No', value: '0' }];
                         var selectComponent = new StringSelectMenuBuilder().setOptions(visibilities).setCustomId('VisibilitySelector').setMinValues(1).setMaxValues(1);
                         var selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                        await interaction_second.reply({ content: 'Do you want this effect announced to the player?', components: [selectRow], ephemeral: true });
+                        await interaction_second.update({ content: 'Do you want this effect announced to the player?', components: [selectRow], ephemeral: true });
 
                     } else if (interaction_second.customId == 'VisibilitySelector') {
                         visible = interaction_second.values[0];
@@ -2446,7 +2662,7 @@ client.on('interactionCreate', async (interaction) => {
                                     console.log('insert');
                                     var insertedEffect = await connection.promise().query('insert into effects (type, charges, visible, typedata) values (?, ?, ?, ?)', [type, charges, visible, typedata]);
                                     await connection.promise().query('insert into reputations_tiers_effects (reputationtier_id, effect_id) values (?, ?)', [tier_id, insertedEffect.insertId]);
-                                    await interaction_second.reply({ content: 'Effect added.', components: [], ephemeral: true });
+                                    await interaction_second.update({ content: 'Effect added.', components: [], ephemeral: true });
                                 }
                             }
                         }
@@ -2459,7 +2675,7 @@ client.on('interactionCreate', async (interaction) => {
                             insertedEffect = await connection.promise().query('insert into effects (type, type_id, charges, visible, typedata) values (?, ?, ?, ?, ?)', [type, typeahead_id, charges, visible, typedata]);
                         }
                         await connection.promise().query('insert into reputations_tiers_effects (reputationtier_id, effect_id) values (?, ?)', [tier_id, insertedEffect.insertId]);
-                        await interaction_second.reply({ content: 'Effect added.', components: [] });
+                        await interaction_second.update({ content: 'Effect added.', components: [] });
                     } else if (interaction_second.customId == 'TierAlphaSelector') {
                         var reputations = await connection.promise().query('select * from reputations where id = ?', [reputation_id]);
                         var result_values = connection.promise().query('select * from reputations_tiers where reputation_id = ? and threshold_name like ?', [reputation_id, interaction_second.values[0] + '%']);
@@ -2471,7 +2687,7 @@ client.on('interactionCreate', async (interaction) => {
                         }
                         selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('TierSelector').setMinValues(1).setMaxValues(1);
                         var selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                        await interaction_second.reply({ content: 'Please select a reputation tier:', components: [selectRow] });
+                        await interaction_second.update({ content: 'Please select a reputation tier:', components: [selectRow] });
                     } else if (interaction_second.customId == 'RepAlphaSelector') {
                         var reputations = connection.promise().query('select * from reputations where name like ? and guild_id = ?', ['%' + interaction_second.values[0], interaction.guildId]);
                         if (reputations[0].length <= 25) {
@@ -2482,9 +2698,9 @@ client.on('interactionCreate', async (interaction) => {
                             }
                             reputationSelectComponent = new StringSelectMenuBuilder().setOptions(reputationsKeyValues).setCustomId('RepSelector').setMinValues(1).setMaxValues(1);
                             var reputationSelectRow = new ActionRowBuilder().addComponents(reputationSelectComponent);
-                            interaction.update({ components: [reputationSelectRow] });
+                            interaction_second.update({ components: [reputationSelectRow] });
                         } else {
-                            interaction_second.reply({ content: 'No reputations with this first letter', components: [] });
+                            interaction_second.update({ content: 'No reputations with this first letter', components: [] });
                         }
                     }
                 });
