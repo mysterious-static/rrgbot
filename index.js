@@ -2065,7 +2065,7 @@ client.on('interactionCreate', async (interaction) => {
                             if (result_values[0].length <= 25) {
                                 var keyValues = [];
                                 for (const result_value of result_values[0]) {
-                                    var thisKeyValue = { label: result_value.name, value: result_value.id.toString() };
+                                    var thisKeyValue = { label: result_value.threshold_name, value: result_value.id.toString() };
                                     keyValues.push(thisKeyValue);
                                 }
                                 selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('TierSelector').setMinValues(1).setMaxValues(1);
@@ -2234,8 +2234,8 @@ client.on('interactionCreate', async (interaction) => {
                         var result_values = connection.promise().query('select * from reputations_tiers where reputation_id = ? and threshold_name like ?', [reputation_id, interaction_second.values[0] + '%']);
                         var selectComponent;
                         var keyValues = [];
-                        for (const result_value of result_values) {
-                            var thisKeyValue = { label: result_value.name, value: result_value.id.toString() };
+                        for (const result_value of result_values[0]) {
+                            var thisKeyValue = { label: result_value.threshold_name, value: result_value.id.toString() };
                             keyValues.push(thisKeyValue);
                         }
                         selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('TierSelector').setMinValues(1).setMaxValues(1);
