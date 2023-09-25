@@ -110,7 +110,7 @@ async function process_effect(character, effect, source, target = null) {
             await connection.promise().query('select e.* from effects e join reputations_tiers_effects rte on e.id = rte.effect_id join reputations_tiers rt on rt.id = rte.reputationtier.id where rt.value > ? and rt.value <= ? and rt.reputation_id = ?', [old_value, old_value + effect.type_qty, effect.type_id]);
             if (effects[0].length > 0) {
                 for (const thisEffect of effects[0]) {
-                    await process_effect(character, thisEffect, 'reputation');
+                    await process_effect(character, thisEffect, 'reputationtier');
                 }
             }
             break;
@@ -130,7 +130,7 @@ async function process_effect(character, effect, source, target = null) {
             var effects = await connection.promise().query('select e.* from effects e join reputations_tiers_effects rte on e.id = rte.effect_id join reputations_tiers rt on rt.id = rte.reputationtier.id where rt.value > ? and rt.value <= ? and rt.reputation_id = ?', [old_value, old_value + effect.type_qty, effect.type_id]);
             if (effects[0].length > 0) {
                 for (const thisEffect of effects[0]) {
-                    await process_effect(character, thisEffect, 'reputation');
+                    await process_effect(character, thisEffect, 'reputationtier');
                 }
             }
             break;
@@ -171,6 +171,21 @@ async function process_effect(character, effect, source, target = null) {
             }
         }
     }
+    var settingvalue = await connection.promise().query('select * from game_settings where guild_id = ? and setting_name = ?', [interaction.guild.id, 'audit_channel']);
+    var audit_channel = await client.channels.cache.get(settingvalue[0][0].setting_value);
+    var embed = new EmbedBuilder()
+        .setTitle('Effect processed!')
+        .setDescription(message)
+        .setAuthor({ name: character.name })
+        .addFields(
+            {
+                name: 'Source',
+                value: source,
+                inline: true
+            }
+        )
+        .setTimestamp();
+    audit_channel.send({ embeds: [embed] });
 
 
 
