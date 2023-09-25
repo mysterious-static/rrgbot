@@ -2221,7 +2221,10 @@ client.on('interactionCreate', async (interaction) => {
                                         keyValues.push(thisKeyValue);
                                     }
                                     selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('TypeaheadSelector').setMinValues(1).setMaxValues(1);
+                                    var selectRow = new ActionRowBuilder().addComponents(selectComponent);
+                                    await interaction_second.reply({ content: 'Select an item from the list:', components: [selectComponent] });
                                 }
+
                             } else {
                                 console.log('no typeahead');
                                 console.log(typedata);
