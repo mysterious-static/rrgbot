@@ -2079,9 +2079,9 @@ client.on('interactionCreate', async (interaction) => {
                                 selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('TierAlphaSelector').setMinValues(1).setMaxValues(1);
                             }
                             var selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                            await interaction_second.editReply({ content: 'Please select a reputation tier:', components: [selectRow] });
+                            await interaction_second.reply({ content: 'Please select a reputation tier:', components: [selectRow] });
                         } else {
-                            await interaction_second.editReply({ content: 'No reputation tiers available for this reputation.', components: [] });
+                            await interaction_second.reply({ content: 'No reputation tiers available for this reputation.', components: [] });
                         }
                     } else if (interaction_second.customId == 'TierSelector') {
                         var tier_id = interaction_second.values[0];
