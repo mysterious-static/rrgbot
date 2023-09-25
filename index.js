@@ -2110,6 +2110,8 @@ client.on('interactionCreate', async (interaction) => {
                         await interaction_second.reply({ content: 'Do you want this effect announced to the player?', components: [selectRow] });
 
                     } else if (interaction_second.customId == 'VisibilitySelector') {
+                        var visible = interaction_second.values[0];
+                        console.log(type);
                         var modal = new ModalBuilder()
                             .setCustomId('RepEffectModal')
                             .setTitle('Add Effect');
