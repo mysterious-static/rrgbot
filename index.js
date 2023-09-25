@@ -2000,7 +2000,7 @@ client.on('interactionCreate', async (interaction) => {
                     reputationSelectComponent = new StringSelectMenuBuilder().setOptions(reputationsKeyValues).setCustomId('RepAlphaSelector').setMinValues(1).setMaxValues(1);
                 }
                 var reputationSelectRow = new ActionRowBuilder().addComponents(reputationSelectComponent);
-                var message = await submittedModal.editReply({ content: 'Please select the following options:', components: [reputationSelectRow], ephemeral: true });
+                var message = await interaction.reply({ content: 'Please select the following options:', components: [reputationSelectRow], ephemeral: true });
                 collector = message.createMessageComponentCollector();
                 collector.on('collect', async (interaction_second) => {
                     if (interaction_second.customId == 'RepSelector') {
@@ -2051,7 +2051,7 @@ client.on('interactionCreate', async (interaction) => {
                     reputationSelectComponent = new StringSelectMenuBuilder().setOptions(reputationsKeyValues).setCustomId('RepAlphaSelector').setMinValues(1).setMaxValues(1);
                 }
                 var reputationSelectRow = new ActionRowBuilder().addComponents(reputationSelectComponent);
-                var message = await submittedModal.editReply({ content: 'Please select a reputation:', components: [reputationSelectRow], ephemeral: true });
+                var message = await interaction.reply({ content: 'Please select a reputation:', components: [reputationSelectRow], ephemeral: true });
                 collector = message.createMessageComponentCollector();
                 collector.on('collect', async (interaction_second) => {
                     if (interaction_second.customId == 'RepSelector') {
