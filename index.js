@@ -3495,7 +3495,7 @@ client.on('interactionCreate', async (interaction) => {
                                 // How do we clean the message up?
                             });
                         } else {
-                            interaction.reply({ content: 'You don\'t seem to have any skills. Sorry about that.', ephemeral: true });
+                            await interaction.reply({ content: 'You don\'t seem to have any skills. Sorry about that.', ephemeral: true });
                         }
 
                         //dropdown
