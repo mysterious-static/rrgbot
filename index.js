@@ -1938,6 +1938,8 @@ client.on('interactionCreate', async (interaction) => {
                         console.log(collected);
                         // How do we clean the message up?
                     });
+                } else {
+                    interaction.reply({ content: 'There are no targetable skills in the database for this game.', ephemeral: true });
                 }
                 // Then select action ,visiblity, modal as with reputation tier.
                 // Ask whether the effect will hit the caster or the target
