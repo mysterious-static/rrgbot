@@ -650,10 +650,6 @@ var reputation = new SlashCommandBuilder().setName('reputation')
                 option.setName('maximum')
                     .setDescription('Maximum reputation value for this reputation.')
                     .setRequired(true))
-            .addIntegerOption(option =>
-                option.setName('start_value')
-                    .setDescription('Starting reputation value for this reputation.')
-                    .setRequired(true))
             .addStringOption(option =>
                 option.setName('icon')
                     .setDescription('(optional) A faction icon\'s emoji ID')))
@@ -2392,7 +2388,6 @@ client.on('interactionCreate', async (interaction) => {
                 var visibility = interaction.options.getString('visibility');
                 var maximum = interaction.options.getInteger('maximum');
                 var icon = interaction.options.getString('icon');
-                var start_value = interaction.options.getInteger('start_value');
                 var reputations = await connection.promise().query('select * from reputations where name = ? and guild_id = ?', [name, interaction.guildId]);
                 if (reputations[0].length > 0) {
                     await interaction.reply({ content: `You've already added a reputation with name ${name}.`, ephemeral: true });
@@ -2405,7 +2400,7 @@ client.on('interactionCreate', async (interaction) => {
                     if ((visibility == 'cflag' && cflags[0].length == 0) || (visibility == 'wflag' && wflags[0].length == 0)) {
                         await interaction.reply({ mescontentsage: 'No flags of the specified type exist in this game yet.', ephemeral: true });
                     } else if (visibility == 'always' || visibility == 'never') {
-                        await connection.promise().query('insert into reputations (name, guild_id, description, visibility, maximum, start_value) values (?, ?, ?, ?, ?, ?)', [name, interaction.guildId, description, visibility, maximum, start_value]);
+                        await connection.promise().query('insert into reputations (name, guild_id, description, visibility, maximum, start_value) values (?, ?, ?, ?, ?, ?)', [name, interaction.guildId, description, visibility, maximum, 0]);
                         await interaction.reply({ content: 'Reputation added.', ephemeral: true });
                     } else {
                         // build modal
