@@ -3622,6 +3622,8 @@ client.on('interactionCreate', async (interaction) => {
                                 console.log(collected);
                                 // How do we clean the message up?
                             });
+                        } else {
+                            interaction.reply({ content: 'You don\'t seem to have any usable skills.', ephemeral: true });
                         }
                     }
                 } else {
