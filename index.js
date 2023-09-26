@@ -606,6 +606,9 @@ var effect = new SlashCommandBuilder().setName('effect')
         subcommand.setName('addprereq')
             .setDescription('Add a prerequisite to an effect')) // Prompt for what type of reward it is - quest, reputation tier, dialog, skill, etc
     .addSubcommand(subcommand =>
+        subcommand.setName('listprereqs')
+            .setDescription('List prerequisites for an effect'))
+    .addSubcommand(subcommand =>
         subcommand.setName('remove')
             .setDescription('Remove an effect.'))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
@@ -2722,6 +2725,358 @@ client.on('interactionCreate', async (interaction) => {
             }
         } else if (interaction.commandName == 'effect') {
             if (interaction.options.getSubcommand() === 'addprereq') {
+                var choices = [
+                    { label: 'Reputation Tier', value: 'reputation' },
+                    { label: 'Skill', value: 'skill' }
+                ];
+                var selectComponent = new StringSelectMenuBuilder().setOptions(choices).setCustomId('PrereqEffectSourceSelector').setMinValues(1).setMaxValues(1);
+                var selectRow = new ActionRowBuilder().addComponents(selectComponent);
+                var message = await interaction.reply({ content: 'Please select the effect source:', components: [selectRow], ephemeral: true });
+                let collector = message.createMessageComponentCollector();
+                let prereq_type;
+                let prereq_id;
+                let logical_and_group;
+                let selectedEffect;
+                let not = false;
+                let prereq_value;
+                let effect_id;
+                collector.on('collect', async (interaction_second) => {
+                    if (interaction_second.customId === 'PrereqEffectSourceSelector') {
+                        var type = interaction_second.values[0];
+                        if (type == 'reputation') {
+                            var reputations = await connection.promise().query('select distinct r.* from reputations r inner join reputations_tiers rt on rt.reputation_id = r.id inner join reputations_tiers_effects rte on rt.id = rte.reputationtier_id where guild_id = ?', [interaction.guildId]);
+                            var reputationSelectComponent;
+                            if (reputations[0].length <= 25) {
+                                var reputationsKeyValues = [];
+                                for (const reputation of reputations[0]) {
+                                    var thisReputationKeyValue = { label: reputation.name, value: reputation.id.toString() };
+                                    reputationsKeyValues.push(thisReputationKeyValue);
+                                }
+                                reputationSelectComponent = new StringSelectMenuBuilder().setOptions(reputationsKeyValues).setCustomId('PrereqRepSelector').setMinValues(1).setMaxValues(1);
+                            } else {
+                                var reputations = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
+                                var reputationsKeyValues = [];
+                                for (const reputation of reputations) {
+                                    var thisReputationKeyValue = { label: reputation, value: reputation }
+                                    reputationsKeyValues.push(thisReputationKeyValue);
+                                }
+                                reputationSelectComponent = new StringSelectMenuBuilder().setOptions(reputationsKeyValues).setCustomId('PrereqRepAlphaSelector').setMinValues(1).setMaxValues(1);
+                            }
+                            var reputationSelectRow = new ActionRowBuilder().addComponents(reputationSelectComponent);
+                            await interaction_second.update({ content: 'Please select the following options:', components: [reputationSelectRow], ephemeral: true });
+                        } else if (type == 'skill') {
+                            var skills = await connection.promise().query('select s.* from skills s inner join skills_effects se on s.id = se.skill_id where guild_id = ?', [interaction.guildId]);
+                            var skillsAlphabetical;
+                            var skillSelectComponent;
+                            if (skills[0].length > 0) {
+                                if (skills[0].length <= 25) {
+                                    skillsAlphabetical = false;
+                                    var skillsKeyValues = [];
+                                    for (const skill of skills[0]) {
+                                        var thisSkillKeyValue = { label: skill.name, value: skill.id.toString() };
+                                        skillsKeyValues.push(thisSkillKeyValue);
+                                    }
+                                    skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('PrereqSkillSelector').setMinValues(1).setMaxValues(1);
+                                } else {
+                                    skillsAlphabetical = true;
+                                    var skills = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
+                                    var skillsKeyValues = [];
+                                    for (const skill of skills) {
+                                        var thisSkillKeyValue = { label: skill, value: skill }
+                                        skillsKeyValues.push(thisSkillKeyValue);
+                                    }
+                                    skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('PrereqSkillAlphaSelector').setMinValues(1).setMaxValues(1);
+                                }
+                                var skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
+                                await interaction_second.update({ content: 'Please select a skill:', components: [skillSelectRow], ephemeral: true });
+                            }
+                        }//extensible for quests and npcs and whatever else
+                    } else if (interaction_second.customId === 'PrereqRepAlphaSelector') {
+                        var reputations = await connection.promise().query('select distinct r.* from reputations r inner join reputations_tiers rt on rt.reputation_id = r.id inner join reputations_tiers_effects rte on rt.id = rte.reputationtier_id where r.guild_id = ? and r.name like ?', [interaction.guildId, interaction_second.values[0] + '%']);
+                        var reputationsKeyValues = [];
+                        for (const reputation of reputations[0]) {
+                            var thisReputationKeyValue = { label: reputation.name, value: reputation.id.toString() };
+                            reputationsKeyValues.push(thisReputationKeyValue);
+                        }
+                        reputationSelectComponent = new StringSelectMenuBuilder().setOptions(reputationsKeyValues).setCustomId('PrereqRepSelector').setMinValues(1).setMaxValues(1);
+                        var reputationSelectRow = new ActionRowBuilder().addComponents(reputationSelectComponent);
+                        await interaction_second.update({ content: 'Please select the following options:', components: [reputationSelectRow], ephemeral: true });
+                    } else if (interaction_second.customId === 'PrereqRepSelector') {
+                        var reputation_id = interaction_second.values[0];
+                        var result_values = await connection.promise().query('select distinct rt.* from reputations_tiers inner join reputations_tiers_effects rte on rt.id = rte.reputationtier_id where rt.reputation_id = ?', [reputation_id]);
+                        var selectComponent;
+                        if (result_values[0].length > 0) {
+                            if (result_values[0].length <= 25) {
+                                var keyValues = [];
+                                for (const result_value of result_values[0]) {
+                                    var thisKeyValue = { label: result_value.threshold_name, value: result_value.id.toString() };
+                                    keyValues.push(thisKeyValue);
+                                }
+                                selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('PrereqRepTierSelector').setMinValues(1).setMaxValues(1);
+                            } else {
+                                var result_values = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
+                                var keyValues = [];
+                                for (const result_value of result_values) {
+                                    var thisKeyValue = { label: result_value, value: result_value }
+                                    keyValues.push(thisKeyValue);
+                                }
+                                selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('PrereqRepTierAlphaSelector').setMinValues(1).setMaxValues(1);
+                            }
+                            var selectRow = new ActionRowBuilder().addComponents(selectComponent);
+                            await interaction_second.update({ content: 'Please select a reputation tier:', components: [selectRow], ephemeral: true });
+                        } else {
+                            await interaction_second.update({ content: 'No reputation tiers available for this reputation.', components: [], ephemeral: true });
+                        }
+
+                    } else if (interaction_second.customId === 'PrereqSkillAlphaSelector') {
+                        var skills = await connection.promise().query('select s.* from skills s inner join skills_effects se on s.id = se.skill_id where guild_id = ? and name like ?', [interaction.guildId, interaction_second.values[0] + '%']);
+                        var skillsKeyValues = [];
+                        for (const skill of skills[0]) {
+                            var thisSkillKeyValue = { label: skill.name, value: skill.id.toString() };
+                            skillsKeyValues.push(thisSkillKeyValue);
+                        }
+                        skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('PrereqSkillSelector').setMinValues(1).setMaxValues(1);
+                        var skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
+                        await interaction_second.update({ content: 'Please select a skill:', components: [skillSelectRow], ephemeral: true });
+                    } else if (interaction_second.customId === 'PrereqSkillSelector') {
+                        var effects = await connection.promise().query('select e.* from effects e join skills_effects se on e.id = se.effect_id where se.skill_id = ?', [interaction_second.values[0] + '%']);
+                        var effectsKeyValues = [];
+                        for (const effect of effects[0]) {
+                            let label;
+                            let description;
+                            var prereqs = await connection.promise().query('select * from effects_prereqs where effect_id = ?');
+                            if (effect.type == 'message') {
+                                label = `Send message`;
+                            } else if (effect.type == 'wflag_inc' || effect.type == 'wflag_set') {
+                                var worldflag = await connection.promise().query('select * from worldflags where id = ?', [effect.type_id]);
+                                label = `Adjust world flag`;
+                                description = worldflag[0][0].name;
+                            } else if (effect.type == 'cflag_inc' || effect.type == 'cflag_set') {
+                                var characterflag = await connection.promise().query('select * from characterflags where id = ?', [effect.type_id]);
+                                label = `Adjust character flag`;
+                                description = characterflag[0][0].name;
+                            } else if (effect.type == 'skill') {
+                                var skill = await connection.promise().query('select * from skills where id = ?', [effect.type_id]);
+                                label = `Grant skill`;
+                                description = skill[0][0].name;
+                            } else if (effect.type == 'archetype') {
+                                var archetype = await connection.promise().query('select * from archetypes where id = ?', [effect.type_id]);
+                                label = `Grant archetype`;
+                                description = archetype[0][0].name;
+                            } else if (effect.type == 'reputation_inc' || effect.type == 'reputation_set') {
+                                var reputation = await connection.promise().query('select * from reputations where id = ?', [effect.type_id]);
+                                label = `Modify reputation`;
+                                description = reputation[0][0].name;
+                            } else if (effect.type == 'stat_set' || effect.type == 'stat_inc') {
+                                var stat = await connection.promise().query('select * from stats where id = ?', [effect.type_id]);
+                                label = `Modify stat`;
+                                description = stat[0][0].name;
+                            }
+                            description += ` (${prereqs[0].length} prereqs already)`;
+                            var thisEffectKeyValue = { label: label, description: description, value: effect.id };
+                            effectsKeyValues.push(thisEffectKeyValue);
+                        }
+                        var effectSelectComponent = new StringSelectMenuBuilder().setOptions(effectsKeyValues).setCustomId('PrereqEffectSelector').setMinValues(1).setMaxValues(1);
+                        var effectSelectRow = new ActionRowBuilder().addComponents(effectSelectComponent);
+                        await interaction_second.update({ content: 'Please select an effect:', components: [effectSelectRow], ephemeral: true });
+                        // Displays PrereqEffectSelector.
+                    } else if (interaction_second.customId === 'PrereqRepTierAlphaSelector') {
+                        var result_values = await connection.promise().query('select distinct rt.* from reputations_tiers inner join reputations_tiers_effects rte on rt.id = rte.reputationtier_id where rt.reputation_id = ? and name like ?', [reputation_id, interaction_second.values[0] + '%']);
+                        if (result_values.length > 0) {
+                            var keyValues = [];
+                            for (const result_value of result_values[0]) {
+                                var thisKeyValue = { label: result_value.threshold_name, value: result_value.id.toString() };
+                                keyValues.push(thisKeyValue);
+                            }
+                            selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('PrereqRepTierSelector').setMinValues(1).setMaxValues(1); await interaction_second.update({ content: 'Please select a reputation tier:', components: [selectRow], ephemeral: true });
+                        } else {
+                            await interaction_second.update({ content: 'No reputation tiers available for this reputation.', components: [], ephemeral: true });
+                        }
+                    } else if (interaction_second.customId === 'PrereqRepTierSelector') {
+                        var effects = await connection.promise().query('select e.* from effects e join reputations_tiers_effects rte on e.id = se.effect_id where rte.reputationtier_id = ?', [interaction_second.values[0] + '%']);
+                        var effectsKeyValues = [];
+                        for (const effect of effects[0]) {
+                            let label;
+                            let description;
+                            var prereqs = await connection.promise().query('select * from effects_prereqs where effect_id = ?');
+                            if (effect.type == 'message') {
+                                label = `Send message`;
+                            } else if (effect.type == 'wflag_inc' || effect.type == 'wflag_set') {
+                                var worldflag = await connection.promise().query('select * from worldflags where id = ?', [effect.type_id]);
+                                label = `Adjust world flag`;
+                                description = worldflag[0][0].name;
+                            } else if (effect.type == 'cflag_inc' || effect.type == 'cflag_set') {
+                                var characterflag = await connection.promise().query('select * from characterflags where id = ?', [effect.type_id]);
+                                label = `Adjust character flag`;
+                                description = characterflag[0][0].name;
+                            } else if (effect.type == 'skill') {
+                                var skill = await connection.promise().query('select * from skills where id = ?', [effect.type_id]);
+                                label = `Grant skill`;
+                                description = skill[0][0].name;
+                            } else if (effect.type == 'archetype') {
+                                var archetype = await connection.promise().query('select * from archetypes where id = ?', [effect.type_id]);
+                                label = `Grant archetype`;
+                                description = archetype[0][0].name;
+                            } else if (effect.type == 'reputation_inc' || effect.type == 'reputation_set') {
+                                var reputation = await connection.promise().query('select * from reputations where id = ?', [effect.type_id]);
+                                label = `Modify reputation`;
+                                description = reputation[0][0].name;
+                            } else if (effect.type == 'stat_set' || effect.type == 'stat_inc') {
+                                var stat = await connection.promise().query('select * from stats where id = ?', [effect.type_id]);
+                                label = `Modify stat`;
+                                description = stat[0][0].name;
+                            }
+                            description += ` (${prereqs[0].length} prereqs already)`;
+                            var thisEffectKeyValue = { label: label, description: description, value: effect.id };
+                            effectsKeyValues.push(thisEffectKeyValue);
+                        }
+                        var effectSelectComponent = new StringSelectMenuBuilder().setOptions(effectsKeyValues).setCustomId('PrereqEffectSelector').setMinValues(1).setMaxValues(1);
+                        var effectSelectRow = new ActionRowBuilder().addComponents(effectSelectComponent);
+                        await interaction_second.update({ content: 'Please select an effect:', components: [effectSelectRow], ephemeral: true });
+                    } else if (interaction_second.customId === 'PrereqEffectSelector') {
+                        effect_id = interaction_second.values[0];
+                        var types = [
+                            { label: 'Character is', value: 'character_eq' },
+                            { label: 'Character is not', value: 'character_ne' },
+                            { label: 'Character flag equals', value: 'cflag_eq' },
+                            { label: 'Character flag less than', value: 'cflag_lt' },
+                            { label: 'Character flag greater than', value: 'cflag_gt' },
+                            { label: 'Character flag not equal', value: 'cflag_ne' },
+                            { label: 'World flag equals', value: 'wflag_eq' },
+                            { label: 'World flag less than', value: 'wflag_lt' },
+                            { label: 'World flag greater than', value: 'wflag_gt' },
+                            { label: 'World flag not equal', value: 'wflag_ne' },
+                            { label: 'Archetype is', value: 'archetype_eq' },
+                            { label: 'Archetype is not', value: 'archetype_ne' },
+                        ];
+                        var selectComponent = new StringSelectMenuBuilder().setOptions(types).setCustomId('PrereqTypeSelector').setMinValues(1).setMaxValues(1);
+                        var selectRow = new ActionRowBuilder().addComponents(selectComponent);
+                        await interaction_second.update({ content: 'Please select a prerequisite type:', components: [selectRow], ephemeral: true });
+                    } else if (interaction_second.customId === 'PrereqTypeSelector') {
+                        if (interaction_second.values[0] == 'character_eq' || interaction_second.values[0] == 'character_ne') {
+                            prereq_type = 'character';
+                            if (interaction_second.values[0] == 'character_ne') {
+                                not = true;
+                            }
+                        } else if (interaction_second.values[0] == 'archetype_eq' || interaction_second.values[0] == 'archetype_ne') {
+                            prereq_type = 'archetype';
+                            if (interaction_second.values[0] == 'archetype_ne') {
+                                not = true;
+                            }
+                        } else if (prereq_type == 'cflag_ne') {
+                            prereq_type == 'cflag_eq';
+                            not = true;
+                        } else if (prereq_type == 'wflag_ne') {
+                            prereq_type == 'wflag_eq';
+                            not = true;
+                        } else {
+                            prereq_type = interaction_second.values[0];
+                        }
+                        var logical_ands = await connection.promise().query('select logical_and_group, count(*) as conditions from effect_prereqs where effect_id = ? group by logical_and_group', [selectedEffect]);
+                        var types = [
+                            { label: 'New logical AND group', value: 'new' }
+                        ];
+                        if (logical_ands[0][0].length > 0) {
+                            for (const logical_and of logical_ands[0]) {
+                                types.push({ label: 'Logical AND group ' + logical_and.logical_and_group + ' (' + conditions + ' prereqs)', value: logical_and.logical_and_group });
+                            }
+                        }
+                        var selectComponent = new StringSelectMenuBuilder().setOptions(types).setCustomId('PrereqLogicalAndSelector').setMinValues(1).setMaxValues(1);
+                        var selectRow = new ActionRowBuilder().addComponents(selectComponent);
+                        await interaction_second.update({ content: 'Do you want to add this prerequisite to an existing logical AND group or use an existing one?', components: [selectRow], ephemeral: true });
+                    } else if (interaction_second.customId === 'PrereqLogicalAndSelector') {
+                        if (interaction_second.values[0] == 'new') {
+                            var and_groups = await connection.promise().query('select max(logical_and_group) as max_val from effects_prereqs where effect_id = ?', [selectedEffect]);
+                            if (and_groups[0].length > 0) {
+                                logical_and_group = and_groups[0][0].max_val;
+                            } else {
+                                logical_and_group = 0;
+                            }
+                        } else {
+                            logical_and_group = interaction_second.values[0];
+                        }
+                        var modal = new ModalBuilder()
+                            .setCustomId('RepPrereqModal')
+                            .setTitle('Add Prerequisite');
+                        var typeaheadInput = new TextInputBuilder()
+                            .setCustomId('typeahead')
+                            .setStyle(TextInputStyle.Short);
+                        if (prereq_type == 'wflag_eq' || prereq_type == 'wflag_gt' || prereq_type == 'wflag_lt') {
+                            typeaheadInput.setLabel('Name of the world flag (autocompletes)');
+                        } else if (prereq_type == 'cflag_eq' || prereq_type == 'cflag_lt' || prereq_type == 'cflag_gt') {
+                            typeaheadInput.setLabel('Name of the character flag (autocompletes)');
+                        } else if (type == 'archetype') {
+                            typeaheadInput.setLabel('Name of the archetype (autocompletes)');
+                        } else if (prereq_type == 'character') {
+                            typeaheadInput.setLabel('Name of the character (autocompletes)');
+                        }
+                        var typeaheadActionRow = new ActionRowBuilder().addComponents(typeaheadInput);
+                        modal.addComponents(typeaheadActionRow);
+                        let requires_quantity = ['wflag_gt', 'wflag_lt', 'wflag_eq', 'cflag_gt', 'cflag_lt', 'cflag_eq'];
+                        if (requires_quantity.includes(type)) {
+                            var quantityInput = new TextInputBuilder()
+                                .setCustomId('prereq_value')
+                                .setStyle(TextInputStyle.Short);
+                            quantityInput.setLabel('Amount to increment by');
+                            var qtyActionRow = new ActionRowBuilder().addComponents(quantityInput);
+                            modal.addComponents(qtyActionRow);
+                        }
+                        await interaction_second.showModal(modal);
+                        let submittedModal = await interaction_second.awaitModalSubmit({ time: 300000 });
+                        if (submittedModal) {
+                            var typeahead = false;
+                            if (submittedModal.fields.fields.find(field => field.customId === 'typeahead')) {
+                                typeahead = submittedModal.fields.getTextInputValue('typeahead');
+                            }
+                            if (submittedModal.fields.fields.find(field => field.customId === 'prereq_value')) {
+                                prereq_value = submittedModal.fields.getTextInputValue('prereq_value');
+                            }
+                            if (typeahead) {
+                                if (prereq_type == 'wflag_gt' || prereq_type == 'wflag_lt' || prereq_type == 'wflag_eq') {
+                                    var typeahead_results = await connection.promise().query('select * from worldflags where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
+                                } else if (prereq_type == 'cflag_gt' || prereq_type == 'cflag_lt' || prereq_type == 'cflag_eq') {
+                                    var typeahead_results = await connection.promise().query('select * from characterflags where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
+                                } else if (type == 'character') {
+                                    var typeahead_results = await connection.promise().query('select * from characters where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
+                                } else if (type == 'archetype') {
+                                    var typeahead_results = await connection.promise().query('select * from archetypes where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
+                                }
+
+                                if (typeahead_results[0].length == 0) {
+                                    await interaction_second.update({ content: 'No match was found with the autocomplete text you entered. Please try again.', components: [], ephemeral: true });
+                                } else if (typeahead_results[0].length == 1) {
+                                    var insertedPrereq;
+                                    if (prereq_value) {
+                                        insertedPrereq = await connection.promise().query('insert into effects_prereqs (effect_id, prereq_type, prereq_id, logical_and_group, not, prereq_value) values (?, ?, ?, ?, ?, ?)', [effect_id, prereq_type, typeahead_results[0][0].id, logical_and_group, not, prereq_value]);
+                                    } else {
+                                        insertedPrereq = await connection.promise().query('insert into effects_prereqs (effect_id, prereq_type, prereq_id, logical_and_group, not) values (?, ?, ?, ?, ?)', [effect_id, prereq_type, typeahead_results[0][0].id, logical_and_group, not]);
+                                    }
+                                    await interaction_second.reply({ content: 'Prereq added.', components: [], ephemeral: true });
+                                } else {
+                                    var keyValues = [];
+                                    for (const result_value of typeahead_results[0]) {
+                                        var thisKeyValue = { label: result_value.name, value: result_value.id.toString() };
+                                        keyValues.push(thisKeyValue);
+                                    }
+                                    selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('PrereqTypeaheadSelector').setMinValues(1).setMaxValues(1);
+                                    var selectRow = new ActionRowBuilder().addComponents(selectComponent);
+                                    await submittedModal.reply({ content: 'Select an item from the list:', components: [selectRow], ephemeral: true });
+                                }
+
+                            }
+                        }
+                    } else if (interaction_second.customId === 'PrereqTypeaheadSelector') {
+                        var typeahead_id = interaction_second.values[0];
+                        var insertedPrereq;
+                        if (prereq_value) {
+                            insertedPrereq = await connection.promise().query('insert into effects_prereqs (effect_id, prereq_type, prereq_id, logical_and_group, not, prereq_value) values (?, ?, ?, ?, ?, ?)', [effect_id, prereq_type, typeahead_id, logical_and_group, not, prereq_value]);
+                        } else {
+                            insertedPrereq = await connection.promise().query('insert into effects_prereqs (effect_id, prereq_type, prereq_id, logical_and_group, not) values (?, ?, ?, ?, ?)', [effect_id, prereq_type, typeahead_id, logical_and_group, not]);
+                        }
+                        await interaction_second.update({ content: 'Prereq added.', components: [] });
+                    }
+                });
+            } else if (interaction.options.getSubcommand() === 'listprereqs') {
 
             } else if (interaction.options.getSubcommand() === 'remove') {
 
@@ -2739,7 +3094,7 @@ client.on('interactionCreate', async (interaction) => {
                 var characterSelectComponent;
                 if (characters[0].length <= 25) {
                     charactersAlphabetical = false;
-                    var charactersKeyValues = [{ label: 'Select a characters', value: '0' }];
+                    var charactersKeyValues = [];
                     for (const character of characters[0]) {
                         var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
                         charactersKeyValues.push(thisCharacterKeyValue);
@@ -2768,7 +3123,7 @@ client.on('interactionCreate', async (interaction) => {
                             var characters = await connection.promise().query('select c.* from players p join players_characters pc on p.id = pc.player_id join charactesr c on pc.character_id = c.id where p.user_id = ? and p.guild_id = ? and upper(c.character_name) like "?%"', [interaction.user.id, interaction.guildId, characterSelected]);
                         }
                         if (characters[0].length > 0) {
-                            var charactersKeyValues = [{ label: 'Select a characters', value: '0' }];
+                            var charactersKeyValues = [];
                             for (const character of characters[0]) {
                                 var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
                                 charactersKeyValues.push(thisCharacterKeyValue);
