@@ -3501,7 +3501,7 @@ client.on('interactionCreate', async (interaction) => {
                         //dropdown
                         // put dropdown in thingy
                     } else if (interaction.options.getSubcommand() == 'use') {
-                        var characterskills = await connection.promise().query('select s.* from skills_characters sc join skills s on cs.skill_id = s.id where sc.character_id = ? and s.targetable = 1', [current_character[0][0].character_id]);
+                        var characterskills = await connection.promise().query('select s.* from skills_characters sc join skills s on sc.skill_id = s.id where sc.character_id = ? and s.targetable = 1', [current_character[0][0].character_id]);
                         var archetypeskills = await connection.promise().query('select s.* from skills s join skills_archetypes sa on sa.skill_id = s.id join characters_archetypes ca on sa.archetype_id = ca.archetype_id where ca.character_id = ? and s.targetable = 1', [current_character[0][0].character_id]);
                         var skills;
                         var selectedSkill;
