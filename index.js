@@ -3546,7 +3546,7 @@ client.on('interactionCreate', async (interaction) => {
                                             } else {
                                                 var characterSelected = await connection.promise().query('select * from characters c where id = ?', [characterDetails[0][0].id]);
                                                 var effects = await connection.promise().query('select e.* from effects e join skills_effects se on se.effect_id = e.id where se.skill_id = ?', [selectedSkill.id]);
-                                                for (const thisEffect of effects) {
+                                                for (const thisEffect of effects[0]) {
                                                     if (thisEffect.target == 'triggering_character') {
                                                         await process_effect(characterDetails[0][0], thisEffect, 'skill')
                                                     } else if (thisEffect.target == 'target') {
@@ -3565,7 +3565,7 @@ client.on('interactionCreate', async (interaction) => {
                                             } else {
                                                 var characterSelected = await connection.promise().query('select * from characters c where id = ?', [characterDetails[0][0].id]);
                                                 var effects = await connection.promise().query('select e.* from effects e join skills_effects se on se.effect_id = e.id where se.skill_id = ?', [selectedSkill.id]);
-                                                for (const thisEffect of effects) {
+                                                for (const thisEffect of effects[0]) {
                                                     if (thisEffect.target == 'triggering_character') {
                                                         await process_effect(characterDetails[0][0], thisEffect, 'skill')
                                                     } else if (thisEffect.target == 'target') {
@@ -3638,7 +3638,7 @@ client.on('interactionCreate', async (interaction) => {
                                 } else if (interaction_second.customId == 'SkillUseCharacterSelector' + interaction.member.id) {
                                     var characterSelected = await connection.promise().query('select * from characters c where id = ?', [interaction_second.values[0]]);
                                     var effects = await connection.promise().query('select e.* from effects e join skills_effects se on se.effect_id = e.id where se.skill_id = ?', [selectedSkill.id]);
-                                    for (const thisEffect of effects) {
+                                    for (const thisEffect of effects[0]) {
                                         if (thisEffect.target == 'triggering_character') {
                                             await process_effect(characterDetails[0][0], thisEffect, 'skill')
                                         } else if (thisEffect.target == 'target') {
