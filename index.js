@@ -3537,13 +3537,13 @@ client.on('interactionCreate', async (interaction) => {
                                     var characters;
                                     location_aware = await connection.promise().query('select setting_value from game_settings where guild_id = ? and setting_name = ?', [interaction.guildId, 'locationawareskills']);
                                     if (location_aware[0].length > 0 && location_aware[0][0].setting_value == 0) {
-                                        if (skill.self_targetable) {
+                                        if (selectedSkill.self_targetable) {
                                             characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
                                         } else {
                                             characters = await connection.promise().query('select * from characters where guild_id = ? and id != ?', [interaction.guildId, characterDetails[0][0].id]);
                                         }
                                     } else {
-                                        if (skill.self_targetable) {
+                                        if (selectedSkill.self_targetable) {
                                             characters = await connection.promise().query('select * from characters where guild_id = ? and location_id = ?', [interaction.guildId, characterDetails[0][0].location_id]);
                                         } else {
                                             characters = await connection.promise().query('select * from characters where guild_id = ? and location_id = ? and id != ?', [interaction.guildId, characterDetails[0][0].location_id, characterDetails[0][0].id]);
@@ -3577,13 +3577,13 @@ client.on('interactionCreate', async (interaction) => {
                                     }
                                 } else if (interaction_second.customId == 'SkillUseAlphabetSelector' + interaction.member.id) {
                                     if (location_aware[0].length > 0 && location_aware[0][0].setting_value == 0) {
-                                        if (skill.self_targetable) {
+                                        if (selectedSkill.self_targetable) {
                                             characters = await connection.promise().query('select * from characters where guild_id = ? and name like ?', [interaction.guildId, interaction_second.values[0] + '%']);
                                         } else {
                                             characters = await connection.promise().query('select * from characters where guild_id = ? and id != ? and name like ?', [interaction.guildId, characterDetails[0][0].id, interaction_second.values[0] + '%']);
                                         }
                                     } else {
-                                        if (skill.self_targetable) {
+                                        if (selectedSkill.self_targetable) {
                                             characters = await connection.promise().query('select * from characters where guild_id = ? and location_id = ? and name like ?', [interaction.guildId, characterDetails[0][0].location_id, interaction_second.values[0] + '%']);
                                         } else {
                                             characters = await connection.promise().query('select * from characters where guild_id = ? and location_id = ? and id != ? and name like ?', [interaction.guildId, characterDetails[0][0].location_id, characterDetails[0][0].id, interaction_second.values[0] + '%']);
