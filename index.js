@@ -113,14 +113,14 @@ async function process_effect(character, effect, source, guildId, target = null)
                     } else {
                         adjusted = 'removed';
                     }
-                    message += ` ${adjusted} ${item[0][0].name} x${effect.type_qty} to ${character.name}`;
+                    message += ` ${adjusted} ${item[0][0].name} x${Math.abs(effect.type_qty)} to ${character.name}`;
                 }
                 break;
             case 'wflag_inc':
                 await connection.promise().query('update worldflags set value = value + ? where id = ?', [effect.type_qty, effect.type_id]);
                 if (effect.visible) {
                     var wflag = await connection.promise().query('select * from worldflags where id = ?', effect.type_id);
-                    message += ` ${adjusted} the *${wflag[0][0].name}* world flag by ${effect.type_qty}`;
+                    message += ` ${adjusted} the *${wflag[0][0].name}* world flag by ${Math.abs(effect.type_qty)}`;
                 }
                 break;
             case 'wflag_set':
@@ -139,7 +139,7 @@ async function process_effect(character, effect, source, guildId, target = null)
                 }
                 if (effect.visible) {
                     var cflag = await connection.promise().query('select * from characterflags where id = ?', effect.type_id);
-                    message += ` ${adjusted} ${character.name}'s *${cflag[0][0].name}* character flag by ${effect.type_qty}`;
+                    message += ` ${adjusted} ${character.name}'s *${cflag[0][0].name}* character flag by ${Math.abs(effect.type_qty)}`;
                 }
                 break;
             case 'cflag_set':
@@ -175,7 +175,7 @@ async function process_effect(character, effect, source, guildId, target = null)
                 }
                 if (effect.visible) {
                     var reputation = await connection.promise().query('select * from reputations where id = ?', effect.type_id);
-                    message += ` ${adjusted} ${character.name}'s standing with *${reputation[0][0].name}* by ${effect.type_qty}`;
+                    message += ` ${adjusted} ${character.name}'s standing with *${reputation[0][0].name}* by ${Math.abs(effect.type_qty)}`;
                 }
                 await connection.promise().query('select e.* from effects e join reputations_tiers_effects rte on e.id = rte.effect_id join reputations_tiers rt on rt.id = rte.reputationtier.id where rt.value > ? and rt.value <= ? and rt.reputation_id = ?', [old_value, old_value + effect.type_qty, effect.type_id]);
                 if (effects[0].length > 0) {
@@ -215,7 +215,7 @@ async function process_effect(character, effect, source, guildId, target = null)
                 }
                 if (effect.visible) {
                     var stat = await connection.promise().query('select * from stats where id = ?', effect.type_id);
-                    message += ` ${adjusted} ${character.name}'s ${stat[0][0].name} stat by ${effect.type_qty}`;
+                    message += ` ${adjusted} ${character.name}'s ${stat[0][0].name} stat by ${Math.abs(effect.type_qty)}`;
                 }
                 break;
             case 'stat_set':
