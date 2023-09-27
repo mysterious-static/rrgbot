@@ -22,10 +22,10 @@ async function process_effect(character, effect, source, guildId, target = null)
     //TODO: care about charges!
     let message;
     if (effect.visible) {
-        if (source.type == 'skill') {
+        if (source == 'skill') {
             var skill = await connection.promise().query('select s.name from effects e join skills_effects se on e.id = se.effect_id join skills s on s.id = se.skill_id where e.id = ?', [effect.id]);
             message = `**${character.name}'s ${skill[0][0].name}**: `
-        } else if (source.type == 'reputationtier') {
+        } else if (source == 'reputationtier') {
             var reputation = await connection.promise().query('select rt.name as tiername, r.name as repname from effects e join reputations_tiers_effects rte on e.id = rte.effect_id join reputations_tiers rt on rte.reputationtier_id = rt.id join reputations r on rt.reputation_id = r.id where e.id = ?', [effect.id]);
             message = `**${reputation[0][0].repname} reaches ${reputation[0][0].tiername}:** `
         }
