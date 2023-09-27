@@ -1533,7 +1533,7 @@ client.on('interactionCreate', async (interaction) => {
                                     var exists = await connection.promise().query('select * from characters_stats where stat_id = ? and character_id = ?', [statSelected, characterSelected]);
                                     if (exists[0] && exists[0].length > 0) {
                                         console.log('exists');
-                                        await connection.promise().query('update characters_stats set override_value = ? where character_id = ? and stat_id = ?', [value, statSelected, characterSelected]);
+                                        await connection.promise().query('update characters_stats set override_value = ? where character_id = ? and stat_id = ?', [value, characterSelected, statSelected]);
                                     } else {
                                         await connection.promise().query('insert into characters_stats (character_id, stat_id, override_value) values (?, ?, ?)', [characterSelected, statSelected, value]);
                                     }
