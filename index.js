@@ -2792,6 +2792,9 @@ client.on('interactionCreate', async (interaction) => {
                             if (submittedModal.fields.fields.find(field => field.customId === 'typedata')) {
                                 typedata = submittedModal.fields.getTextInputValue('typedata');
                             }
+                            if (!typedata) {
+                                typedata = null;
+                            }
                             if (typeahead) {
                                 if (type == 'wflag_inc' || type == 'wflag_set') {
                                     var typeahead_results = await connection.promise().query('select * from worldflags where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
