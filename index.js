@@ -2722,7 +2722,7 @@ client.on('interactionCreate', async (interaction) => {
                                 }
 
                                 if (typeahead_results[0].length == 0) {
-                                    await interaction_second.reply({ content: 'No match was found with the autocomplete text you entered. Please try again.', components: [], ephemeral: true });
+                                    await interaction_second.update({ content: 'No match was found with the autocomplete text you entered. Please try again.', components: [], ephemeral: true });
                                 } else if (typeahead_results[0].length == 1) {
                                     var insertedEffect;
                                     if (type_qty) {
@@ -2731,7 +2731,7 @@ client.on('interactionCreate', async (interaction) => {
                                         insertedEffect = await connection.promise().query('insert into effects (type, type_id, charges, visible, typedata) values (?, ?, ?, ?, ?)', [type, typeahead_results[0][0].id, charges, visible, typedata]);
                                     }
                                     await connection.promise().query('insert into reputations_tiers_effects (reputationtier_id, effect_id) values (?, ?)', [tier_id, insertedEffect[0].insertId]);
-                                    await interaction_second.reply({ content: 'Effect added.', components: [], ephemeral: true });
+                                    await interaction_second.update({ content: 'Effect added.', components: [], ephemeral: true });
                                 } else {
                                     var keyValues = [];
                                     for (const result_value of typeahead_results[0]) {
