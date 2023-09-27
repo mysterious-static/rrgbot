@@ -1597,7 +1597,7 @@ client.on('interactionCreate', async (interaction) => {
                                 if (statSelected && characterSelected) {
                                     var exists = await connection.promise().query('select * from characters_stats where stat_id = ? and character_id = ?', [statSelected, characterSelected]);
                                     if (exists[0] && exists[0].length > 0) {
-                                        await connection.promise().query('update characters_stats set override_value = ? where character_id = ? and stat_id = ?', [exists[0][0].value + value, characterSelected, statSelected]);
+                                        await connection.promise().query('update characters_stats set override_value = ? where character_id = ? and stat_id = ?', [exists[0][0].override_value + value, characterSelected, statSelected]);
                                     } else {
                                         var stat = await connection.promise().query('select * from stats where id = ?', [statSelected]);
                                         await connection.promise().query('insert into characters_stats (character_id, stat_id, override_value) values (?, ?, ?)', [characterSelected, statSelected, stat[0][0].default_value + value]);
