@@ -732,14 +732,17 @@ var skill = new SlashCommandBuilder().setName('skill')
             .setDescription('Use a targetable skill.'));
 
 var item = new SlashCommandBuilder().setName('item')
-    .setDescription('Posts an item in the current chat channel.');
-
-var give = new SlashCommandBuilder().setName('give')
-    .setDescription('Gives an item to another character.')
-    .addIntegerOption(option =>
-        option.setName('quantity')
-            .setDescription('The quantity of item you are giving.')
-            .setRequired(true));
+    .setDescription('Item commands for players.')
+    .addSubcommand(subcommand =>
+        subcommand.setName('display')
+            .setDescription('Posts an item in the current chat channel.'))
+    .addSubcommand(subcommand =>
+        subcommand.setName('give')
+            .setDescription('Gives an item to another character.')
+            .addIntegerOption(option =>
+                option.setName('quantity')
+                    .setDescription('The quantity of item you are giving.')
+                    .setRequired(true)));
 
 var duel = new SlashCommandBuilder().setName('duel')
     .setDescription('Duels another player.')
@@ -874,7 +877,6 @@ client.on('ready', async () => {
         transferitem.toJSON(),
         item.toJSON(),
         modsheet.toJSON(),
-        give.toJSON(),
         duel.toJSON(),
         assignspecialstat.toJSON(),
         deck.toJSON(),
@@ -3722,134 +3724,136 @@ client.on('interactionCreate', async (interaction) => {
                     interaction.reply({ content: 'You don\'t seem to have an active character. Check in with the mods on this, please.', ephemeral: true });
                 }
             } else if (interaction.commandName == 'item') {
-                var current_character = await connection.promise().query('select pc.character_id, c.name from players_characters pc join players p on p.id = pc.player_id join characters c on c.id = pc.character_id where p.user_id = ? and p.guild_id = ? and pc.active = 1', [interaction.user.id, interaction.guildId]);
-                if (current_character[0].length > 0) {
-                    var items = await connection.promise().query('select i.* from items i join characters_items ci on ci.item_id = i.id where ci.character_id = ?', [current_character[0][0].character_id]);
-                    if (items[0].length > 0) {
-                        var itemsKeyValues = [];
-                        for (const item of items[0]) {
-                            var thisItemKeyValue = { label: item.name, value: item.id.toString() };
-                            itemsKeyValues.push(thisItemKeyValue);
-                        }
-                        const itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
-                        var itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
-                        var message = await interaction.reply({ content: 'Select a item to share with the channel:', components: [itemSelectRow], ephemeral: true });
-                        var collector = message.createMessageComponentCollector();
-                        collector.on('collect', async (interaction_second) => {
-                            if (interaction_second.values[0]) {
-                                itemSelected = interaction_second.values[0];
-                                var item = items[0].find(i => i.id == itemSelected);
-                                await interaction_second.reply({ content: `${current_character[0][0].name}'s **${item.name}**: ${item.description}` });
-                                await collector.stop();
-                            }
-
-                        });
-                        collector.on('end', async (collected) => {
-                            console.log(collected);
-                            // How do we clean the message up?
-                        });
-                    } else {
-                        interaction.reply({ content: 'You don\'t seem to have any items. Sorry about that.', ephemeral: true });
-                    }
-                } else {
-                    interaction.reply({ content: 'You don\'t seem to have an active character. Check in with the mods on this, please.', ephemeral: true });
-                }
-                //dropdown
-                // put dropdown in thingy
-            } else if (interaction.commandName == 'give') { //TODO: Futureproof this with the alphabet selector.)
-                var quantity = interaction.options.getInteger('quantity');
-                if (quantity > 0) {
-                    var current_character = await connection.promise().query('select c.location_id, pc.character_id, c.name, c.id from players_characters pc join characters c on c.id = pc.character_id join players p on p.id = pc.player_id where p.user_id = ? and p.guild_id = ? and pc.active = 1', [interaction.user.id, interaction.guildId]);
+                if (interaction.options.getSubcommand() == 'display') {
+                    var current_character = await connection.promise().query('select pc.character_id, c.name from players_characters pc join players p on p.id = pc.player_id join characters c on c.id = pc.character_id where p.user_id = ? and p.guild_id = ? and pc.active = 1', [interaction.user.id, interaction.guildId]);
                     if (current_character[0].length > 0) {
-                        var items = await connection.promise().query('select i.* from items i join characters_items ci on ci.item_id = i.id where ci.character_id = ?', [current_character[0][0].id]);
+                        var items = await connection.promise().query('select i.* from items i join characters_items ci on ci.item_id = i.id where ci.character_id = ?', [current_character[0][0].character_id]);
                         if (items[0].length > 0) {
                             var itemsKeyValues = [];
                             for (const item of items[0]) {
                                 var thisItemKeyValue = { label: item.name, value: item.id.toString() };
                                 itemsKeyValues.push(thisItemKeyValue);
                             }
-                            const itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('GiveItemSelector').setMinValues(1).setMaxValues(1);
+                            const itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
                             var itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
-
-                            // Get locationawaretrading value from game_settings and adjust this query if necessary.
-                            var locationaware = await connection.promise().query('select * from game_settings where setting_name = ? and guild_id = ?', ['locationawaretrading', interaction.guildId]);
-                            if (locationaware[0].length > 0 && locationaware[0][0].setting_value == 0) {
-                                var characters = await connection.promise().query('select * from characters where guild_id = ? and id != ?', [interaction.guildId, current_character[0][0].id]);
-                            } else {
-                                var characters = await connection.promise().query('select * from characters where guild_id = ? and id != ? and location_id = ?', [interaction.guildId, current_character[0][0].id, current_character[0][0].location_id]);
-                            }
-                            if (characters[0].length > 0) {
-                                var charactersKeyValues = [];
-                                for (const character of characters[0]) {
-                                    charactersKeyValues.push({ label: character.name, value: character.id.toString() });
+                            var message = await interaction.reply({ content: 'Select a item to share with the channel:', components: [itemSelectRow], ephemeral: true });
+                            var collector = message.createMessageComponentCollector();
+                            collector.on('collect', async (interaction_second) => {
+                                if (interaction_second.values[0]) {
+                                    itemSelected = interaction_second.values[0];
+                                    var item = items[0].find(i => i.id == itemSelected);
+                                    await interaction_second.reply({ content: `${current_character[0][0].name}'s **${item.name}**: ${item.description}` });
+                                    await collector.stop();
                                 }
-                                const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('GiveCharacterSelector').setMinValues(1).setMaxValues(characters[0].length);
-                                var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
 
-                                var message = await interaction.reply({ content: 'Select an item and a character to give it to:', components: [itemSelectRow, characterSelectRow], ephemeral: true });
-                                var collector = message.createMessageComponentCollector();
-                                var itemSelected;
-                                var characterSelected;
-                                collector.on('collect', async (interaction_second) => {
-                                    if (interaction_second.values[0]) {
-                                        if (interaction_second.customId == 'GiveItemSelector') {
-                                            console.log('item');
-                                            itemSelected = interaction_second.values[0];
-                                        } else {
-                                            console.log('character');
-                                            characterSelected = interaction_second.values[0];
-                                        }
-                                        if (itemSelected && characterSelected) {
-                                            //get item quantity and update if it's a valid number
-                                            var item_current = await connection.promise().query('select * from characters_items where character_id = ? and item_id = ?', [current_character[0][0].id, itemSelected]);
-                                            if (item_current[0][0].quantity >= quantity) {
-                                                //check if recipient has any of that item yet, and insert or update as needed
-                                                var recipient_has = await connection.promise().query('select * from characters_items where character_id = ? and item_id = ?', [characterSelected, itemSelected]);
-                                                if (recipient_has[0].length > 0) {
-                                                    await connection.promise().query('update characters_items set quantity = ? where character_id = ? and item_id = ?', [quantity + recipient_has[0][0].quantity, characterSelected, itemSelected]);
-                                                } else {
-                                                    await connection.promise().query('insert into characters_items (character_id, item_id, quantity) values (?, ?, ?)', [characterSelected, itemSelected, quantity]);
-                                                }
-                                                //check if giver quantity = number given, and delete or update as needed
-                                                var giver_has = await connection.promise().query('select * from characters_items where character_id = ? and item_id = ?', [current_character[0][0].id, itemSelected]);
-                                                if (giver_has[0][0].quantity - quantity > 0) {
-                                                    await connection.promise().query('update characters_items set quantity = ? where character_id = ? and item_id = ?', [giver_has[0][0].quantity - quantity, current_character[0][0].id, itemSelected]);
-                                                } else {
-                                                    await connection.promise().query('delete from characters_items where character_id = ? and item_id = ?', [current_character[0][0].id, itemSelected]);
-                                                }
-                                                var item = items[0].find(i => i.id == itemSelected);
-                                                var character_destination = characters[0].find(c => c.id == characterSelected);
-                                                await interaction_second.update({ content: "Interaction processed.", components: [] });
-                                                await interaction_second.channel.send({ content: `${current_character[0][0].name} gives ${character_destination.name} their **${item.name}**!` });
-                                                await collector.stop();
-                                            } else {
-                                                await interaction_second.update({ content: "You don't have enough of that item to give that quantity.", components: [] });
-                                                await collector.stop();
-                                            }
-
-                                        } else {
-                                            await interaction_second.deferUpdate();
-                                        }
-                                    } else {
-                                        await interaction_second.deferUpdate();
-                                    }
-                                });
-                                //okay now set up the message
-
-                                // and the collector
-
-                                // and then process the give inside the collector (update item owner in characters_items)
-                            } else {
-                                interaction.reply({ content: 'There don\'t seem to be any other characters in this game...or maybe just in your area. You may want to double check on this.', ephemeral: true });
-                            }
+                            });
+                            collector.on('end', async (collected) => {
+                                console.log(collected);
+                                // How do we clean the message up?
+                            });
                         } else {
                             interaction.reply({ content: 'You don\'t seem to have any items. Sorry about that.', ephemeral: true });
                         }
                     } else {
-                        interaction.reply({ content: 'You don\'t seem to have an active character. If you weren\'t expecting to see this message, check in with the mods.', ephemeral: true });
+                        interaction.reply({ content: 'You don\'t seem to have an active character. Check in with the mods on this, please.', ephemeral: true });
                     }
-                } else {
-                    interaction.reply({ content: 'You can\'t give a negative number or zero of an item.', ephemeral: true });
+                    //dropdown
+                    // put dropdown in thingy
+                } else if (interaction.options.getSubcommand() == 'give') { //TODO: Futureproof this with the alphabet selector.)
+                    var quantity = interaction.options.getInteger('quantity');
+                    if (quantity > 0) {
+                        var current_character = await connection.promise().query('select c.location_id, pc.character_id, c.name, c.id from players_characters pc join characters c on c.id = pc.character_id join players p on p.id = pc.player_id where p.user_id = ? and p.guild_id = ? and pc.active = 1', [interaction.user.id, interaction.guildId]);
+                        if (current_character[0].length > 0) {
+                            var items = await connection.promise().query('select i.* from items i join characters_items ci on ci.item_id = i.id where ci.character_id = ?', [current_character[0][0].id]);
+                            if (items[0].length > 0) {
+                                var itemsKeyValues = [];
+                                for (const item of items[0]) {
+                                    var thisItemKeyValue = { label: item.name, value: item.id.toString() };
+                                    itemsKeyValues.push(thisItemKeyValue);
+                                }
+                                const itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('GiveItemSelector').setMinValues(1).setMaxValues(1);
+                                var itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
+
+                                // Get locationawaretrading value from game_settings and adjust this query if necessary.
+                                var locationaware = await connection.promise().query('select * from game_settings where setting_name = ? and guild_id = ?', ['locationawaretrading', interaction.guildId]);
+                                if (locationaware[0].length > 0 && locationaware[0][0].setting_value == 0) {
+                                    var characters = await connection.promise().query('select * from characters where guild_id = ? and id != ?', [interaction.guildId, current_character[0][0].id]);
+                                } else {
+                                    var characters = await connection.promise().query('select * from characters where guild_id = ? and id != ? and location_id = ?', [interaction.guildId, current_character[0][0].id, current_character[0][0].location_id]);
+                                }
+                                if (characters[0].length > 0) {
+                                    var charactersKeyValues = [];
+                                    for (const character of characters[0]) {
+                                        charactersKeyValues.push({ label: character.name, value: character.id.toString() });
+                                    }
+                                    const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('GiveCharacterSelector').setMinValues(1).setMaxValues(characters[0].length);
+                                    var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+
+                                    var message = await interaction.reply({ content: 'Select an item and a character to give it to:', components: [itemSelectRow, characterSelectRow], ephemeral: true });
+                                    var collector = message.createMessageComponentCollector();
+                                    var itemSelected;
+                                    var characterSelected;
+                                    collector.on('collect', async (interaction_second) => {
+                                        if (interaction_second.values[0]) {
+                                            if (interaction_second.customId == 'GiveItemSelector') {
+                                                console.log('item');
+                                                itemSelected = interaction_second.values[0];
+                                            } else {
+                                                console.log('character');
+                                                characterSelected = interaction_second.values[0];
+                                            }
+                                            if (itemSelected && characterSelected) {
+                                                //get item quantity and update if it's a valid number
+                                                var item_current = await connection.promise().query('select * from characters_items where character_id = ? and item_id = ?', [current_character[0][0].id, itemSelected]);
+                                                if (item_current[0][0].quantity >= quantity) {
+                                                    //check if recipient has any of that item yet, and insert or update as needed
+                                                    var recipient_has = await connection.promise().query('select * from characters_items where character_id = ? and item_id = ?', [characterSelected, itemSelected]);
+                                                    if (recipient_has[0].length > 0) {
+                                                        await connection.promise().query('update characters_items set quantity = ? where character_id = ? and item_id = ?', [quantity + recipient_has[0][0].quantity, characterSelected, itemSelected]);
+                                                    } else {
+                                                        await connection.promise().query('insert into characters_items (character_id, item_id, quantity) values (?, ?, ?)', [characterSelected, itemSelected, quantity]);
+                                                    }
+                                                    //check if giver quantity = number given, and delete or update as needed
+                                                    var giver_has = await connection.promise().query('select * from characters_items where character_id = ? and item_id = ?', [current_character[0][0].id, itemSelected]);
+                                                    if (giver_has[0][0].quantity - quantity > 0) {
+                                                        await connection.promise().query('update characters_items set quantity = ? where character_id = ? and item_id = ?', [giver_has[0][0].quantity - quantity, current_character[0][0].id, itemSelected]);
+                                                    } else {
+                                                        await connection.promise().query('delete from characters_items where character_id = ? and item_id = ?', [current_character[0][0].id, itemSelected]);
+                                                    }
+                                                    var item = items[0].find(i => i.id == itemSelected);
+                                                    var character_destination = characters[0].find(c => c.id == characterSelected);
+                                                    await interaction_second.update({ content: "Interaction processed.", components: [] });
+                                                    await interaction_second.channel.send({ content: `${current_character[0][0].name} gives ${character_destination.name} their **${item.name}**!` });
+                                                    await collector.stop();
+                                                } else {
+                                                    await interaction_second.update({ content: "You don't have enough of that item to give that quantity.", components: [] });
+                                                    await collector.stop();
+                                                }
+
+                                            } else {
+                                                await interaction_second.deferUpdate();
+                                            }
+                                        } else {
+                                            await interaction_second.deferUpdate();
+                                        }
+                                    });
+                                    //okay now set up the message
+
+                                    // and the collector
+
+                                    // and then process the give inside the collector (update item owner in characters_items)
+                                } else {
+                                    interaction.reply({ content: 'There don\'t seem to be any other characters in this game...or maybe just in your area. You may want to double check on this.', ephemeral: true });
+                                }
+                            } else {
+                                interaction.reply({ content: 'You don\'t seem to have any items. Sorry about that.', ephemeral: true });
+                            }
+                        } else {
+                            interaction.reply({ content: 'You don\'t seem to have an active character. If you weren\'t expecting to see this message, check in with the mods.', ephemeral: true });
+                        }
+                    } else {
+                        interaction.reply({ content: 'You can\'t give a negative number or zero of an item.', ephemeral: true });
+                    }
                 }
             } else if (interaction.commandName == 'duel') {
                 var isHealthStat = await connection.promise().query('select * from stats join stats_specialstats sps on stats.id = sps.stat_id where stats.guild_id = ? and sps.special_type = "health"', [interaction.guildId]);
