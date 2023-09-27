@@ -516,6 +516,18 @@ var additem = new SlashCommandBuilder().setName('additem')
         option.setName('description')
             .setDescription('What this item is.')
             .setRequired(true))
+    .addBooleanOption(option =>
+        option.setName('other_targetable')
+            .setDescription('Whether item can be used to target other characters (has effects)')
+            .setRequired(true))
+    .addBooleanOption(option =>
+        option.setName('self_targetable')
+            .setDescription('Whether item can be used on the casting character.')
+            .setRequired(true))
+    .addBooleanOption(option =>
+        option.setName('consumable')
+            .setDescription('Whether item is consumed on use.')
+            .setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 var addworldstat = new SlashCommandBuilder().setName('addworldstat')
@@ -2065,9 +2077,12 @@ client.on('interactionCreate', async (interaction) => {
                 // Ask whether the effect will hit the caster or the target
             }
         } else if (interaction.commandName == 'additem') {
-            var name = interaction.options.getString('itemname')
-            var description = interaction.options.getString('description');
-            await connection.promise().query('insert into items (name, description, guild_id) values (?, ?, ?)', [name, description, interaction.guildId]);
+            let name = interaction.options.getString('itemname')
+            let description = interaction.options.getString('description');
+            let consumable = interaction.options.getBoolean('consumable');
+            let self_targetable = interaction.options.getBoolean('self_targetable');
+            let other_targetable = interaction.options.getBoolean('other_targetable');
+            await connection.promise().query('insert into items (name, description, guild_id, consumable, self_targetable, other_targetable) values (?, ?, ?, ?, ?, ?)', [name, description, interaction.guildId, consumable, self_targetable, other_targetable]);
             interaction.reply({ content: 'Item added!', ephemeral: true });
         } else if (interaction.commandName == 'addworldstat') {
             var name = interaction.options.getString('name');
