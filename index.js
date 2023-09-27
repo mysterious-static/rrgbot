@@ -37,58 +37,60 @@ async function process_effect(character, effect, source, target = null) {
     let prereqs = await connection.promise().query('select * from events_prereqs where effect_id = ?', [effect.id]);
     let process = false;
     let and_groups = [];
-    for (const prereq of prereqs) {
-        let check = false;
-        switch (prereq.prereq_type) {
-            case 'wflag_gt':
-                check = await connection.promise().query('select * from worldflags where id = ? and value > ?', [prereq.prereq_id, prereq.prereq_value]);
-                break;
-            case 'wflag_eq':
-                check = await connection.promise().query('select * from worldflags where id = ? and value = ?', [prereq.prereq_id, prereq.prereq_value]);
-                break;
-            case 'wflag_lt':
-                check = await connection.promise().query('select * from worldflags where id = ? and value < ?', [prereq.prereq_id, prereq.prereq_value]);
-                break;
-            case 'cflag_gt':
-                check = await connection.promise().query('select * from characters_characterflags where character_id = ? and characterflag_id = ? and value > ?', [character.id, prereq.prereq_id, prereq.prereq_value]);
-                break;
-            case 'cflag_eq':
-                check = await connection.promise().query('select * from characters_characterflags where character_id = ? and characterflag_id = ? and value = ?', [character.id, prereq.prereq_id, prereq.prereq_value]);
-                break;
-            case 'cflag_lt':
-                check = await connection.promise().query('select * from characters_characterflags where character_id = ? and characterflag_id = ? and value < ?', [character.id, prereq.prereq_id, prereq.prereq_value]);
-                break;
-            case 'archetype':
-                res = await connection.promise().query('select from characters_archetypes where character_id = ? and archetype_id = ?', [character.id, prereq.prereq_id]);
-                check[0] = [];
-                if (res[0].length > 0 && !prereq.not) {
-                    check[0].push(true);
-                }
-                break;
-            case 'character':
-                check[0] = [];
-                if (character.id == prereq.prereq_id) {
-                    if (!prereq.not) {
+    if (prereqs[0].length > 0) {
+        for (const prereq of prereqs[0]) {
+            let check = false;
+            switch (prereq.prereq_type) {
+                case 'wflag_gt':
+                    check = await connection.promise().query('select * from worldflags where id = ? and value > ?', [prereq.prereq_id, prereq.prereq_value]);
+                    break;
+                case 'wflag_eq':
+                    check = await connection.promise().query('select * from worldflags where id = ? and value = ?', [prereq.prereq_id, prereq.prereq_value]);
+                    break;
+                case 'wflag_lt':
+                    check = await connection.promise().query('select * from worldflags where id = ? and value < ?', [prereq.prereq_id, prereq.prereq_value]);
+                    break;
+                case 'cflag_gt':
+                    check = await connection.promise().query('select * from characters_characterflags where character_id = ? and characterflag_id = ? and value > ?', [character.id, prereq.prereq_id, prereq.prereq_value]);
+                    break;
+                case 'cflag_eq':
+                    check = await connection.promise().query('select * from characters_characterflags where character_id = ? and characterflag_id = ? and value = ?', [character.id, prereq.prereq_id, prereq.prereq_value]);
+                    break;
+                case 'cflag_lt':
+                    check = await connection.promise().query('select * from characters_characterflags where character_id = ? and characterflag_id = ? and value < ?', [character.id, prereq.prereq_id, prereq.prereq_value]);
+                    break;
+                case 'archetype':
+                    res = await connection.promise().query('select from characters_archetypes where character_id = ? and archetype_id = ?', [character.id, prereq.prereq_id]);
+                    check[0] = [];
+                    if (res[0].length > 0 && !prereq.not) {
                         check[0].push(true);
                     }
-                }
-                break;
-        }
-        if (check[0].length > 0) {
-            if (!and_groups[logical_and_group]) {
-                and_groups[prereq.logical_and_group] = true;
+                    break;
+                case 'character':
+                    check[0] = [];
+                    if (character.id == prereq.prereq_id) {
+                        if (!prereq.not) {
+                            check[0].push(true);
+                        }
+                    }
+                    break;
             }
-        } else {
-            and_groups[prereq.logical_and_group] = false;
+            if (check[0].length > 0) {
+                if (!and_groups[logical_and_group]) {
+                    and_groups[prereq.logical_and_group] = true;
+                }
+            } else {
+                and_groups[prereq.logical_and_group] = false;
+            }
         }
-    }
-    for (const thisAndGroup of and_groups) {
-        if (thisAndGroup == true) {
-            process = true;
+        for (const thisAndGroup of and_groups) {
+            if (thisAndGroup == true) {
+                process = true;
+            }
         }
     }
 
-    if (process) {
+    if (process || prereqs[0].length == 0) {
         switch (effect.type) {
             case 'item':
                 var item_exists = await connection.promise().query('select * from characters_items where character_id = ? and item_id = ?', [character.id, effect.type_id]);
