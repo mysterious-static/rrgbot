@@ -151,7 +151,7 @@ async function process_effect(character, effect, source, guildId, target = null)
                 var old_value;
                 var reputation_exists = await connection.promise().query('select * from characters_reputations where character_id = ? and reputation_id = ?', [character.id, effect.type_id]);
                 if (reputation_exists[0].length == 1) {
-                    await connection.promise().query('update characters_reputations set value = value + ?, max_value = max(max_value, (value + ?)) where character_id = ? and reputation_id = ?', [effect.type_qty, effect.type_qty, character.id, effect.type_id]);
+                    await connection.promise().query('update characters_reputations set value = value + ?, max_value = greatest(max_value, (value + ?)) where character_id = ? and reputation_id = ?', [effect.type_qty, effect.type_qty, character.id, effect.type_id]);
                     old_value = reputation_exists[0][0].max_value;
                 } else {
                     await connection.promise().query('insert into characters_reputations (character_id, reputation_id, value) values (?, ?, ?)', [character.id, effect.type_id, effect.type_qty]);
@@ -174,7 +174,7 @@ async function process_effect(character, effect, source, guildId, target = null)
                 } else {
                     old_value = 0;
                 }
-                await connection.promise().query('replace into characters_reputations (character_id, reputation_id, value, max_value) values (?, ?, ?, max(max_value, ?))', [character.id, effect.type_id, effect.type_qty, effect.type_qty]);
+                await connection.promise().query('replace into characters_reputations (character_id, reputation_id, value, max_value) values (?, ?, ?, greatest(max_value, ?))', [character.id, effect.type_id, effect.type_qty, effect.type_qty]);
                 var reputation = await connection.promise().query('select * from reputations where id = ?', effect.type_id);
                 message += ` set ${character.name}'s standing with *${reputation[0][0].name}* to ${effect.type_qty}`;
                 var effects = await connection.promise().query('select e.* from effects e join reputations_tiers_effects rte on e.id = rte.effect_id join reputations_tiers rt on rt.id = rte.reputationtier_id where rt.value > ? and rt.value <= ? and rt.reputation_id = ?', [old_value, old_value + effect.type_qty, effect.type_id]);
