@@ -3552,7 +3552,7 @@ client.on('interactionCreate', async (interaction) => {
                                                         await process_effect(characterDetails[0][0], thisEffect, 'skill', characterSelected[0][0]);
                                                     } //potentially *specific* effects at some poitn in the future
                                                 }
-                                                interaction_second.update({ content: 'Successfully used the skill!' });
+                                                interaction_second.update({ content: 'Successfully used the skill!', components: [] });
                                             }
                                         } else {
                                             characters = await connection.promise().query('select * from characters where guild_id = ? and id != ?', [interaction.guildId, characterDetails[0][0].id]);
@@ -3571,7 +3571,7 @@ client.on('interactionCreate', async (interaction) => {
                                                         await process_effect(characterDetails[0][0], thisEffect, 'skill', characterSelected[0][0]);
                                                     } //potentially *specific* effects at some poitn in the future
                                                 }
-                                                interaction_second.update({ content: 'Successfully used the skill!' });
+                                                interaction_second.update({ content: 'Successfully used the skill!', components: [] });
                                             }
                                         } else {
                                             characters = await connection.promise().query('select * from characters where guild_id = ? and location_id = ? and id != ?', [interaction.guildId, characterDetails[0][0].location_id, characterDetails[0][0].id]);
@@ -3602,7 +3602,7 @@ client.on('interactionCreate', async (interaction) => {
                                             var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
                                             await interaction_second.update({ content: 'Select a character to target with this skill:', components: [characterSelectRow], ephemeral: true });
                                         } else {
-                                            interaction_second.update({ content: 'No valid characters found.' });
+                                            interaction_second.update({ content: 'No valid characters found.', components: [] });
                                         }
                                     }
                                 } else if (interaction_second.customId == 'SkillUseAlphabetSelector' + interaction.member.id) {
@@ -3631,7 +3631,7 @@ client.on('interactionCreate', async (interaction) => {
                                         var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
                                         await interaction_second.update({ content: 'Select a character to target with this skill:', components: [characterSelectRow], ephemeral: true });
                                     } else {
-                                        interaction_second.update({ content: 'No valid characters found.' });
+                                        interaction_second.update({ content: 'No valid characters found.', components: [] });
                                     }
 
                                 } else if (interaction_second.customId == 'SkillUseCharacterSelector' + interaction.member.id) {
@@ -3644,7 +3644,7 @@ client.on('interactionCreate', async (interaction) => {
                                             await process_effect(characterDetails[0][0], thisEffect, 'skill', characterSelected[0][0]);
                                         } //potentially *specific* effects at some poitn in the future
                                     }
-                                    interaction_second.update({ content: 'Successfully used the skill!' });
+                                    interaction_second.update({ content: 'Successfully used the skill!', components: [] });
                                 }
 
                             });
