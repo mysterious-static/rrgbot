@@ -35,7 +35,7 @@ async function process_effect(character, effect, source, target = null) {
     }
 
     // Eligibility check
-    let prereqs = await connection.promise().query('select * from events_prereqs where effect_id = ?', [effect.id]);
+    let prereqs = await connection.promise().query('select * from effects_prereqs where effect_id = ?', [effect.id]);
     let process = false;
     let and_groups = [];
     if (prereqs[0].length > 0) {
