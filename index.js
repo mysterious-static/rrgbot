@@ -2779,8 +2779,8 @@ client.on('interactionCreate', async (interaction) => {
                         let submittedModal = await interaction_second.awaitModalSubmit({ time: 300000 });
                         if (submittedModal) {
                             var typeahead = false;
-                            var type_qty = false;
-                            var typedata = false;
+                            var type_qty = null;
+                            var typedata = null;
                             console.log(submittedModal.fields.fields);
                             charges = submittedModal.fields.getTextInputValue('charges');
                             if (submittedModal.fields.fields.find(field => field.customId === 'typeahead')) {
@@ -2791,9 +2791,6 @@ client.on('interactionCreate', async (interaction) => {
                             }
                             if (submittedModal.fields.fields.find(field => field.customId === 'typedata')) {
                                 typedata = submittedModal.fields.getTextInputValue('typedata');
-                            }
-                            if (!typedata) {
-                                typedata = null;
                             }
                             if (typeahead) {
                                 if (type == 'wflag_inc' || type == 'wflag_set') {
