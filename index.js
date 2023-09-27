@@ -2441,7 +2441,7 @@ client.on('interactionCreate', async (interaction) => {
                             if (cwflags[0].length < 1) {
                                 await submittedModal.editReply({ content: "No flags with that name exist.", ephemeral: true });
                             } else if (cwflags[0].length == 1) {
-                                await connection.promise().query('insert into reputations (name, guild_id, description, visibility, maximum, start_value, cwflag_id, cwflag_value) values (?, ?, ?, ?, ?, ?, ?, ?)', [name, submittedModal.guildId, description, visibility, maximum, start_value, cwflags[0][0].id, value]);
+                                await connection.promise().query('insert into reputations (name, guild_id, description, visibility, maximum, start_value, cwflag_id, cwflag_value) values (?, ?, ?, ?, ?, ?, ?, ?)', [name, submittedModal.guildId, description, visibility, maximum, 0, cwflags[0][0].id, value]);
                                 await submittedModal.editReply({ content: "Reputation added.", ephemeral: true });
                             } else {
                                 var cwflagSelectComponent;
