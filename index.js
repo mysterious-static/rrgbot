@@ -18,6 +18,7 @@ client.login(process.env.app_token);
 /* Functions */
 
 async function process_effect(character, effect, source, target = null) {
+    console.log('process effect ' + effect.id);
     //TODO: care about charges!
     let message;
     if (effect.visible) {
