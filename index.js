@@ -25,7 +25,7 @@ async function process_effect(character, effect, source, guildId, target = null)
         var skill = await connection.promise().query('select s.name from effects e join skills_effects se on e.id = se.effect_id join skills s on s.id = se.skill_id where e.id = ?', [effect.id]);
         message = `**${character.name}'s ${skill[0][0].name}**:`
     } else if (source == 'reputationtier') {
-        var reputation = await connection.promise().query('select rt.name as tiername, r.name as repname from effects e join reputations_tiers_effects rte on e.id = rte.effect_id join reputations_tiers rt on rte.reputationtier_id = rt.id join reputations r on rt.reputation_id = r.id where e.id = ?', [effect.id]);
+        var reputation = await connection.promise().query('select rt.threshold_name as tiername, r.name as repname from effects e join reputations_tiers_effects rte on e.id = rte.effect_id join reputations_tiers rt on rte.reputationtier_id = rt.id join reputations r on rt.reputation_id = r.id where e.id = ?', [effect.id]);
         message = `**${reputation[0][0].repname} reaches ${reputation[0][0].tiername}:**`
     }
     if (target && effect.target == 'target') {
@@ -162,7 +162,7 @@ async function process_effect(character, effect, source, guildId, target = null)
                 var effects = await connection.promise().query('select e.* from effects e join reputations_tiers_effects rte on e.id = rte.effect_id join reputations_tiers rt on rt.id = rte.reputationtier_id where rt.value > ? and rt.value <= ? and rt.reputation_id = ?', [old_value, old_value + effect.type_qty, effect.type_id]);
                 if (effects[0].length > 0) {
                     for (const thisEffect of effects[0]) {
-                        await process_effect(character, thisEffect, reputation[0][0].id, guildId, 'reputationtier');
+                        await process_effect(character, thisEffect, 'reputationtier', guildId);
                     }
                 }
                 break;
@@ -180,7 +180,7 @@ async function process_effect(character, effect, source, guildId, target = null)
                 var effects = await connection.promise().query('select e.* from effects e join reputations_tiers_effects rte on e.id = rte.effect_id join reputations_tiers rt on rt.id = rte.reputationtier_id where rt.value > ? and rt.value <= ? and rt.reputation_id = ?', [old_value, old_value + effect.type_qty, effect.type_id]);
                 if (effects[0].length > 0) {
                     for (const thisEffect of effects[0]) {
-                        await process_effect(character, thisEffect, reputation[0][0].id, guildId, 'reputationtier');
+                        await process_effect(character, thisEffect, 'reputationtier', guildId);
                     }
                 }
                 break;
