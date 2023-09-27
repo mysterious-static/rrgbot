@@ -151,7 +151,7 @@ async function process_effect(character, effect, source, guildId, target = null)
                 var old_value;
                 var reputation_exists = await connection.promise().query('select * from characters_reputations where character_id = ? and reputation_id = ?', [character.id, effect.type_id]);
                 if (reputation_exists[0].length == 1) {
-                    await connection.promise().query('update characters_reputations set value = value + ?, max_value = max(max_value, value + ?) where character_id = ? and reputation_id = ?', [effect.type_qty, effect.type_qty, character.id, effect.type_id]);
+                    await connection.promise().query('update characters_reputations set value = value + ?, max_value = max(max_value, (value + ?)) where character_id = ? and reputation_id = ?', [effect.type_qty, effect.type_qty, character.id, effect.type_id]);
                     old_value = reputation_exists[0][0].max_value;
                 } else {
                     await connection.promise().query('insert into characters_reputations (character_id, reputation_id, value) values (?, ?, ?)', [character.id, effect.type_id, effect.type_qty]);
