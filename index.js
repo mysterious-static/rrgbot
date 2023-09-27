@@ -24,6 +24,9 @@ async function process_effect(character, effect, source, guildId, target = null)
     if (source == 'skill') {
         var skill = await connection.promise().query('select s.name from effects e join skills_effects se on e.id = se.effect_id join skills s on s.id = se.skill_id where e.id = ?', [effect.id]);
         message = `**${character.name}'s ${skill[0][0].name}**:`
+    } else if (source == 'item') {
+        var item = await connection.promise().query('select i.name from effects e join items_effects ie on e.id = ie.effect_id join items i on i.id = ie.item_id where e.id = ?', [effect.id]);
+        message = `**${character.name}'s ${item[0][0].name}**:`;
     } else if (source == 'reputationtier') {
         var reputation = await connection.promise().query('select rt.threshold_name as tiername, r.name as repname from effects e join reputations_tiers_effects rte on e.id = rte.effect_id join reputations_tiers rt on rte.reputationtier_id = rt.id join reputations r on rt.reputation_id = r.id where e.id = ?', [effect.id]);
         message = `**${reputation[0][0].repname} reaches ${reputation[0][0].tiername}:**`
@@ -506,28 +509,46 @@ var skilladmin = new SlashCommandBuilder().setName('skilladmin')
             .setDescription('Add effect to targetable skill.'))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
-var additem = new SlashCommandBuilder().setName('additem')
-    .setDescription('Add an item for display on character sheet.')
-    .addStringOption(option =>
-        option.setName('itemname')
-            .setDescription('The name of the item')
-            .setRequired(true))
-    .addStringOption(option =>
-        option.setName('description')
-            .setDescription('What this item is.')
-            .setRequired(true))
-    .addBooleanOption(option =>
-        option.setName('other_targetable')
-            .setDescription('Whether item can be used to target other characters (has effects)')
-            .setRequired(true))
-    .addBooleanOption(option =>
-        option.setName('self_targetable')
-            .setDescription('Whether item can be used on the casting character.')
-            .setRequired(true))
-    .addBooleanOption(option =>
-        option.setName('consumable')
-            .setDescription('Whether item is consumed on use.')
-            .setRequired(true))
+
+var itemadmin = new SlashCommandBuilder().setName('itemadmin')
+    .setDescription('Item administration tools.')
+    .addSubcommand(subcommand =>
+        subcommand.setName('add')
+            .setDescription('Add an item for display on character sheet.')
+            .addStringOption(option =>
+                option.setName('itemname')
+                    .setDescription('The name of the item')
+                    .setRequired(true))
+            .addStringOption(option =>
+                option.setName('description')
+                    .setDescription('What this item is.')
+                    .setRequired(true))
+            .addBooleanOption(option =>
+                option.setName('other_targetable')
+                    .setDescription('Whether item can be used to target other characters (has effects)')
+                    .setRequired(true))
+            .addBooleanOption(option =>
+                option.setName('self_targetable')
+                    .setDescription('Whether item can be used on the casting character.')
+                    .setRequired(true))
+            .addBooleanOption(option =>
+                option.setName('consumable')
+                    .setDescription('Whether item is consumed on use.')
+                    .setRequired(true)))
+    .addSubcommand(subcommand =>
+        subcommand.setName('assign')
+            .setDescription('Assign an item to a character')
+            .addIntegerOption(option =>
+                option.setName('quantity')
+                    .setDescription('The quantity of item you want to assign')
+                    .setRequired(true)))
+    .addSubcommand(subcommand =>
+        subcommand.setName('transfer')
+            .setDescription('Transfer a item from a character to another character')
+            .addIntegerOption(option =>
+                option.setName('quantity')
+                    .setDescription('The quantity of the item to transfer')
+                    .setRequired(true)))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 var addworldstat = new SlashCommandBuilder().setName('addworldstat')
@@ -555,22 +576,6 @@ var setarchetypestat = new SlashCommandBuilder().setName('setarchetypestat')
     .addIntegerOption(option =>
         option.setName('value')
             .setDescription('The value to which the archetype stat will be set.')
-            .setRequired(true))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-var assignitem = new SlashCommandBuilder().setName('assignitem')
-    .setDescription('Assign an item to a character')
-    .addIntegerOption(option =>
-        option.setName('quantity')
-            .setDescription('The quantity of item you want to assign')
-            .setRequired(true))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-var transferitem = new SlashCommandBuilder().setName('transferitem')
-    .setDescription('Transfer a item from a character to another character')
-    .addIntegerOption(option =>
-        option.setName('quantity')
-            .setDescription('The quantity of the item to transfer')
             .setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
@@ -881,12 +886,10 @@ client.on('ready', async () => {
         stat.toJSON(),
         addarchetypestat.toJSON(),
         skilladmin.toJSON(),
-        additem.toJSON(),
+        itemadmin.toJSON(),
         addworldstat.toJSON(),
         setarchetypestat.toJSON(),
         skill.toJSON(),
-        assignitem.toJSON(),
-        transferitem.toJSON(),
         item.toJSON(),
         modsheet.toJSON(),
         duel.toJSON(),
@@ -2079,14 +2082,170 @@ client.on('interactionCreate', async (interaction) => {
                 // Then select action ,visiblity, modal as with reputation tier.
                 // Ask whether the effect will hit the caster or the target
             }
-        } else if (interaction.commandName == 'additem') {
-            let name = interaction.options.getString('itemname')
-            let description = interaction.options.getString('description');
-            let consumable = interaction.options.getBoolean('consumable');
-            let self_targetable = interaction.options.getBoolean('self_targetable');
-            let other_targetable = interaction.options.getBoolean('other_targetable');
-            await connection.promise().query('insert into items (name, description, guild_id, consumable, self_targetable, other_targetable) values (?, ?, ?, ?, ?, ?)', [name, description, interaction.guildId, consumable, self_targetable, other_targetable]);
-            interaction.reply({ content: 'Item added!', ephemeral: true });
+        } else if (interaction.commandName == 'itemadmin') {
+            if (interaction.options.getSubcommand() == 'add') {
+                let name = interaction.options.getString('itemname')
+                let description = interaction.options.getString('description');
+                let consumable = interaction.options.getBoolean('consumable');
+                let self_targetable = interaction.options.getBoolean('self_targetable');
+                let other_targetable = interaction.options.getBoolean('other_targetable');
+                await connection.promise().query('insert into items (name, description, guild_id, consumable, self_targetable, other_targetable) values (?, ?, ?, ?, ?, ?)', [name, description, interaction.guildId, consumable, self_targetable, other_targetable]);
+                interaction.reply({ content: 'Item added!', ephemeral: true });
+            } else if (interaction.options.getSubcommand() == 'transfer') {
+                var quantity = interaction.options.getInteger('quantity');
+                var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
+                if (characters[0].length > 0) {
+                    var charactersKeyValues = [];
+                    for (const character of characters[0]) {
+                        var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
+                        charactersKeyValues.push(thisCharacterKeyValue);
+                    }
+                    const unassignItemComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ItemUnassignmentCharacterSelector').setMinValues(1).setMaxValues(1);
+                    var unassignItemRow = new ActionRowBuilder().addComponents(unassignItemComponent);
+                }
+
+                if (characters[0].length > 0) {
+                    var message = await interaction.reply({ content: 'Select the character to remove item from.', components: [unassignItemRow], ephemeral: true });
+                    var collector = message.createMessageComponentCollector();
+                    var characterSelected;
+                    var archetypeSelected;
+                    var itemSelected;
+                    collector.on('collect', async (interaction_second) => {
+                        if (interaction_second.customId == 'ItemUnassignmentCharacterSelector') {
+                            characterSelected = interaction_second.values[0];
+                        } else {
+                            itemSelected = interaction_second.values[0];
+                        }
+                        if (!itemSelected && characterSelected) {
+                            var items = await connection.promise().query('select i.* from items i join characters_items ci on i.id = ci.item_id where ci.character_id = ?', [characterSelected]);
+                            if (items[0].length > 0) {
+                                var itemsKeyValues = [];
+                                for (const item of items[0]) {
+                                    var thisItemKeyValue = { label: item.name, value: item.id.toString() };
+                                    itemsKeyValues.push(thisItemKeyValue);
+                                }
+                                const unassignItemComponent2 = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemUnassignmentItemSelector').setMinValues(1).setMaxValues(1);
+                                var unassignItemRow2 = new ActionRowBuilder().addComponents(unassignItemComponent2);
+                                await interaction_second.update({ content: 'Now select a item to unassign:', components: [unassignItemRow2] });
+                            } else {
+                                await interaction_second.update({ content: 'Couldn\'t find any items for this cahracter.' });
+                                collector.stop();
+                            }
+
+                        }
+                        if (itemSelected && characterSelected) {
+
+                            await connection.promise().query('delete from characters_items where character_id = ? and item_id = ?', [characterSelected, itemSelected]);
+
+                            await interaction_second.update({ content: "Item removed from character.", components: [] });
+                            collector.stop();
+                        }
+                    });
+                } else {
+                    await interaction.reply({ content: "Couldn't find any characters to unassign items from.", ephemeral: true });
+                }
+
+            } else if (interaction.options.getSubcommand() == 'assign') {
+                var quantity = interaction.options.getInteger('quantity');
+                var items = await connection.promise().query('select i.* from items i where i.guild_id = ?', [interaction.guildId]);
+                var itemsAlphabetical;
+                if (items[0].length > 0) {
+                    if (items[0].length <= 25) {
+                        itemsAlphabetical = false;
+                        var itemsKeyValues = [];
+                        for (const item of items[0]) {
+                            var thisItemKeyValue = { label: `${item.name}`, value: item.id.toString() };
+                            itemsKeyValues.push(thisItemKeyValue);
+                        }
+                        const itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemAssignmentItemSelector').setMinValues(1).setMaxValues(1);
+                    } else {
+                        itemsAlphabetical = true;
+                        var items = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
+                        var itemsKeyValues = [];
+                        for (const item of items) {
+                            var thisItemKeyValue = { label: item, value: item }
+                            itemsKeyValues.push(thisItemKeyValue);
+                        }
+                        itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemAssignmentAlphabetSelector').setMinValues(1).setMaxValues(1);
+                    }
+                    var itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
+                    var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
+                    if (characters[0].length > 0) {
+                        var charactersKeyValues = [{ label: 'Select a character', value: '0' }];
+                        for (const character of characters[0]) {
+                            var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
+                            charactersKeyValues.push(thisCharacterKeyValue);
+                        }
+                        const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ItemAssignmentCharacterSelector').setMinValues(1).setMaxValues(1);
+                        var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                        var message = await interaction.reply({ content: 'Please select the following options:', components: [itemSelectRow, characterSelectRow], ephemeral: true });
+                        var collector = message.createMessageComponentCollector();
+                        var characterSelected;
+                        var itemSelected;
+                        var alphabetSelected;
+                        collector.on('collect', async (interaction_second) => {
+                            if (interaction_second.values[0]) {
+                                if (interaction_second.customId == 'ItemAssignmentItemSelector') {
+                                    itemSelected = interaction_second.values[0];
+                                } else if (interaction_second.customId == 'ItemAssignmentAlphabetSelector') {
+                                    alphabetSelected = interaction_second.values[0];
+                                } else if (interaction_second.customId == 'ItemAssignmentCharacterSelector') {
+                                    characterSelected = interaction_second.values[0];
+                                }
+                                if (alphabetSelected && !itemSelected) {
+                                    if (alphabetSelected.length == 1) {
+                                        var items = await connection.promise().query('select * from items where guild_id = ? and name like ?', [interaction_second.guildId, alphabetSelected + '%']);
+                                    } else {
+                                        await interaction_second.update({ content: 'Something has gone really horribly wrong, can you ask Alli maybe?', components: [] });
+                                        await collector.stop();
+                                    }
+                                    var itemsKeyValues = [];
+                                    for (const item of items[0]) {
+                                        var thisItemKeyValue = { label: `${item.name}`, value: item.id.toString() };
+                                        itemsKeyValues.push(thisItemKeyValue);
+                                    }
+                                    const itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemAssignmentItemSelector').setMinValues(1).setMaxValues(1);
+                                    var itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
+                                    await interaction_second.update({ content: 'Please select the following options:', components: [itemSelectRow, characterSelectRow] });
+                                } else if (itemSelected && characterSelected) {
+                                    var exists = await connection.promise().query('select * from characters_items where character_id = ? and item_id = ?', [characterSelected, itemSelected]);
+                                    if (exists[0].length > 0) {
+                                        if (quantity + exists[0][0].quantity >= 0) {
+                                            if (quantity + exists[0][0].quantity == 0) {
+                                                await connection.promise().query('delete from characters_items where character_id = ? and item_id = ?', [characterSelected, itemSelected]);
+                                            } else {
+                                                await connection.promise().query('update characters_items set quantity = ? where character_id = ? and item_id = ?', [quantity + exists[0][0].quantity, characterSelected, itemSelected]);
+                                            }
+                                            await connection.promise().query('replace into characters_items (character_id, item_id) values (?, ?)', [characterSelected, itemSelected]);
+                                            await interaction_second.update({ content: 'Successfully assigned item to character.', components: [] });
+                                            await collector.stop();
+                                        } else {
+                                            await interaction_second.update({ content: 'This character doesn\'t have enough of this item to remove that quantity.', components: [] });
+                                            await collector.stop();
+                                        }
+                                    } else {
+                                        await connection.promise().query('insert into characters_items (character_id, item_id, quantity) values (?, ?, ?)', [characterSelected, itemSelected, quantity]);
+                                        await interaction_second.update({ content: 'Successfully assigned item to character.', components: [] });
+                                        await collector.stop();
+                                    }
+                                } else {
+                                    await interaction_second.deferUpdate();
+                                }
+                            } else {
+                                await interaction_second.deferUpdate();
+                            }
+                        });
+                        collector.on('end', async (collected) => {
+                            console.log(collected);
+                            // How do we clean the message up?
+                        });
+                    } else {
+                        interaction.reply({ content: 'Couldn\'t find any characters, which is a bit odd. Try creating one, or yell at Alli if you shouldn\'t be getting this.', ephemeral: true });
+                    }
+                } else {
+                    interaction.reply({ content: 'Please create at least one ~~skill~~ item first. <3', ephemeral: true });
+                }
+            }
         } else if (interaction.commandName == 'addworldstat') {
             var name = interaction.options.getString('name');
             var description = interaction.options.getString('description');
@@ -2163,160 +2322,6 @@ client.on('interactionCreate', async (interaction) => {
             } else {
                 interaction.reply({ content: 'You haven\'t created any characters yet. Try creating a character first.', ephemeral: true });
             }
-        } else if (interaction.commandName == 'assignitem') {
-            var quantity = interaction.options.getInteger('quantity');
-            var items = await connection.promise().query('select i.* from items i where i.guild_id = ?', [interaction.guildId]);
-            var itemsAlphabetical;
-            if (items[0].length > 0) {
-                if (items[0].length <= 25) {
-                    itemsAlphabetical = false;
-                    var itemsKeyValues = [];
-                    for (const item of items[0]) {
-                        var thisItemKeyValue = { label: `${item.name}`, value: item.id.toString() };
-                        itemsKeyValues.push(thisItemKeyValue);
-                    }
-                    const itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemAssignmentItemSelector').setMinValues(1).setMaxValues(1);
-                } else {
-                    itemsAlphabetical = true;
-                    var items = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
-                    var itemsKeyValues = [];
-                    for (const item of items) {
-                        var thisItemKeyValue = { label: item, value: item }
-                        itemsKeyValues.push(thisItemKeyValue);
-                    }
-                    itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemAssignmentAlphabetSelector').setMinValues(1).setMaxValues(1);
-                }
-                var itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
-                var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
-                if (characters[0].length > 0) {
-                    var charactersKeyValues = [{ label: 'Select a character', value: '0' }];
-                    for (const character of characters[0]) {
-                        var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
-                        charactersKeyValues.push(thisCharacterKeyValue);
-                    }
-                    const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ItemAssignmentCharacterSelector').setMinValues(1).setMaxValues(1);
-                    var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                    var message = await interaction.reply({ content: 'Please select the following options:', components: [itemSelectRow, characterSelectRow], ephemeral: true });
-                    var collector = message.createMessageComponentCollector();
-                    var characterSelected;
-                    var itemSelected;
-                    var alphabetSelected;
-                    collector.on('collect', async (interaction_second) => {
-                        if (interaction_second.values[0]) {
-                            if (interaction_second.customId == 'ItemAssignmentItemSelector') {
-                                itemSelected = interaction_second.values[0];
-                            } else if (interaction_second.customId == 'ItemAssignmentAlphabetSelector') {
-                                alphabetSelected = interaction_second.values[0];
-                            } else if (interaction_second.customId == 'ItemAssignmentCharacterSelector') {
-                                characterSelected = interaction_second.values[0];
-                            }
-                            if (alphabetSelected && !itemSelected) {
-                                if (alphabetSelected.length == 1) {
-                                    var items = await connection.promise().query('select * from items where guild_id = ? and name like ?', [interaction_second.guildId, alphabetSelected + '%']);
-                                } else {
-                                    await interaction_second.update({ content: 'Something has gone really horribly wrong, can you ask Alli maybe?', components: [] });
-                                    await collector.stop();
-                                }
-                                var itemsKeyValues = [];
-                                for (const item of items[0]) {
-                                    var thisItemKeyValue = { label: `${item.name}`, value: item.id.toString() };
-                                    itemsKeyValues.push(thisItemKeyValue);
-                                }
-                                const itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemAssignmentItemSelector').setMinValues(1).setMaxValues(1);
-                                var itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
-                                await interaction_second.update({ content: 'Please select the following options:', components: [itemSelectRow, characterSelectRow] });
-                            } else if (itemSelected && characterSelected) {
-                                var exists = await connection.promise().query('select * from characters_items where character_id = ? and item_id = ?', [characterSelected, itemSelected]);
-                                if (exists[0].length > 0) {
-                                    if (quantity + exists[0][0].quantity >= 0) {
-                                        if (quantity + exists[0][0].quantity == 0) {
-                                            await connection.promise().query('delete from characters_items where character_id = ? and item_id = ?', [characterSelected, itemSelected]);
-                                        } else {
-                                            await connection.promise().query('update characters_items set quantity = ? where character_id = ? and item_id = ?', [quantity + exists[0][0].quantity, characterSelected, itemSelected]);
-                                        }
-                                        await connection.promise().query('replace into characters_items (character_id, item_id) values (?, ?)', [characterSelected, itemSelected]);
-                                        await interaction_second.update({ content: 'Successfully assigned item to character.', components: [] });
-                                        await collector.stop();
-                                    } else {
-                                        await interaction_second.update({ content: 'This character doesn\'t have enough of this item to remove that quantity.', components: [] });
-                                        await collector.stop();
-                                    }
-                                } else {
-                                    await connection.promise().query('insert into characters_items (character_id, item_id, quantity) values (?, ?, ?)', [characterSelected, itemSelected, quantity]);
-                                    await interaction_second.update({ content: 'Successfully assigned item to character.', components: [] });
-                                    await collector.stop();
-                                }
-                            } else {
-                                await interaction_second.deferUpdate();
-                            }
-                        } else {
-                            await interaction_second.deferUpdate();
-                        }
-                    });
-                    collector.on('end', async (collected) => {
-                        console.log(collected);
-                        // How do we clean the message up?
-                    });
-                } else {
-                    interaction.reply({ content: 'Couldn\'t find any characters, which is a bit odd. Try creating one, or yell at Alli if you shouldn\'t be getting this.', ephemeral: true });
-                }
-            } else {
-                interaction.reply({ content: 'Please create at least one ~~skill~~ item first. <3', ephemeral: true });
-            }
-        } else if (interaction.commandName == 'transferitem') {
-            var quantity = interaction.options.getInteger('quantity');
-            var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
-            if (characters[0].length > 0) {
-                var charactersKeyValues = [];
-                for (const character of characters[0]) {
-                    var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
-                    charactersKeyValues.push(thisCharacterKeyValue);
-                }
-                const unassignItemComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ItemUnassignmentCharacterSelector').setMinValues(1).setMaxValues(1);
-                var unassignItemRow = new ActionRowBuilder().addComponents(unassignItemComponent);
-            }
-
-            if (characters[0].length > 0) {
-                var message = await interaction.reply({ content: 'Select the character to remove item from.', components: [unassignItemRow], ephemeral: true });
-                var collector = message.createMessageComponentCollector();
-                var characterSelected;
-                var archetypeSelected;
-                var itemSelected;
-                collector.on('collect', async (interaction_second) => {
-                    if (interaction_second.customId == 'ItemUnassignmentCharacterSelector') {
-                        characterSelected = interaction_second.values[0];
-                    } else {
-                        itemSelected = interaction_second.values[0];
-                    }
-                    if (!itemSelected && characterSelected) {
-                        var items = await connection.promise().query('select i.* from items i join characters_items ci on i.id = ci.item_id where ci.character_id = ?', [characterSelected]);
-                        if (items[0].length > 0) {
-                            var itemsKeyValues = [];
-                            for (const item of items[0]) {
-                                var thisItemKeyValue = { label: item.name, value: item.id.toString() };
-                                itemsKeyValues.push(thisItemKeyValue);
-                            }
-                            const unassignItemComponent2 = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemUnassignmentItemSelector').setMinValues(1).setMaxValues(1);
-                            var unassignItemRow2 = new ActionRowBuilder().addComponents(unassignItemComponent2);
-                            await interaction_second.update({ content: 'Now select a item to unassign:', components: [unassignItemRow2] });
-                        } else {
-                            await interaction_second.update({ content: 'Couldn\'t find any items for this cahracter.' });
-                            collector.stop();
-                        }
-
-                    }
-                    if (itemSelected && characterSelected) {
-
-                        await connection.promise().query('delete from characters_items where character_id = ? and item_id = ?', [characterSelected, itemSelected]);
-
-                        await interaction_second.update({ content: "Item removed from character.", components: [] });
-                        collector.stop();
-                    }
-                });
-            } else {
-                await interaction.reply({ content: "Couldn't find any characters to unassign items from.", ephemeral: true });
-            }
-
         } else if (interaction.commandName == 'modsheet') {
             var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
             if (characters[0].length > 0) {
