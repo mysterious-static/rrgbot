@@ -3048,7 +3048,7 @@ client.on('interactionCreate', async (interaction) => {
                         } else {
                             prereq_type = interaction_second.values[0];
                         }
-                        var logical_ands = await connection.promise().query('select logical_and_group, count(*) as conditions from effect_prereqs where effect_id = ? group by logical_and_group', [selectedEffect]);
+                        var logical_ands = await connection.promise().query('select logical_and_group, count(*) as conditions from effects_prereqs where effect_id = ? group by logical_and_group', [selectedEffect]);
                         var types = [
                             { label: 'New logical AND group', value: 'new' }
                         ];
