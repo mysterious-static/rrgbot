@@ -3592,7 +3592,7 @@ client.on('interactionCreate', async (interaction) => {
                             }
                             const skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillUseSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
                             var skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
-                            var message = await interaction.reply({ content: 'Select a skill to share with the channel:', components: [skillSelectRow], ephemeral: true });
+                            var message = await interaction.reply({ content: 'Select a skill to use:', components: [skillSelectRow], ephemeral: true });
                             var collector = message.createMessageComponentCollector();
                             collector.on('collect', async (interaction_second) => {
                                 if (interaction_second.customId == 'SkillUseSelector' + interaction.member.id) {
