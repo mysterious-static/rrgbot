@@ -3854,6 +3854,153 @@ client.on('interactionCreate', async (interaction) => {
                     } else {
                         interaction.reply({ content: 'You can\'t give a negative number or zero of an item.', ephemeral: true });
                     }
+                } else if (interaction.options.getSubcommand() == 'use') {
+                    var items = await connection.promise().query('select i.* from characters_items ci join items i on ci.item_id = i.id where ci.character_id = ? and (i.other_targetable = 1 or i.self_targetable = 1)', [current_character[0][0].character_id]);
+                    var selectedItem;
+                    var location_aware;
+                    var characterDetails = await connection.promise().query('select * from characters where id = ?', [current_character[0][0].character_id]);
+                    if (items) {
+                        var itemsKeyValues = [];
+                        for (const item of items) {
+                            var thisItemKeyValue = { label: item.name, value: item.id.toString() };
+                            itemsKeyValues.push(thisItemKeyValue);
+                        }
+                        const itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemUseSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
+                        var itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
+                        var message = await interaction.reply({ content: 'Select an item to use:', components: [itemSelectRow], ephemeral: true });
+                        var collector = message.createMessageComponentCollector();
+                        collector.on('collect', async (interaction_second) => {
+                            if (interaction_second.customId == 'ItemUseSelector' + interaction.member.id) {
+                                itemSelected = interaction_second.values[0];
+                                selectedItem = items.find(i => i.id == selectedItem);
+                                var characters;
+                                location_aware = await connection.promise().query('select setting_value from game_settings where guild_id = ? and setting_name = ?', [interaction.guildId, 'locationawareskills']);
+                                if (location_aware[0].length > 0 && location_aware[0][0].setting_value == 0) {
+                                    if (selectedItem.self_targetable) {
+                                        if (selectedItem.other_targetable) {
+                                            characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
+                                        } else {
+                                            var characterSelected = await connection.promise().query('select * from characters c where id = ?', [characterDetails[0][0].id]);
+                                            var effects = await connection.promise().query('select e.* from effects e join items_effects ie on se.effect_id = e.id where ie.item_id = ?', [selectedItem.id]);
+                                            for (const thisEffect of effects[0]) {
+                                                if (thisEffect.target == 'triggering_character') {
+                                                    process_effect(characterDetails[0][0], thisEffect, 'item', interaction.guildId)
+                                                } else if (thisEffect.target == 'target') {
+                                                    process_effect(characterDetails[0][0], thisEffect, 'item', interaction.guildId, characterSelected[0][0]);
+                                                } //potentially *specific* effects at some poitn in the future
+                                            }
+                                            if (selectedItem.consumable) {
+                                                await connection.promise().query('update characters_items set quantity = quantity - 1 where item_id = ? and character_id = ?', [selectedItem.id, characterDetails[0][0].id]);
+                                            }
+                                            interaction_second.update({ content: 'Successfully used the item!', components: [] });
+                                        }
+                                    } else {
+                                        characters = await connection.promise().query('select * from characters where guild_id = ? and id != ?', [interaction.guildId, characterDetails[0][0].id]);
+                                    }
+                                } else {
+                                    if (selectedItem.self_targetable) {
+                                        if (selectedItem.other_targetable) {
+                                            characters = await connection.promise().query('select * from characters where guild_id = ? and location_id = ?', [interaction.guildId, characterDetails[0][0].location_id]);
+                                        } else {
+                                            var characterSelected = await connection.promise().query('select * from characters c where id = ?', [characterDetails[0][0].id]);
+                                            var effects = await connection.promise().query('select e.* from effects e join items_effects se on ie.effect_id = e.id where ie.item_id = ?', [selectedItem.id]);
+                                            for (const thisEffect of effects[0]) {
+                                                if (thisEffect.target == 'triggering_character') {
+                                                    process_effect(characterDetails[0][0], thisEffect, 'item', interaction.guildId)
+                                                } else if (thisEffect.target == 'target') {
+                                                    process_effect(characterDetails[0][0], thisEffect, 'item', interaction.guildId, characterSelected[0][0]);
+                                                } //potentially *specific* effects at some poitn in the future
+                                            }
+                                            if (selectedItem.consumable) {
+                                                await connection.promise().query('update characters_items set quantity = quantity - 1 where item_id = ? and character_id = ?', [selectedItem.id, characterDetails[0][0].id]);
+                                            }
+                                            interaction_second.update({ content: 'Successfully used the item!', components: [] });
+                                        }
+                                    } else {
+                                        characters = await connection.promise().query('select * from characters where guild_id = ? and location_id = ? and id != ?', [interaction.guildId, characterDetails[0][0].location_id, characterDetails[0][0].id]);
+                                    }
+                                }
+                                if (!(selectedItem.self_targetable && !selectedItem.other_targetable)) {
+                                    if (characters[0].length > 0) {
+                                        var charactersAlphabetical;
+                                        var characterSelectComponent;
+                                        if (characters[0].length <= 25) {
+                                            charactersAlphabetical = false;
+                                            var charactersKeyValues = [{ label: 'Select a characters', value: '0' }];
+                                            for (const character of characters[0]) {
+                                                var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
+                                                charactersKeyValues.push(thisCharacterKeyValue);
+                                            }
+                                            characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ItemUseCharacterSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
+                                        } else {
+                                            charactersAlphabetical = true;
+                                            var characters = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
+                                            var charactersKeyValues = [];
+                                            for (const character of characters) {
+                                                var thisCharacterKeyValue = { label: character, value: character }
+                                                charactersKeyValues.push(thisCharacterKeyValue);
+                                            }
+                                            characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ItemUseAlphabetSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
+                                        }
+                                        var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                                        await interaction_second.update({ content: 'Select a character to target with this item:', components: [characterSelectRow], ephemeral: true });
+                                    } else {
+                                        interaction_second.update({ content: 'No valid characters found.', components: [] });
+                                    }
+                                }
+                            } else if (interaction_second.customId == 'ItemUseAlphabetSelector' + interaction.member.id) {
+                                if (location_aware[0].length > 0 && location_aware[0][0].setting_value == 0) {
+                                    if (selectedItem.self_targetable) {
+                                        characters = await connection.promise().query('select * from characters where guild_id = ? and name like ?', [interaction.guildId, interaction_second.values[0] + '%']);
+                                    } else {
+                                        characters = await connection.promise().query('select * from characters where guild_id = ? and id != ? and name like ?', [interaction.guildId, characterDetails[0][0].id, interaction_second.values[0] + '%']);
+                                    }
+                                } else {
+                                    if (selectedItem.self_targetable) {
+                                        characters = await connection.promise().query('select * from characters where guild_id = ? and location_id = ? and name like ?', [interaction.guildId, characterDetails[0][0].location_id, interaction_second.values[0] + '%']);
+                                    } else {
+                                        characters = await connection.promise().query('select * from characters where guild_id = ? and location_id = ? and id != ? and name like ?', [interaction.guildId, characterDetails[0][0].location_id, characterDetails[0][0].id, interaction_second.values[0] + '%']);
+                                    }
+                                }
+                                if (characters[0].length > 0) {
+                                    var characterSelectComponent;
+                                    charactersAlphabetical = false;
+                                    var charactersKeyValues = [{ label: 'Select a character', value: '0' }];
+                                    for (const character of characters[0]) {
+                                        var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
+                                        charactersKeyValues.push(thisCharacterKeyValue);
+                                    }
+                                    characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ItemUseCharacterSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
+                                    var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                                    await interaction_second.update({ content: 'Select a character to target with this item:', components: [characterSelectRow], ephemeral: true });
+                                } else {
+                                    interaction_second.update({ content: 'No valid characters found.', components: [] });
+                                }
+
+                            } else if (interaction_second.customId == 'ItemUseCharacterSelector' + interaction.member.id) {
+                                var characterSelected = await connection.promise().query('select * from characters c where id = ?', [interaction_second.values[0]]);
+                                var effects = await connection.promise().query('select e.* from effects e join items_effects ie on ie.effect_id = e.id where ie.item_id = ?', [selectedItem.id]);
+                                for (const thisEffect of effects[0]) {
+                                    if (thisEffect.target == 'triggering_character') {
+                                        process_effect(characterDetails[0][0], thisEffect, 'item', interaction.guildId)
+                                    } else if (thisEffect.target == 'target') {
+                                        process_effect(characterDetails[0][0], thisEffect, 'item', interaction.guildId, characterSelected[0][0]);
+                                    } //potentially *specific* effects at some poitn in the future
+                                }
+                                if (selectedItem.consumable) {
+                                    await connection.promise().query('update characters_items set quantity = quantity - 1 where item_id = ? and character_id = ?', [selectedItem.id, characterDetails[0][0].id]);
+                                }
+                                interaction_second.update({ content: 'Successfully used the item!', components: [] });
+                            }
+
+                        });
+                        collector.on('end', async (collected) => {
+                            console.log(collected);
+                            // How do we clean the message up?
+                        });
+                    } else {
+                        interaction.reply({ content: 'You don\'t seem to have any usable items.', ephemeral: true });
+                    }
                 }
             } else if (interaction.commandName == 'duel') {
                 var isHealthStat = await connection.promise().query('select * from stats join stats_specialstats sps on stats.id = sps.stat_id where stats.guild_id = ? and sps.special_type = "health"', [interaction.guildId]);
