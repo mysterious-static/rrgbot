@@ -2836,7 +2836,7 @@ client.on('interactionCreate', async (interaction) => {
                                     console.log('insert');
                                     var insertedEffect = await connection.promise().query('insert into effects (type, charges, visible, typedata) values (?, ?, ?, ?)', [type, charges, visible, typedata]);
                                     await connection.promise().query('insert into reputations_tiers_effects (reputationtier_id, effect_id) values (?, ?)', [tier_id, insertedEffect[0].insertId]);
-                                    await interaction_second.editReply({ content: 'Effect added.', components: [], ephemeral: true });
+                                    await submittedModal.reply({ content: 'Effect added.', components: [], ephemeral: true });
                                 }
                             }
                         }
