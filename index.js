@@ -3191,7 +3191,7 @@ client.on('interactionCreate', async (interaction) => {
                         await interaction_second.update({ content: 'Please select the following options:', components: [reputationSelectRow], ephemeral: true });
                     } else if (interaction_second.customId === 'PrereqRepSelector') {
                         var reputation_id = interaction_second.values[0];
-                        var result_values = await connection.promise().query('select distinct rt.* from reputations_tiers inner join reputations_tiers_effects rte on rt.id = rte.reputationtier_id where rt.reputation_id = ?', [reputation_id]);
+                        var result_values = await connection.promise().query('select distinct rt.* from reputations_tiers rt inner join reputations_tiers_effects rte on rt.id = rte.reputationtier_id where rt.reputation_id = ?', [reputation_id]);
                         var selectComponent;
                         if (result_values[0].length > 0) {
                             if (result_values[0].length <= 25) {
