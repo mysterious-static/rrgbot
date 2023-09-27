@@ -2029,6 +2029,8 @@ client.on('interactionCreate', async (interaction) => {
                                         var typeahead_results = await connection.promise().query('select * from skills where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
                                     } else if (type == 'archetype') {
                                         var typeahead_results = await connection.promise().query('select * from archetypes where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
+                                    } else if (type == 'reputation_inc' || type == 'reputation_set') {
+                                        var typeahead_results = await connection.promise().query('select * from reputations where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
                                     }
 
                                     if (typeahead_results[0].length == 0) {
