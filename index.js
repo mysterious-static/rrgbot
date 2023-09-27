@@ -3541,7 +3541,7 @@ client.on('interactionCreate', async (interaction) => {
                                             if (selectedSkill.other_targetable) {
                                                 characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
                                             } else {
-                                                var characterSelected = await connection.promise().query('select * from characters c where id = ?', [interaction_second.values[0]]);
+                                                var characterSelected = await connection.promise().query('select * from characters c where id = ?', [characterDetails[0][0].id]);
                                                 var effects = await connection.promise().query('select e.* from effects e join skills_effects se on se.effect_id = e.id where se.skill_id = ?', [selectedSkill.id]);
                                                 for (const thisEffect of effects) {
                                                     if (thisEffect.target == 'triggering_character') {
@@ -3560,7 +3560,7 @@ client.on('interactionCreate', async (interaction) => {
                                             if (selectedSkill.other_targetable) {
                                                 characters = await connection.promise().query('select * from characters where guild_id = ? and location_id = ?', [interaction.guildId, characterDetails[0][0].location_id]);
                                             } else {
-                                                var characterSelected = await connection.promise().query('select * from characters c where id = ?', [interaction_second.values[0]]);
+                                                var characterSelected = await connection.promise().query('select * from characters c where id = ?', [characterDetails[0][0].id]);
                                                 var effects = await connection.promise().query('select e.* from effects e join skills_effects se on se.effect_id = e.id where se.skill_id = ?', [selectedSkill.id]);
                                                 for (const thisEffect of effects) {
                                                     if (thisEffect.target == 'triggering_character') {
