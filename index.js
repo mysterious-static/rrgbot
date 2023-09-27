@@ -3548,9 +3548,9 @@ client.on('interactionCreate', async (interaction) => {
                                                 var effects = await connection.promise().query('select e.* from effects e join skills_effects se on se.effect_id = e.id where se.skill_id = ?', [selectedSkill.id]);
                                                 for (const thisEffect of effects[0]) {
                                                     if (thisEffect.target == 'triggering_character') {
-                                                        await process_effect(characterDetails[0][0], thisEffect, 'skill', interaction.guildId)
+                                                        process_effect(characterDetails[0][0], thisEffect, 'skill', interaction.guildId)
                                                     } else if (thisEffect.target == 'target') {
-                                                        await process_effect(characterDetails[0][0], thisEffect, 'skill', interaction.guildId, characterSelected[0][0]);
+                                                        process_effect(characterDetails[0][0], thisEffect, 'skill', interaction.guildId, characterSelected[0][0]);
                                                     } //potentially *specific* effects at some poitn in the future
                                                 }
                                                 interaction_second.update({ content: 'Successfully used the skill!', components: [] });
@@ -3567,9 +3567,9 @@ client.on('interactionCreate', async (interaction) => {
                                                 var effects = await connection.promise().query('select e.* from effects e join skills_effects se on se.effect_id = e.id where se.skill_id = ?', [selectedSkill.id]);
                                                 for (const thisEffect of effects[0]) {
                                                     if (thisEffect.target == 'triggering_character') {
-                                                        await process_effect(characterDetails[0][0], thisEffect, 'skill', interaction.guildId)
+                                                        process_effect(characterDetails[0][0], thisEffect, 'skill', interaction.guildId)
                                                     } else if (thisEffect.target == 'target') {
-                                                        await process_effect(characterDetails[0][0], thisEffect, 'skill', interaction.guildId, characterSelected[0][0]);
+                                                        process_effect(characterDetails[0][0], thisEffect, 'skill', interaction.guildId, characterSelected[0][0]);
                                                     } //potentially *specific* effects at some poitn in the future
                                                 }
                                                 interaction_second.update({ content: 'Successfully used the skill!', components: [] });
@@ -3640,9 +3640,9 @@ client.on('interactionCreate', async (interaction) => {
                                     var effects = await connection.promise().query('select e.* from effects e join skills_effects se on se.effect_id = e.id where se.skill_id = ?', [selectedSkill.id]);
                                     for (const thisEffect of effects[0]) {
                                         if (thisEffect.target == 'triggering_character') {
-                                            await process_effect(characterDetails[0][0], thisEffect, 'skill', interaction.guildId)
+                                            process_effect(characterDetails[0][0], thisEffect, 'skill', interaction.guildId)
                                         } else if (thisEffect.target == 'target') {
-                                            await process_effect(characterDetails[0][0], thisEffect, 'skill', interaction.guildId, characterSelected[0][0]);
+                                            process_effect(characterDetails[0][0], thisEffect, 'skill', interaction.guildId, characterSelected[0][0]);
                                         } //potentially *specific* effects at some poitn in the future
                                     }
                                     interaction_second.update({ content: 'Successfully used the skill!', components: [] });
