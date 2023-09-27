@@ -474,8 +474,8 @@ var skilladmin = new SlashCommandBuilder().setName('skilladmin')
                         { name: 'innate', value: 'innate' },
                         { name: 'profession', value: 'profession' }))
             .addBooleanOption(option =>
-                option.setName('targetable')
-                    .setDescription('Whether skill can be used to target (has effects)')
+                option.setName('other_targetable')
+                    .setDescription('Whether skill can be used to target other characters (has effects)')
                     .setRequired(true))
             .addBooleanOption(option =>
                 option.setName('self_targetable')
@@ -1519,12 +1519,12 @@ client.on('interactionCreate', async (interaction) => {
             if (interaction.options.getSubcommand() == 'add') {
                 var name = interaction.options.getString('name');
                 var type = interaction.options.getString('type');
-                var targetable = interaction.options.getBoolean('targetable');
+                var other_targetable = interaction.options.getBoolean('other_targetable');
                 var self_targetable = interaction.options.getBoolean('self_targetable');
                 var description = interaction.options.getString('description');
                 var exists = await connection.promise().query('select * from skills where guild_id = ? and name = ?', [interaction.guildId, name]);
                 if (exists[0].length == 0) {
-                    await connection.promise().query('insert into skills (name, description, type, guild_id, targetable, self_targetable) values (?, ?, ?, ?, ?, ?)', [name, description, type, interaction.guildId, targetable, self_targetable]);
+                    await connection.promise().query('insert into skills (name, description, type, guild_id, other_targetable, self_targetable) values (?, ?, ?, ?, ?, ?)', [name, description, type, interaction.guildId, other_targetable, self_targetable]);
                     interaction.reply({ content: 'Skill added!', ephemeral: true });
                 } else {
                     interaction.reply({ content: 'Skill with this name already exists!', ephemeral: true });
@@ -1723,7 +1723,7 @@ client.on('interactionCreate', async (interaction) => {
                     await interaction.reply({ content: "Couldn't find any characters (or archetypes) to unassign skills from.", ephemeral: true });
                 }
             } else if (interaction.options.getSubcommand() == 'addeffect') {
-                var skills = await connection.promise().query('select * from skills where guild_id = ? and targetable = 1', [interaction.guildId]);
+                var skills = await connection.promise().query('select * from skills where guild_id = ? and (other_targetable = 1 or self_targetable = 1)', [interaction.guildId]);
                 var skillsAlphabetical;
                 var skillSelectComponent;
                 if (skills[0].length > 0) {
@@ -1754,7 +1754,7 @@ client.on('interactionCreate', async (interaction) => {
                     var target;
                     collector.on('collect', async (interaction_second) => {
                         if (interaction_second.customId == 'SkillEffectAlphabetSelector') {
-                            var skills = await connection.promise().query('select * from skills where guild_id = ? and targetable = 1 and name like ?', [interaction.guildId, interaction_second.values[0] + '%']);
+                            var skills = await connection.promise().query('select * from skills where guild_id = ? and (other_targetable = 1 or self_targetable = 1) and name like ?', [interaction.guildId, interaction_second.values[0] + '%']);
                             var skillsKeyValues = [{ label: 'Select a skill', value: '0' }];
                             for (const skill of skills[0]) {
                                 var thisSkillKeyValue = { label: skill.name, value: skill.id.toString() };
@@ -3501,8 +3501,8 @@ client.on('interactionCreate', async (interaction) => {
                         //dropdown
                         // put dropdown in thingy
                     } else if (interaction.options.getSubcommand() == 'use') {
-                        var characterskills = await connection.promise().query('select s.* from skills_characters sc join skills s on sc.skill_id = s.id where sc.character_id = ? and s.targetable = 1', [current_character[0][0].character_id]);
-                        var archetypeskills = await connection.promise().query('select s.* from skills s join skills_archetypes sa on sa.skill_id = s.id join characters_archetypes ca on sa.archetype_id = ca.archetype_id where ca.character_id = ? and s.targetable = 1', [current_character[0][0].character_id]);
+                        var characterskills = await connection.promise().query('select s.* from skills_characters sc join skills s on sc.skill_id = s.id where sc.character_id = ? and (s.other_targetable = 1 or s.self_targetable = 1)', [current_character[0][0].character_id]);
+                        var archetypeskills = await connection.promise().query('select s.* from skills s join skills_archetypes sa on sa.skill_id = s.id join characters_archetypes ca on sa.archetype_id = ca.archetype_id where ca.character_id = ? and (s.other_targetable = 1 or s.self_targetable = 1)', [current_character[0][0].character_id]);
                         var skills;
                         var selectedSkill;
                         var location_aware;
@@ -3538,42 +3538,70 @@ client.on('interactionCreate', async (interaction) => {
                                     location_aware = await connection.promise().query('select setting_value from game_settings where guild_id = ? and setting_name = ?', [interaction.guildId, 'locationawareskills']);
                                     if (location_aware[0].length > 0 && location_aware[0][0].setting_value == 0) {
                                         if (selectedSkill.self_targetable) {
-                                            characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
+                                            if (selectedSkill.other_targetable) {
+                                                characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
+                                            } else {
+                                                var characterSelected = await connection.promise().query('select * from characters c where id = ?', [interaction_second.values[0]]);
+                                                var effects = await connection.promise().query('select e.* from effects e join skills_effects se on se.effect_id = e.id where se.skill_id = ?', [selectedSkill.id]);
+                                                for (const thisEffect of effects) {
+                                                    if (thisEffect.target == 'triggering_character') {
+                                                        await process_effect(characterDetails[0][0], thisEffect, 'skill')
+                                                    } else if (thisEffect.target == 'target') {
+                                                        await process_effect(characterDetails[0][0], thisEffect, 'skill', characterSelected[0][0]);
+                                                    } //potentially *specific* effects at some poitn in the future
+                                                }
+                                                interaction_second.update({ content: 'Successfully used the skill!' });
+                                            }
                                         } else {
                                             characters = await connection.promise().query('select * from characters where guild_id = ? and id != ?', [interaction.guildId, characterDetails[0][0].id]);
                                         }
                                     } else {
                                         if (selectedSkill.self_targetable) {
-                                            characters = await connection.promise().query('select * from characters where guild_id = ? and location_id = ?', [interaction.guildId, characterDetails[0][0].location_id]);
+                                            if (selectedSkill.other_targetable) {
+                                                characters = await connection.promise().query('select * from characters where guild_id = ? and location_id = ?', [interaction.guildId, characterDetails[0][0].location_id]);
+                                            } else {
+                                                var characterSelected = await connection.promise().query('select * from characters c where id = ?', [interaction_second.values[0]]);
+                                                var effects = await connection.promise().query('select e.* from effects e join skills_effects se on se.effect_id = e.id where se.skill_id = ?', [selectedSkill.id]);
+                                                for (const thisEffect of effects) {
+                                                    if (thisEffect.target == 'triggering_character') {
+                                                        await process_effect(characterDetails[0][0], thisEffect, 'skill')
+                                                    } else if (thisEffect.target == 'target') {
+                                                        await process_effect(characterDetails[0][0], thisEffect, 'skill', characterSelected[0][0]);
+                                                    } //potentially *specific* effects at some poitn in the future
+                                                }
+                                                interaction_second.update({ content: 'Successfully used the skill!' });
+                                            }
                                         } else {
                                             characters = await connection.promise().query('select * from characters where guild_id = ? and location_id = ? and id != ?', [interaction.guildId, characterDetails[0][0].location_id, characterDetails[0][0].id]);
                                         }
                                     }
-                                    if (characters[0].length > 0) {
-                                        var charactersAlphabetical;
-                                        var characterSelectComponent;
-                                        if (characters[0].length <= 25) {
-                                            charactersAlphabetical = false;
-                                            var charactersKeyValues = [{ label: 'Select a characters', value: '0' }];
-                                            for (const character of characters[0]) {
-                                                var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
-                                                charactersKeyValues.push(thisCharacterKeyValue);
+                                    if (!(selectedSkill.self_targetable && !selectedSkill.other_targetable)) {
+                                        if (characters[0].length > 0) {
+                                            var charactersAlphabetical;
+                                            var characterSelectComponent;
+                                            if (characters[0].length <= 25) {
+                                                charactersAlphabetical = false;
+                                                var charactersKeyValues = [{ label: 'Select a characters', value: '0' }];
+                                                for (const character of characters[0]) {
+                                                    var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
+                                                    charactersKeyValues.push(thisCharacterKeyValue);
+                                                }
+                                                characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('SkillUseCharacterSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
+                                            } else {
+                                                charactersAlphabetical = true;
+                                                var characters = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
+                                                var charactersKeyValues = [];
+                                                for (const character of characters) {
+                                                    var thisCharacterKeyValue = { label: character, value: character }
+                                                    charactersKeyValues.push(thisCharacterKeyValue);
+                                                }
+                                                characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('SkillUseAlphabetSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
                                             }
-                                            characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('SkillUseCharacterSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
+                                            var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                                            await interaction_second.update({ content: 'Select a character to target with this skill:', components: [characterSelectRow], ephemeral: true });
                                         } else {
-                                            charactersAlphabetical = true;
-                                            var characters = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
-                                            var charactersKeyValues = [];
-                                            for (const character of characters) {
-                                                var thisCharacterKeyValue = { label: character, value: character }
-                                                charactersKeyValues.push(thisCharacterKeyValue);
-                                            }
-                                            characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('SkillUseAlphabetSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
+                                            interaction_second.update({ content: 'No valid characters found.' });
                                         }
-                                        var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                                        await interaction_second.update({ content: 'Select a character to target with this skill:', components: [characterSelectRow], ephemeral: true });
-                                    } else {
-                                        interaction_second.update({ content: 'No valid characters found.' });
                                     }
                                 } else if (interaction_second.customId == 'SkillUseAlphabetSelector' + interaction.member.id) {
                                     if (location_aware[0].length > 0 && location_aware[0][0].setting_value == 0) {
@@ -3592,7 +3620,7 @@ client.on('interactionCreate', async (interaction) => {
                                     if (characters[0].length > 0) {
                                         var characterSelectComponent;
                                         charactersAlphabetical = false;
-                                        var charactersKeyValues = [{ label: 'Select a characters', value: '0' }];
+                                        var charactersKeyValues = [{ label: 'Select a character', value: '0' }];
                                         for (const character of characters[0]) {
                                             var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
                                             charactersKeyValues.push(thisCharacterKeyValue);
