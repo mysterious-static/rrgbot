@@ -3286,12 +3286,12 @@ client.on('interactionCreate', async (interaction) => {
                             await interaction_second.update({ content: 'No reputation tiers available for this reputation.', components: [], ephemeral: true });
                         }
                     } else if (interaction_second.customId === 'PrereqRepTierSelector') {
-                        var effects = await connection.promise().query('select e.* from effects e join reputations_tiers_effects rte on e.id = rte.effect_id where rte.reputationtier_id = ?', [interaction_second.values[0] + '%']);
-                        var effectsKeyValues = [];
+                        let effects = await connection.promise().query('select e.* from effects e join reputations_tiers_effects rte on e.id = rte.effect_id where rte.reputationtier_id = ?', [interaction_second.values[0] + '%']);
+                        let effectsKeyValues = [];
                         for (const effect of effects[0]) {
                             let label;
                             let description;
-                            var prereqs = await connection.promise().query('select * from effects_prereqs where effect_id = ?', [effect.id]);
+                            let prereqs = await connection.promise().query('select * from effects_prereqs where effect_id = ?', [effect.id]);
                             if (effect.type == 'message') {
                                 label = `Send message`;
                                 description = effect.typedata.slice(0, 18) + '...';
@@ -3325,6 +3325,7 @@ client.on('interactionCreate', async (interaction) => {
                             var thisEffectKeyValue = { label: label, description: description, value: effect.id.toString() };
                             effectsKeyValues.push(thisEffectKeyValue);
                         }
+                        console.log(effectsKeyValues);
                         var effectSelectComponent = new StringSelectMenuBuilder().setOptions(effectsKeyValues).setCustomId('PrereqEffectSelector').setMinValues(1).setMaxValues(1);
                         var effectSelectRow = new ActionRowBuilder().addComponents(effectSelectComponent);
                         await interaction_second.update({ content: 'Please select an effect:', components: [effectSelectRow], ephemeral: true });
