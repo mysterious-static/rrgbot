@@ -1724,13 +1724,13 @@ client.on('interactionCreate', async (interaction) => {
                                     .setStyle(TextInputStyle.Short);
                                 let valueActionRow = new ActionRowBuilder().addComponents(newValueInput);
                                 modal.addComponents(nameActionRow, valueActionRow);
-                                await interaction.showModal(modal);
-                                let submittedModal = await interaction.awaitModalSubmit({ time: 60000 });
+                                await interaction_second.showModal(modal);
+                                let submittedModal = await interaction_second.awaitModalSubmit({ time: 60000 });
                                 if (submittedModal) {
                                     if (submittedModal.customId == 'SkillEditModal' && submittedModal.member.id == interaction.member.id) {
-                                        const newValue = interaction.fields.getTextInputValue('newValue');
+                                        const newValue = submittedModal.fields.getTextInputValue('newValue');
                                         await connection.promise().query('update skills set ?? = ? where id = ?', [column_name, newValue, skill_id]);
-                                        interaction.update({ content: 'Successfully updated this skill entry.', components: [] });
+                                        interaction_second.update({ content: 'Successfully updated this skill entry.', components: [] });
                                     }
                                 }
                             }
