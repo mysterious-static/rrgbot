@@ -1730,7 +1730,7 @@ client.on('interactionCreate', async (interaction) => {
                                     if (submittedModal.customId == 'SkillEditModal' && submittedModal.member.id == interaction.member.id) {
                                         const newValue = submittedModal.fields.getTextInputValue('newValue');
                                         await connection.promise().query('update skills set ?? = ? where id = ?', [column_name, newValue, skill_id]);
-                                        interaction_second.update({ content: 'Successfully updated this skill entry.', components: [] });
+                                        submittedModal.update({ content: 'Successfully updated this skill entry.', components: [] });
                                     }
                                 }
                             }
