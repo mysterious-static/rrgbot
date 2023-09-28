@@ -1712,6 +1712,7 @@ client.on('interactionCreate', async (interaction) => {
                                 let selectRow = new ActionRowBuilder().addComponents(selectComponent);
                                 await interaction_second.updates({ content: 'Please select a property from the dropdown to edit.', components: [selectRow] });
                             } else if (interaction_second.customID == 'SkillEditColumnSelector' + interaction_second.member.id) {
+                                console.log('Column selector');
                                 column_name = interaction_second.values[0];
                                 let modal = new ModalBuilder()
                                     .setCustomId('SkillEditModal');
@@ -1724,13 +1725,13 @@ client.on('interactionCreate', async (interaction) => {
                                     .setStyle(TextInputStyle.Short);
                                 let valueActionRow = new ActionRowBuilder().addComponents(newValueInput);
                                 modal.addComponents(nameActionRow, valueActionRow);
-                                await interaction_second.showModal(modal);
-                                let submittedModal = await interaction_second.awaitModalSubmit({ time: 60000 });
+                                await interaction.showModal(modal);
+                                let submittedModal = await interaction.awaitModalSubmit({ time: 60000 });
                                 if (submittedModal) {
                                     if (submittedModal.customId == 'SkillEditModal' && submittedModal.member.id == interaction.member.id) {
                                         const newValue = interaction.fields.getTextInputValue('newValue');
                                         await connection.promise().query('update skills set ?? = ? where id = ?', [column, newValue, skill_id]);
-                                        interaction_second.update({ content: 'Successfully updated this skill entry.', components: [] });
+                                        interaction.update({ content: 'Successfully updated this skill entry.', components: [] });
                                     }
                                 }
                             } else {
