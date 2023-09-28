@@ -62,7 +62,7 @@ async function process_effect(character, effect, source, guildId, target = null)
                     check = await connection.promise().query('select * from characters_characterflags where character_id = ? and characterflag_id = ? and value < ?', [character.id, prereq.prereq_id, prereq.prereq_value]);
                     break;
                 case 'archetype':
-                    res = await connection.promise().query('select from characters_archetypes where character_id = ? and archetype_id = ?', [character.id, prereq.prereq_id]);
+                    res = await connection.promise().query('select * from characters_archetypes where character_id = ? and archetype_id = ?', [character.id, prereq.prereq_id]);
                     check[0] = [];
                     if (res[0].length > 0 && !prereq.not) {
                         check[0].push(true);
