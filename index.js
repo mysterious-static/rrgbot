@@ -3366,7 +3366,7 @@ client.on('interactionCreate', async (interaction) => {
                         ];
                         if (logical_ands[0].length > 0) {
                             for (const logical_and of logical_ands[0]) {
-                                types.push({ label: 'Logical AND group ' + logical_and.logical_and_group + ' (' + logical_and.conditions + ' prereqs)', value: logical_and.logical_and_group });
+                                types.push({ label: 'Logical AND group ' + logical_and.logical_and_group + ' (' + logical_and.conditions + ' prereqs)', value: logical_and.logical_and_group.toString() });
                             }
                         }
                         var selectComponent = new StringSelectMenuBuilder().setOptions(types).setCustomId('PrereqLogicalAndSelector').setMinValues(1).setMaxValues(1);
