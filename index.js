@@ -41,7 +41,7 @@ async function process_effect(character, effect, source, guildId, target = null)
     let and_groups = [];
     if (prereqs[0].length > 0) {
         for (const prereq of prereqs[0]) {
-            let check = false;
+            let check = new Array();
             switch (prereq.prereq_type) {
                 case 'wflag_gt':
                     check = await connection.promise().query('select * from worldflags where id = ? and value > ?', [prereq.prereq_id, prereq.prereq_value]);
