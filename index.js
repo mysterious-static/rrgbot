@@ -1681,7 +1681,7 @@ client.on('interactionCreate', async (interaction) => {
                         }
                         const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('SkillEditColumnSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
                         let selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                        message = await interaction.reply({ content: 'Please select a property from the dropdown to edit.', components: [selectRow] });
+                        message = await interaction.reply({ content: 'Please select a property from the dropdown to edit.', components: [selectRow], ephemeral: true });
                         //show dropdown for column to edit, then show modal
                     } else {
                         if (skill[0].length > 25) {
@@ -1694,7 +1694,7 @@ client.on('interactionCreate', async (interaction) => {
                             }
                             const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('SkillEditSkillSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
                             let selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                            message = await interaction.reply({ content: 'Please select a skill from the dropdown to edit.', components: [selectRow] });
+                            message = await interaction.reply({ content: 'Please select a skill from the dropdown to edit.', components: [selectRow], ephemeral: true });
                         }
                         //show dropdown for skill, then show dropdown for column, then show modal
                     }
