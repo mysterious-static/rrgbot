@@ -1723,7 +1723,7 @@ client.on('interactionCreate', async (interaction) => {
                                     .setPlaceholder(currentValue[0][0].current_value)
                                     .setStyle(TextInputStyle.Short);
                                 let valueActionRow = new ActionRowBuilder().addComponents(newValueInput);
-                                modal.addComponents(nameActionRow, valueActionRow);
+                                modal.addComponents(valueActionRow);
                                 await interaction_second.showModal(modal);
                                 let submittedModal = await interaction_second.awaitModalSubmit({ time: 60000 });
                                 if (submittedModal) {
