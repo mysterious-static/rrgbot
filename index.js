@@ -47,7 +47,11 @@ async function process_effect(character, effect, source, guildId, target = null)
                     check = await connection.promise().query('select * from worldflags where id = ? and value > ?', [prereq.prereq_id, prereq.prereq_value]);
                     break;
                 case 'wflag_eq':
-                    check = await connection.promise().query('select * from worldflags where id = ? and value = ?', [prereq.prereq_id, prereq.prereq_value]);
+                    res = await connection.promise().query('select * from worldflags where id = ? and value = ?', [prereq.prereq_id, prereq.prereq_value]);
+                    check[0] = new Array();
+                    if (res[0].length > 0 && !prereq.not || (res[0].length == 0 && prereq.not)) {
+                        check[0].push(true);
+                    }
                     break;
                 case 'wflag_lt':
                     check = await connection.promise().query('select * from worldflags where id = ? and value < ?', [prereq.prereq_id, prereq.prereq_value]);
@@ -56,7 +60,11 @@ async function process_effect(character, effect, source, guildId, target = null)
                     check = await connection.promise().query('select * from characters_characterflags where character_id = ? and characterflag_id = ? and value > ?', [character.id, prereq.prereq_id, prereq.prereq_value]);
                     break;
                 case 'cflag_eq':
-                    check = await connection.promise().query('select * from characters_characterflags where character_id = ? and characterflag_id = ? and value = ?', [character.id, prereq.prereq_id, prereq.prereq_value]);
+                    res = await connection.promise().query('select * from characters_characterflags where character_id = ? and characterflag_id = ? and value = ?', [character.id, prereq.prereq_id, prereq.prereq_value]);
+                    check[0] = new Array();
+                    if (res[0].length > 0 && !prereq.not || (res[0].length == 0 && prereq.not)) {
+                        check[0].push(true);
+                    }
                     break;
                 case 'cflag_lt':
                     check = await connection.promise().query('select * from characters_characterflags where character_id = ? and characterflag_id = ? and value < ?', [character.id, prereq.prereq_id, prereq.prereq_value]);
