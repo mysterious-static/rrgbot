@@ -3124,7 +3124,6 @@ client.on('interactionCreate', async (interaction) => {
                 let prereq_type;
                 let prereq_id;
                 let logical_and_group;
-                let selectedEffect;
                 let not = false;
                 let prereq_value;
                 let effect_id;
