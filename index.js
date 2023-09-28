@@ -1733,6 +1733,9 @@ client.on('interactionCreate', async (interaction) => {
                                         interaction_second.update({ content: 'Successfully updated this skill entry.', components: [] });
                                     }
                                 }
+                            } else {
+                                console.log(interaction_second.customID);
+                                console.log(interaction_second.member.id);
                             }
                         });
                     }
