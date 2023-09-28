@@ -3458,9 +3458,9 @@ client.on('interactionCreate', async (interaction) => {
                         var typeahead_id = interaction_second.values[0];
                         var insertedPrereq;
                         if (prereq_value) {
-                            insertedPrereq = await connection.promise().query('insert into effects_prereqs (effect_id, prereq_type, prereq_id, logical_and_group, not, prereq_value) values (?, ?, ?, ?, ?, ?)', [effect_id, prereq_type, typeahead_id, logical_and_group, not, prereq_value]);
+                            insertedPrereq = await connection.promise().query('insert into effects_prereqs (effect_id, prereq_type, prereq_id, logical_and_group, \`not\`, prereq_value) values (?, ?, ?, ?, ?, ?)', [effect_id, prereq_type, typeahead_id, logical_and_group, not, prereq_value]);
                         } else {
-                            insertedPrereq = await connection.promise().query('insert into effects_prereqs (effect_id, prereq_type, prereq_id, logical_and_group, not) values (?, ?, ?, ?, ?)', [effect_id, prereq_type, typeahead_id, logical_and_group, not]);
+                            insertedPrereq = await connection.promise().query('insert into effects_prereqs (effect_id, prereq_type, prereq_id, logical_and_group, \`not\`) values (?, ?, ?, ?, ?)', [effect_id, prereq_type, typeahead_id, logical_and_group, not]);
                         }
                         await interaction_second.update({ content: 'Prereq added.', components: [] });
                     }
