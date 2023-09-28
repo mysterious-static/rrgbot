@@ -2638,6 +2638,11 @@ client.on('interactionCreate', async (interaction) => {
                                 new ButtonBuilder().setCustomId(`skills-${characterSelected}`).setLabel('Skills').setStyle(ButtonStyle.Primary),
                                 new ButtonBuilder().setCustomId(`inventory-${characterSelected}`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
                             );
+
+                        var reputation_enabled = await connection.promise().query('select * from game_settings where setting_name = "reputation" and guild_id = ?', [interaction.guildId]);
+                        if (reputation_enabled[0].length > 0 && reputation_enabled[0][0].setting_value == true) {
+                            buttonActionRow.addComponents(new ButtonBuilder().setCustomId(`reputation-${characterSelected}`).setLabel('Reputation').setStyle(ButtonStyle.Primary));
+                        }
                         await interaction_second.update({ content: msg, components: [buttonActionRow] });
                         await collector.stop();
                     }
@@ -3691,7 +3696,10 @@ client.on('interactionCreate', async (interaction) => {
                             new ButtonBuilder().setCustomId(`inventory-${current_character[0][0].character_id}`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
                         );
                     // If game settings - reputation enabled, then add the Reputation button too
-                    var reputation_enabled = await connection.promise().query('select * from game_settings where ')
+                    var reputation_enabled = await connection.promise().query('select * from game_settings where setting_name = "reputation" and guild_id = ?', [interaction.guildId]);
+                    if (reputation_enabled[0].length > 0 && reputation_enabled[0][0].setting_value == true) {
+                        buttonActionRow.addComponents(new ButtonBuilder().setCustomId(`reputation-${current_character[0][0].character_id}`).setLabel('Reputation').setStyle(ButtonStyle.Primary));
+                    }
                     await interaction.reply({ content: msg, components: [buttonActionRow], ephemeral: true });
                 } else {
                     interaction.reply({ content: 'Somehow, you don\'t have an active character! If you\'re a player, this means something has gone HORRIBLY WRONG. Please let an Orchestrator know.', ephemeral: true });
@@ -5053,6 +5061,11 @@ client.on('interactionCreate', async (interaction) => {
                     new ButtonBuilder().setCustomId(`skills-${character_id}`).setLabel('Skills').setStyle(ButtonStyle.Primary),
                     new ButtonBuilder().setCustomId(`inventory-${character_id}`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
                 );
+
+            var reputation_enabled = await connection.promise().query('select * from game_settings where setting_name = "reputation" and guild_id = ?', [interaction.guildId]);
+            if (reputation_enabled[0].length > 0 && reputation_enabled[0][0].setting_value == true) {
+                buttonActionRow.addComponents(new ButtonBuilder().setCustomId(`reputation-${character_id}`).setLabel('Reputation').setStyle(ButtonStyle.Primary));
+            }
             await interaction.update({ content: msg, components: [buttonActionRow] });
         } else if (interaction.customId.startsWith('skills-')) {
             var character_id = interaction.customId.split('-')[1];
@@ -5096,6 +5109,32 @@ client.on('interactionCreate', async (interaction) => {
                 .addComponents(
                     new ButtonBuilder().setCustomId(`sheet-${character_id}`).setLabel('Sheet').setStyle(ButtonStyle.Primary),
                     new ButtonBuilder().setCustomId(`skills-${character_id}`).setLabel('Skills').setStyle(ButtonStyle.Primary)
+                );
+            var reputation_enabled = await connection.promise().query('select * from game_settings where setting_name = "reputation" and guild_id = ?', [interaction.guildId]);
+            if (reputation_enabled[0].length > 0 && reputation_enabled[0][0].setting_value == true) {
+                buttonActionRow.addComponents(new ButtonBuilder().setCustomId(`reputation-${character_id}`).setLabel('Reputation').setStyle(ButtonStyle.Primary));
+            }
+            await interaction.update({ content: msg, components: [buttonActionRow] });
+        } else if (interaction.customId.startsWith('reputation-')) {
+            var character_id = interaction.customId.split('-'[1]);
+            var character_reputations = await connection.promise().query('select r.*, cr.value as characterStanding from reputations r join characters_reputations cr on r.id = cr.reputation_id left outer join characters_characterflags cc on (r.visibility = "cflag" and r.cwflag_id = cc.characterflag_id) left outer join worldflags w on (r.visibility = "wflag" and r.cwflag_id = w.id) where cr.character_id = ? and (r.visibility = "always" or (r.visibility = "cflag" and cc.value > r.cwflag_value) or (r.visibility = "wflag" and w.value > r.cwflag_value))', [character_id]); // Filter this by cflag visibility
+            let msg;
+            if (character_reputations[0].length > 0) {
+                msg = `__Reputations__\n`
+                for (const thisReputation of character_reputations[0]) {
+                    var standing = await connection.promise().query('select * from reputations_tiers rt where value <= ? order by value desc limit 1', [thisReputation.characterStanding]);
+                    //var next_standing = await connection.promise().query('select * from reputations_tiers rt where value > ? order by value asc limit 1', [thisReputation.characterStanding]);
+                    //eventually use these three numbers to do "0/12000" or whatever
+                    msg = msg.concat(`**${thisReputation.name}** (${thisReputation.description}) (${standing[0][0].threshold_name})`);
+                }
+            } else {
+                msg = `You don't have any reputations encountered yet.`;
+            }
+            const buttonActionRow = new ActionRowBuilder()
+                .addComponents(
+                    new ButtonBuilder().setCustomId(`sheet-${character_id}`).setLabel('Sheet').setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder().setCustomId(`skills-${character_id}`).setLabel('Skills').setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder().setCustomId(`inventory-${character_id}`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
                 );
             await interaction.update({ content: msg, components: [buttonActionRow] });
         }
