@@ -2859,9 +2859,9 @@ client.on('interactionCreate', async (interaction) => {
                             }
                             reputationSelectComponent = new StringSelectMenuBuilder().setOptions(reputationsKeyValues).setCustomId('RepSelector').setMinValues(1).setMaxValues(1);
                             var reputationSelectRow = new ActionRowBuilder().addComponents(reputationSelectComponent);
-                            interaction_second.editReply({ components: [reputationSelectRow] });
+                            interaction_second.update({ components: [reputationSelectRow] });
                         } else {
-                            interaction_second.editReply({ content: 'No reputations with this first letter', components: [] });
+                            interaction_second.update({ content: 'No reputations with this first letter', components: [] });
                         }
                     }
                 });
