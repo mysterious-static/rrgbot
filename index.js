@@ -3328,11 +3328,9 @@ client.on('interactionCreate', async (interaction) => {
                                 description = 'Description not implemented for this effect';
                             }
                             description += ` (${prereqs[0].length} prereqs already)`;
-                            console.log(label);
                             var thisEffectKeyValue = { label: label, description: description, value: effect.id.toString() };
                             effectsKeyValues.push(thisEffectKeyValue);
                         }
-                        console.log(effectsKeyValues);
                         var effectSelectComponent = new StringSelectMenuBuilder().setOptions(effectsKeyValues).setCustomId('PrereqEffectSelector').setMinValues(1).setMaxValues(1);
                         var effectSelectRow = new ActionRowBuilder().addComponents(effectSelectComponent);
                         await interaction_second.update({ content: 'Please select an effect:', components: [effectSelectRow], ephemeral: true });
