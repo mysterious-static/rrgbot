@@ -3393,7 +3393,7 @@ client.on('interactionCreate', async (interaction) => {
                             typeaheadInput.setLabel('Name of the world flag (autocompletes)');
                         } else if (prereq_type == 'cflag_eq' || prereq_type == 'cflag_lt' || prereq_type == 'cflag_gt') {
                             typeaheadInput.setLabel('Name of the character flag (autocompletes)');
-                        } else if (type == 'archetype') {
+                        } else if (prereq_type == 'archetype') {
                             typeaheadInput.setLabel('Name of the archetype (autocompletes)');
                         } else if (prereq_type == 'character') {
                             typeaheadInput.setLabel('Name of the character (autocompletes)');
