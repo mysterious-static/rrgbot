@@ -3374,8 +3374,9 @@ client.on('interactionCreate', async (interaction) => {
                         await interaction_second.update({ content: 'Do you want to add this prerequisite to an existing logical AND group or use an existing one?', components: [selectRow], ephemeral: true });
                     } else if (interaction_second.customId === 'PrereqLogicalAndSelector') {
                         if (interaction_second.values[0] == 'new') {
-                            var and_groups = await connection.promise().query('select max(logical_and_group) as max_val from effects_prereqs where effect_id = ?', [selectedEffect]);
+                            var and_groups = await connection.promise().query('select coalesce(max(logical_and_group), 0) as max_val from effects_prereqs where effect_id = ?', [selectedEffect]);
                             if (and_groups[0].length > 0) {
+                                console.log(and_groups[0]);
                                 logical_and_group = and_groups[0][0].max_val;
                             } else {
                                 logical_and_group = 0;
