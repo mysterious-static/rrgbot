@@ -3420,14 +3420,15 @@ client.on('interactionCreate', async (interaction) => {
                                 prereq_value = submittedModal.fields.getTextInputValue('prereq_value');
                             }
                             if (typeahead) {
+                                let typeahead_results;
                                 if (prereq_type == 'wflag_gt' || prereq_type == 'wflag_lt' || prereq_type == 'wflag_eq') {
-                                    var typeahead_results = await connection.promise().query('select * from worldflags where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
+                                    typeahead_results = await connection.promise().query('select * from worldflags where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
                                 } else if (prereq_type == 'cflag_gt' || prereq_type == 'cflag_lt' || prereq_type == 'cflag_eq') {
-                                    var typeahead_results = await connection.promise().query('select * from characterflags where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
+                                    typeahead_results = await connection.promise().query('select * from characterflags where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
                                 } else if (type == 'character') {
-                                    var typeahead_results = await connection.promise().query('select * from characters where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
+                                    typeahead_results = await connection.promise().query('select * from characters where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
                                 } else if (type == 'archetype') {
-                                    var typeahead_results = await connection.promise().query('select * from archetypes where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
+                                    typeahead_results = await connection.promise().query('select * from archetypes where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
                                 }
 
                                 if (typeahead_results[0].length == 0) {
