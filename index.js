@@ -1638,12 +1638,12 @@ client.on('interactionCreate', async (interaction) => {
                     for (const archetype of archetypes[0]) {
                         archetypesKeyValues.push({ label: archetype.name, value: archetype.id.toString() });
                     }
-                    const archetypeSelectComponent = new StringSelectMenuBuilder().setOptions(archetypesKeyValues).setCustomId('ArchetypeAssignmentSelector').setMinValues(1).setMaxValues(archetypes[0].length);
+                    const archetypeSelectComponent = new StringSelectMenuBuilder().setOptions(archetypesKeyValues).setCustomId('ArchetypeStatAssignmentSelector' + interaction.member.id).setMinValues(1).setMaxValues(archetypes[0].length);
                     var archetypeSelectRow = new ActionRowBuilder().addComponents(archetypeSelectComponent);
                     var message = await interaction.reply({ content: 'Archetype stat added! Select archetype(s):', components: [archetypeSelectRow], ephemeral: true });
                     var collector = message.createMessageComponentCollector({ time: 35000 });
                     collector.on('collect', async (interaction_second) => {
-                        if (interaction_second.customId == 'ArchetypeAssignmentSelector') {
+                        if (interaction_second.customId == 'ArchetypeStatAssignmentSelector' + interaction_second.member.id) {
                             for (const thisArchetype of interaction_second.values) {
                                 await connection.promise().query('insert into archetypes_archetypestats (archetype_id, archetypestat_id) values (?, ?)', [thisArchetype, addedStat[0].insertId]);
                             }
@@ -1657,6 +1657,84 @@ client.on('interactionCreate', async (interaction) => {
                 interaction.reply({ content: 'Stat with this name already exists!', ephemeral: true });
             }
         } else if (interaction.commandName == 'skilladmin') {
+            if (interaction.options.getSubcommand() == 'edit') {
+                let skill_name = interaction.options.getString('name')
+                let skill_id;
+                let column_name;
+                let process;
+                let columns = await connection.promise().query('show columns from skills where Type = "text"');
+                let message;
+                let skill = await connection.promise().query('select * from skills where name like ? and guild_id = ?', ['%' + skill_name + '%', interaction.guildId]);
+                if (skill[0].length > 0) {
+                    if (skill[0].length == 1) {
+                        let keyValues = [];
+                        skill_id = skill[0][0].id;
+                        for (const column of columns[0]) {
+                            keyValues.push({ label: column.Field, value: column.Field });
+                        }
+                        const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('SkillEditColumnSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
+                        let selectRow = new ActionRowBuilder().addComponents(selectComponent);
+                        message = await interaction.reply({ content: 'Please select a property from the dropdown to edit.', components: [selectRow] });
+                        //show dropdown for column to edit, then show modal
+                    } else {
+                        if (skill[0].length > 25) {
+                            await interaction.reply({ content: 'Your string match returned more than 25 skills. Please try again with a more specific string match.', ephemeral: true });
+                            process = false;
+                        } else {
+                            let keyValues = [];
+                            for (const skill of skills[0]) {
+                                keyValues.push({ label: skill.name, value: skill.id.toString() });
+                            }
+                            const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('SkillEditSkillSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
+                            let selectRow = new ActionRowBuilder().addComponents(selectComponent);
+                            message = await interaction.reply({ content: 'Please select a skill from the dropdown to edit.', components: [selectRow] });
+                        }
+                        //show dropdown for skill, then show dropdown for column, then show modal
+                    }
+                    if (process) {
+                        let collector = message.createMessageComponentCollector();
+                        collector.on('collect', async (interaction_second) => {
+                            if (interaction_second.customId == 'SkillEditSkillSelector' + interaction_second.member.id) {
+                                skill_id = interaction_second.values[0];
+                                let keyValues = [];
+                                skill_id = skill[0][0].id;
+                                for (const column of columns[0]) {
+                                    keyValues.push({ label: column.Field, value: column.Field });
+                                }
+                                const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('SkillEditColumnSelector' + interaction_second.member.id).setMinValues(1).setMaxValues(1);
+                                let selectRow = new ActionRowBuilder().addComponents(selectComponent);
+                                await interaction_second.updates({ content: 'Please select a property from the dropdown to edit.', components: [selectRow] });
+                            } else if (interaction_second.customID == 'SkillEditColumnSelector' + interaction_second.member.id) {
+                                column_name = interaction_second.values[0];
+                                let modal = new ModalBuilder()
+                                    .setCustomId('SkillEditModal');
+                                modal.setTitle(`Skill Update - ${column}`);
+                                let currentValue = await connection.promise().query(`select ?? as current_value from skills where id = ?`, [column, skill_id]);
+                                let newValueInput = new TextInputBuilder()
+                                    .setCustomId('newValue')
+                                    .setLabel('New value for this field')
+                                    .setPlaceholder(currentValue[0][0].current_value)
+                                    .setStyle(TextInputStyle.Short);
+                                let valueActionRow = new ActionRowBuilder().addComponents(newValueInput);
+                                modal.addComponents(nameActionRow, valueActionRow);
+                                await interaction_second.showModal(modal);
+                                let submittedModal = await interaction_second.awaitModalSubmit({ time: 60000 });
+                                if (submittedModal) {
+                                    if (submittedModal.customId == 'SkillEditModal' && submittedModal.member.id == interaction.member.id) {
+                                        const newValue = interaction.fields.getTextInputValue('newValue');
+                                        await connection.promise().query('update skills set ?? = ? where id = ?', [column, newValue, skill_id]);
+                                        interaction_second.update({ content: 'Successfully updated this skill entry.', components: [] });
+                                    }
+                                }
+                            }
+                        });
+                    }
+                } else {
+                    await interaction.reply({ content: 'No skills found matching your entry. Please double check and try again.', ephemeral: true });
+                }
+
+
+            }
             if (interaction.options.getSubcommand() == 'add') {
                 var name = interaction.options.getString('name');
                 var type = interaction.options.getString('type');
