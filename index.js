@@ -5126,7 +5126,7 @@ client.on('interactionCreate', async (interaction) => {
                     var standing = await connection.promise().query('select * from reputations_tiers rt where value <= ? order by value desc limit 1', [thisReputation.characterStanding]);
                     //var next_standing = await connection.promise().query('select * from reputations_tiers rt where value > ? order by value asc limit 1', [thisReputation.characterStanding]);
                     //eventually use these three numbers to do "0/12000" or whatever
-                    msg = msg.concat(`**${thisReputation.name}** (${thisReputation.description}) (${standing[0][0].threshold_name})`);
+                    msg = msg.concat(`**${thisReputation.name}** (${thisReputation.description}) (${standing[0][0].threshold_name})\n`);
                 }
             } else {
                 msg = `You don't have any reputations encountered yet.`;
