@@ -1257,15 +1257,10 @@ client.on('interactionCreate', async (interaction) => {
                                 var old_announcements;
                                 var old_name;
                                 var character_name = character[0][0].name;
-                                console.log(locations[0]);
                                 var user = await client.users.fetch(character[0][0].user_id);
                                 for (const location of locations[0]) {
-                                    console.log(location.id);
                                     var channel = await client.channels.cache.get(location.channel_id);
-                                    console.log(channel.permissionOverwrites);
                                     if (location.id == locationSelected) {
-                                        console.log('match')
-                                        console.log(location);
                                         await channel.permissionOverwrites.edit(user, { ViewChannel: true, SendMessages: true });
                                         if (location.announcements_channel) {
                                             new_announcements = await client.channels.cache.get(location.announcements_channel);
@@ -1391,7 +1386,6 @@ client.on('interactionCreate', async (interaction) => {
             var user = interaction.options.getUser('user');
             var player = await connection.promise().query('select * from players where user_id = ? and guild_id = ?', [user.id, interaction.guildId]);
             if (player[0].length > 0) {
-                console.log(interaction.guildId);
                 var owned_characters = await connection.promise().query('select distinct c.id from characters c join players_characters pc on c.id = pc.character_id join players p on pc.player_id = p.id where c.guild_id = ? and p.user_id = ?', [interaction.guildId, user.id]);
                 var owned = [];
                 if (owned_characters[0].length > 0) {
@@ -1402,7 +1396,6 @@ client.on('interactionCreate', async (interaction) => {
                 } else {
                     var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
                 }
-                console.log(characters);
                 if (characters[0].length > 0) {
                     var charactersKeyValues = [];
                     for (const character of characters[0]) {
@@ -1414,7 +1407,6 @@ client.on('interactionCreate', async (interaction) => {
                 var message = await interaction.reply({ content: 'Select a character or characters to assign to this player:', components: [characterSelectRow], ephemeral: true });
                 const collector = message.createMessageComponentCollector({ time: 35000 });
                 collector.on('collect', async (interaction_second) => {
-                    console.log(interaction_second.values); // Is this an array of all selected or is it an array of arrays
                     for (const thisId of interaction_second.values) {
                         await connection.promise().query('insert into players_characters (player_id, character_id, active) values (?, ?, ?)', [player[0][0].id, thisId, 0]);
                     }
@@ -1470,7 +1462,6 @@ client.on('interactionCreate', async (interaction) => {
                         selectedArchetype = interaction_second.values[0];
                         var characters = await connection.promise().query('select distinct characters.* from characters left outer join characters_archetypes ca on characters.id = ca.character_id where guild_id = ? and (ca.archetype_id <> ? or ca.archetype_id is null)', [interaction.guildId, selectedArchetype]);
                         if (characters[0].length > 0) {
-                            console.log(characters[0]);
                             var charactersKeyValues = [];
                             for (const character of characters[0]) {
                                 charactersKeyValues.push({ label: character.name, value: character.id.toString() });
@@ -1539,8 +1530,6 @@ client.on('interactionCreate', async (interaction) => {
                                     characterSelected = interaction_second.values[0];
                                 }
                                 if (statSelected && characterSelected) {
-                                    console.log(statSelected);
-                                    console.log(characterSelected);
                                     var exists = await connection.promise().query('select * from characters_stats where stat_id = ? and character_id = ?', [statSelected, characterSelected]);
                                     if (exists[0] && exists[0].length > 0) {
                                         console.log('exists');
@@ -1732,9 +1721,6 @@ client.on('interactionCreate', async (interaction) => {
                         var archetypesSelected;
                         var skillSelected;
                         collector.on('collect', async (interaction_second) => {
-                            console.log('Collected!');
-                            console.log(interaction_second.customId);
-                            console.log(interaction_second.values);
                             if (interaction_second.values[0]) {
                                 if (interaction_second.customId == 'SkillAssignmentSkillSelector') {
                                     skillSelected = interaction_second.values[0];
@@ -2007,7 +1993,6 @@ client.on('interactionCreate', async (interaction) => {
                                 var typeahead = false;
                                 var type_qty = false;
                                 var typedata = false;
-                                console.log(submittedModal.fields.fields);
                                 charges = submittedModal.fields.getTextInputValue('charges');
                                 if (submittedModal.fields.fields.find(field => field.customId === 'typeahead')) {
                                     typeahead = submittedModal.fields.getTextInputValue('typeahead');
@@ -2058,8 +2043,6 @@ client.on('interactionCreate', async (interaction) => {
                                     }
 
                                 } else {
-                                    console.log('no typeahead');
-                                    console.log(typedata);
                                     if (typedata) {
                                         console.log('insert');
                                         var insertedEffect = await connection.promise().query('insert into effects (type, charges, visible, typedata, target) values (?, ?, ?, ?, ?)', [type, charges, visible, typedata, target]);
@@ -2394,7 +2377,6 @@ client.on('interactionCreate', async (interaction) => {
                                 var typeahead = false;
                                 var type_qty = false;
                                 var typedata = false;
-                                console.log(submittedModal.fields.fields);
                                 charges = submittedModal.fields.getTextInputValue('charges');
                                 if (submittedModal.fields.fields.find(field => field.customId === 'typeahead')) {
                                     typeahead = submittedModal.fields.getTextInputValue('typeahead');
@@ -2445,8 +2427,6 @@ client.on('interactionCreate', async (interaction) => {
                                     }
 
                                 } else {
-                                    console.log('no typeahead');
-                                    console.log(typedata);
                                     if (typedata) {
                                         console.log('insert');
                                         var insertedEffect = await connection.promise().query('insert into effects (type, charges, visible, typedata, target) values (?, ?, ?, ?, ?)', [type, charges, visible, typedata, target]);
@@ -2760,12 +2740,9 @@ client.on('interactionCreate', async (interaction) => {
                             var cwflag_name = submittedModal.fields.getTextInputValue('flagName');
                             var value = submittedModal.fields.getTextInputValue('flagValue');
                             if (visibility == 'cflag') {
-                                console.log(submittedModal.guildId);
                                 var cwflags = await connection.promise().query('select * from characterflags where lower(name) like lower(?) and guild_id = ?', ['%' + cwflag_name + '%', submittedModal.guildId]); // where lower(name) like lower("%?%") and guild_id = ?', [cwflag_name, interaction.guildId]);
-                                console.log(cwflags);
                             } else {
                                 var cwflags = await connection.promise().query('select * from worldflags where lower(name) like lower(?) and guild_id = ?', ['%' + cwflag_name + '%', submittedModal.guildId]);
-                                console.log(cwflags);
                             }
                             await submittedModal.reply({ content: 'Checking for flags...', ephemeral: true });
                             if (cwflags[0].length < 1) {
@@ -3025,7 +3002,6 @@ client.on('interactionCreate', async (interaction) => {
                             var typeahead = false;
                             var type_qty = null;
                             var typedata = null;
-                            console.log(submittedModal.fields.fields);
                             charges = submittedModal.fields.getTextInputValue('charges');
                             if (submittedModal.fields.fields.find(field => field.customId === 'typeahead')) {
                                 typeahead = submittedModal.fields.getTextInputValue('typeahead');
@@ -3076,8 +3052,6 @@ client.on('interactionCreate', async (interaction) => {
                                 }
 
                             } else {
-                                console.log('no typeahead');
-                                console.log(typedata);
                                 if (typedata) {
                                     console.log('insert');
                                     var insertedEffect = await connection.promise().query('insert into effects (type, charges, visible, typedata) values (?, ?, ?, ?)', [type, charges, visible, typedata]);
@@ -3401,7 +3375,6 @@ client.on('interactionCreate', async (interaction) => {
                         if (interaction_second.values[0] == 'new') {
                             var and_groups = await connection.promise().query('select coalesce(max(logical_and_group), 0) as max_val from effects_prereqs where effect_id = ?', [effect_id]);
                             if (and_groups[0].length > 0) {
-                                console.log(and_groups[0]);
                                 logical_and_group = and_groups[0][0].max_val + 1;
                             } else {
                                 logical_and_group = 0;
@@ -3855,7 +3828,6 @@ client.on('interactionCreate', async (interaction) => {
                                 skills = archetypeskills[0];
                             }
                         } else if (characterskills[0].length > 0) {
-                            console.log(characterskills[0]);
                             skills = characterskills[0];
                         }
                         if (skills) {
@@ -3895,16 +3867,13 @@ client.on('interactionCreate', async (interaction) => {
                         var location_aware;
                         var characterDetails = await connection.promise().query('select * from characters where id = ?', [current_character[0][0].character_id]);
                         if (archetypeskills[0].length > 0) {
-                            console.log(archetypeskills[0]);
                             var skillids = new Set(archetypeskills[0].map(d => d.id));
                             if (characterskills[0].length > 0) {
-                                console.log(characterskills[0]);
                                 skills = [...archetypeskills[0], ...characterskills[0].filter(d => !skillids.has(d.id))];
                             } else {
                                 skills = archetypeskills[0];
                             }
                         } else if (characterskills[0].length > 0) {
-                            console.log(characterskills[0]);
                             skills = characterskills[0];
                         }
                         if (skills) {
@@ -4117,10 +4086,8 @@ client.on('interactionCreate', async (interaction) => {
                                     collector.on('collect', async (interaction_second) => {
                                         if (interaction_second.values[0]) {
                                             if (interaction_second.customId == 'GiveItemSelector') {
-                                                console.log('item');
                                                 itemSelected = interaction_second.values[0];
                                             } else {
-                                                console.log('character');
                                                 characterSelected = interaction_second.values[0];
                                             }
                                             if (itemSelected && characterSelected) {
@@ -4565,7 +4532,6 @@ client.on('interactionCreate', async (interaction) => {
 
     if (interaction.isButton()) {
         if (interaction.customId === 'rpsButtonR' || interaction.customId === 'rpsButtonP' || interaction.customId === 'rpsButtonS') {
-            console.log(interaction);
             var rpsthrow = interaction.customId.slice(-1);
             var throwfull = '';
             switch (rpsthrow) {
@@ -5119,7 +5085,6 @@ client.on('interactionCreate', async (interaction) => {
             var character_id = interaction.customId.split('-')[1];
             var character_reputations = await connection.promise().query('select r.*, cr.value as characterStanding from reputations r join characters_reputations cr on r.id = cr.reputation_id left outer join characters_characterflags cc on (r.visibility = "cflag" and r.cwflag_id = cc.characterflag_id) left outer join worldflags w on (r.visibility = "wflag" and r.cwflag_id = w.id) where cr.character_id = ? and (r.visibility = "always" or (r.visibility = "cflag" and cc.value is not null and cc.value >= r.cwflag_value) or (r.visibility = "wflag" and w.value is not null and w.value >= r.cwflag_value))', [character_id]); // Filter this by cflag visibility
             let msg;
-            console.log(character_reputations[0]);
             if (character_reputations[0].length > 0) {
                 msg = `__Reputations__\n`
                 for (const thisReputation of character_reputations[0]) {
