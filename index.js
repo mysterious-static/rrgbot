@@ -64,7 +64,7 @@ async function process_effect(character, effect, source, guildId, target = null)
                 case 'archetype':
                     res = await connection.promise().query('select * from characters_archetypes where character_id = ? and archetype_id = ?', [character.id, prereq.prereq_id]);
                     check[0] = [];
-                    if (res[0].length > 0 && !prereq.not) {
+                    if (res[0].length > 0 && !prereq.not || (res[0].length == 0 && prereq.not)) {
                         check[0].push(true);
                     }
                     break;
@@ -74,6 +74,8 @@ async function process_effect(character, effect, source, guildId, target = null)
                         if (!prereq.not) {
                             check[0].push(true);
                         }
+                    } else if (prereq.not) {
+                        check[0].push(true);
                     }
                     break;
             }
