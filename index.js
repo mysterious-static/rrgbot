@@ -2114,7 +2114,7 @@ client.on('interactionCreate', async (interaction) => {
                                     }
 
                                     if (typeahead_results[0].length == 0) {
-                                        await submittedModal.reply({ content: 'No match was found with the autocomplete text you entered. Please try again.', components: [], ephemeral: true });
+                                        await submittedModal.update({ content: 'No match was found with the autocomplete text you entered. Please try again.', components: [], ephemeral: true });
                                     } else if (typeahead_results[0].length == 1) {
                                         var insertedEffect;
                                         if (type_qty) {
@@ -2123,7 +2123,7 @@ client.on('interactionCreate', async (interaction) => {
                                             insertedEffect = await connection.promise().query('insert into effects (type, type_id, charges, visible, typedata) values (?, ?, ?, ?, ?, ?)', [type, typeahead_results[0][0].id, charges, visible, typedata, target]);
                                         }
                                         await connection.promise().query('insert into skills_effects (skill_id, effect_id) values (?, ?)', [selectedSkill, insertedEffect[0].insertId]);
-                                        await submittedModal.reply({ content: 'Effect added.', components: [], ephemeral: true });
+                                        await submittedModal.update({ content: 'Effect added.', components: [], ephemeral: true });
                                     } else {
                                         var keyValues = [];
                                         for (const result_value of typeahead_results[0]) {
@@ -2132,7 +2132,7 @@ client.on('interactionCreate', async (interaction) => {
                                         }
                                         selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('TypeaheadSelector').setMinValues(1).setMaxValues(1);
                                         var selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                                        await submittedModal.reply({ content: 'Select an item from the list:', components: [selectRow], ephemeral: true });
+                                        await submittedModal.update({ content: 'Select an item from the list:', components: [selectRow], ephemeral: true });
                                     }
 
                                 } else {
@@ -2498,7 +2498,7 @@ client.on('interactionCreate', async (interaction) => {
                                     }
 
                                     if (typeahead_results[0].length == 0) {
-                                        await submittedModal.reply({ content: 'No match was found with the autocomplete text you entered. Please try again.', components: [], ephemeral: true });
+                                        await submittedModal.update({ content: 'No match was found with the autocomplete text you entered. Please try again.', components: [], ephemeral: true });
                                     } else if (typeahead_results[0].length == 1) {
                                         var insertedEffect;
                                         if (type_qty) {
@@ -2507,7 +2507,7 @@ client.on('interactionCreate', async (interaction) => {
                                             insertedEffect = await connection.promise().query('insert into effects (type, type_id, charges, visible, typedata) values (?, ?, ?, ?, ?, ?)', [type, typeahead_results[0][0].id, charges, visible, typedata, target]);
                                         }
                                         await connection.promise().query('insert into items_effects (item_id, effect_id) values (?, ?)', [selectedItem, insertedEffect[0].insertId]);
-                                        await submittedModal.reply({ content: 'Effect added.', components: [], ephemeral: true });
+                                        await submittedModal.update({ content: 'Effect added.', components: [], ephemeral: true });
                                     } else {
                                         var keyValues = [];
                                         for (const result_value of typeahead_results[0]) {
@@ -2516,7 +2516,7 @@ client.on('interactionCreate', async (interaction) => {
                                         }
                                         selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('TypeaheadSelector').setMinValues(1).setMaxValues(1);
                                         var selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                                        await submittedModal.reply({ content: 'Select an item from the list:', components: [selectRow], ephemeral: true });
+                                        await submittedModal.update({ content: 'Select an item from the list:', components: [selectRow], ephemeral: true });
                                     }
 
                                 } else {
@@ -3132,7 +3132,7 @@ client.on('interactionCreate', async (interaction) => {
                                         insertedEffect = await connection.promise().query('insert into effects (type, type_id, charges, visible, typedata) values (?, ?, ?, ?, ?)', [type, typeahead_results[0][0].id, charges, visible, typedata]);
                                     }
                                     await connection.promise().query('insert into reputations_tiers_effects (reputationtier_id, effect_id) values (?, ?)', [tier_id, insertedEffect[0].insertId]);
-                                    await submittedModal.reply({ content: 'Effect added.', components: [], ephemeral: true });
+                                    await submittedModal.update({ content: 'Effect added.', components: [], ephemeral: true });
                                 } else {
                                     var keyValues = [];
                                     for (const result_value of typeahead_results[0]) {
@@ -3141,7 +3141,7 @@ client.on('interactionCreate', async (interaction) => {
                                     }
                                     selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('TypeaheadSelector').setMinValues(1).setMaxValues(1);
                                     var selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                                    await submittedModal.reply({ content: 'Select an item from the list:', components: [selectRow], ephemeral: true });
+                                    await submittedModal.update({ content: 'Select an item from the list:', components: [selectRow], ephemeral: true });
                                 }
 
                             } else {
@@ -3149,7 +3149,7 @@ client.on('interactionCreate', async (interaction) => {
                                     console.log('insert');
                                     var insertedEffect = await connection.promise().query('insert into effects (type, charges, visible, typedata) values (?, ?, ?, ?)', [type, charges, visible, typedata]);
                                     await connection.promise().query('insert into reputations_tiers_effects (reputationtier_id, effect_id) values (?, ?)', [tier_id, insertedEffect[0].insertId]);
-                                    await submittedModal.reply({ content: 'Effect added.', components: [], ephemeral: true });
+                                    await submittedModal.update({ content: 'Effect added.', components: [], ephemeral: true });
                                 }
                             }
                         }
@@ -3532,7 +3532,7 @@ client.on('interactionCreate', async (interaction) => {
                                     } else {
                                         insertedPrereq = await connection.promise().query('insert into effects_prereqs (effect_id, prereq_type, prereq_id, logical_and_group, \`not\`) values (?, ?, ?, ?, ?)', [effect_id, prereq_type, typeahead_results[0][0].id, logical_and_group, not]);
                                     }
-                                    await submittedModal.reply({ content: 'Prereq added.', components: [], ephemeral: true });
+                                    await submittedModal.update({ content: 'Prereq added.', components: [], ephemeral: true });
                                 } else {
                                     var keyValues = [];
                                     for (const result_value of typeahead_results[0]) {
@@ -3541,7 +3541,7 @@ client.on('interactionCreate', async (interaction) => {
                                     }
                                     selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('PrereqTypeaheadSelector').setMinValues(1).setMaxValues(1);
                                     var selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                                    await submittedModal.reply({ content: 'Select an item from the list:', components: [selectRow], ephemeral: true });
+                                    await submittedModal.update({ content: 'Select an item from the list:', components: [selectRow], ephemeral: true });
                                 }
 
                             }
