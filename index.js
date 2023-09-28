@@ -1715,8 +1715,8 @@ client.on('interactionCreate', async (interaction) => {
                                 column_name = interaction_second.values[0];
                                 let modal = new ModalBuilder()
                                     .setCustomId('SkillEditModal');
-                                modal.setTitle(`Skill Update - ${column}`);
-                                let currentValue = await connection.promise().query(`select ?? as current_value from skills where id = ?`, [column, skill_id]);
+                                modal.setTitle(`Skill Update - ${column_name}`);
+                                let currentValue = await connection.promise().query(`select ?? as current_value from skills where id = ?`, [column_name, skill_id]);
                                 let newValueInput = new TextInputBuilder()
                                     .setCustomId('newValue')
                                     .setLabel('New value for this field')
@@ -1729,7 +1729,7 @@ client.on('interactionCreate', async (interaction) => {
                                 if (submittedModal) {
                                     if (submittedModal.customId == 'SkillEditModal' && submittedModal.member.id == interaction.member.id) {
                                         const newValue = interaction.fields.getTextInputValue('newValue');
-                                        await connection.promise().query('update skills set ?? = ? where id = ?', [column, newValue, skill_id]);
+                                        await connection.promise().query('update skills set ?? = ? where id = ?', [column_name, newValue, skill_id]);
                                         interaction.update({ content: 'Successfully updated this skill entry.', components: [] });
                                     }
                                 }
