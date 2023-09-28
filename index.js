@@ -517,6 +517,13 @@ var skilladmin = new SlashCommandBuilder().setName('skilladmin')
     .addSubcommand(subcommand =>
         subcommand.setName('addeffect')
             .setDescription('Add effect to targetable skill.'))
+    .addSubcommand(subcommand =>
+        subcommand.setName('edit')
+            .setDescription('Edit a text field on a skill.')
+            .addStringOption(option =>
+                option.setName('name')
+                    .setDescription('The name of the skill (partial okay)')
+                    .setRequired(true)))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 
@@ -1658,7 +1665,7 @@ client.on('interactionCreate', async (interaction) => {
             }
         } else if (interaction.commandName == 'skilladmin') {
             if (interaction.options.getSubcommand() == 'edit') {
-                let skill_name = interaction.options.getString('name')
+                let skill_name = interaction.options.getString('name');
                 let skill_id;
                 let column_name;
                 let process;
