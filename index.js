@@ -3425,9 +3425,9 @@ client.on('interactionCreate', async (interaction) => {
                                     typeahead_results = await connection.promise().query('select * from worldflags where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
                                 } else if (prereq_type == 'cflag_gt' || prereq_type == 'cflag_lt' || prereq_type == 'cflag_eq') {
                                     typeahead_results = await connection.promise().query('select * from characterflags where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
-                                } else if (type == 'character') {
+                                } else if (prereq_type == 'character') {
                                     typeahead_results = await connection.promise().query('select * from characters where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
-                                } else if (type == 'archetype') {
+                                } else if (prereq_type == 'archetype') {
                                     typeahead_results = await connection.promise().query('select * from archetypes where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
                                 }
 
