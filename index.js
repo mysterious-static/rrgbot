@@ -107,7 +107,7 @@ async function process_effect(character, effect, source, guildId, target = null)
                 if (item_exists[0].length == 1) {
                     await connection.promise().query('update characters_items set quantity = quantity + ? where character_id = ? and item_id = ?', [effect.type_qty, character.id, effect.type_id]);
                 } else {
-                    await connection.promise().query('insert into characters_items (character_id, item_id, quantity) values (?, ?, ?)', [character_id, effect.type_id, effect.type_qty]);
+                    await connection.promise().query('insert into characters_items (character_id, item_id, quantity) values (?, ?, ?)', [character.id, effect.type_id, effect.type_qty]);
                 }
                 var item = await connection.promise().query('select * from items where id = ?', effect.type_id);
                 if (effect.type_qty > 0) {
