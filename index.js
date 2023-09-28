@@ -3360,7 +3360,7 @@ client.on('interactionCreate', async (interaction) => {
                         } else {
                             prereq_type = interaction_second.values[0];
                         }
-                        var logical_ands = await connection.promise().query('select logical_and_group, count(*) as conditions from effects_prereqs where effect_id = ? group by logical_and_group', [selectedEffect]);
+                        var logical_ands = await connection.promise().query('select logical_and_group, count(*) as conditions from effects_prereqs where effect_id = ? group by logical_and_group', [effect_id]);
                         var types = [
                             { label: 'New logical AND group', value: 'new' }
                         ];
@@ -3374,7 +3374,7 @@ client.on('interactionCreate', async (interaction) => {
                         await interaction_second.update({ content: 'Do you want to add this prerequisite to an existing logical AND group or use an existing one?', components: [selectRow], ephemeral: true });
                     } else if (interaction_second.customId === 'PrereqLogicalAndSelector') {
                         if (interaction_second.values[0] == 'new') {
-                            var and_groups = await connection.promise().query('select coalesce(max(logical_and_group), 0) as max_val from effects_prereqs where effect_id = ?', [selectedEffect]);
+                            var and_groups = await connection.promise().query('select coalesce(max(logical_and_group), 0) as max_val from effects_prereqs where effect_id = ?', [effect_id]);
                             if (and_groups[0].length > 0) {
                                 console.log(and_groups[0]);
                                 logical_and_group = and_groups[0][0].max_val;
