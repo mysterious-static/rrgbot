@@ -1971,7 +1971,7 @@ client.on('interactionCreate', async (interaction) => {
                                 var typeaheadActionRow = new ActionRowBuilder().addComponents(typeaheadInput);
                                 modal.addComponents(typeaheadActionRow);
                             }
-                            let requires_quantity = ['wflag_inc', 'wflag_set', 'cflag_inc', 'cflag_set', 'stat_inc', 'stat_set', 'reputation_inc', 'reputation_set'];
+                            let requires_quantity = ['wflag_inc', 'wflag_set', 'cflag_inc', 'cflag_set', 'stat_inc', 'stat_set', 'reputation_inc', 'reputation_set', 'item'];
                             if (requires_quantity.includes(type)) {
                                 var quantityInput = new TextInputBuilder()
                                     .setCustomId('type_qty')
@@ -2358,7 +2358,7 @@ client.on('interactionCreate', async (interaction) => {
                                 var typeaheadActionRow = new ActionRowBuilder().addComponents(typeaheadInput);
                                 modal.addComponents(typeaheadActionRow);
                             }
-                            let requires_quantity = ['wflag_inc', 'wflag_set', 'cflag_inc', 'cflag_set', 'stat_inc', 'stat_set', 'reputation_inc', 'reputation_set'];
+                            let requires_quantity = ['wflag_inc', 'wflag_set', 'cflag_inc', 'cflag_set', 'stat_inc', 'stat_set', 'reputation_inc', 'reputation_set', 'item'];
                             if (requires_quantity.includes(type)) {
                                 var quantityInput = new TextInputBuilder()
                                     .setCustomId('type_qty')
@@ -2977,7 +2977,7 @@ client.on('interactionCreate', async (interaction) => {
                             var typeaheadActionRow = new ActionRowBuilder().addComponents(typeaheadInput);
                             modal.addComponents(typeaheadActionRow);
                         }
-                        let requires_quantity = ['wflag_inc', 'wflag_set', 'cflag_inc', 'cflag_set', 'stat_inc', 'stat_set', 'reputation_inc', 'reputation_set'];
+                        let requires_quantity = ['wflag_inc', 'wflag_set', 'cflag_inc', 'cflag_set', 'stat_inc', 'stat_set', 'reputation_inc', 'reputation_set', 'item'];
                         if (requires_quantity.includes(type)) {
                             var quantityInput = new TextInputBuilder()
                                 .setCustomId('type_qty')
