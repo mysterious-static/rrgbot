@@ -3294,7 +3294,6 @@ client.on('interactionCreate', async (interaction) => {
                             var prereqs = await connection.promise().query('select * from effects_prereqs where effect_id = ?', [effect.id]);
                             if (effect.type == 'message') {
                                 label = `Send message`;
-                                console.log(effect);
                                 description = effect.typedata.slice(0, 18) + '...';
                             } else if (effect.type == 'wflag_inc' || effect.type == 'wflag_set') {
                                 var worldflag = await connection.promise().query('select * from worldflags where id = ?', [effect.type_id]);
@@ -3322,6 +3321,7 @@ client.on('interactionCreate', async (interaction) => {
                                 description = stat[0][0].name;
                             }
                             description += ` (${prereqs[0].length} prereqs already)`;
+                            console.log(label);
                             var thisEffectKeyValue = { label: label, description: description, value: effect.id.toString() };
                             effectsKeyValues.push(thisEffectKeyValue);
                         }
