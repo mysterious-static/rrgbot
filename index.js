@@ -3364,7 +3364,7 @@ client.on('interactionCreate', async (interaction) => {
                         var types = [
                             { label: 'New logical AND group', value: 'new' }
                         ];
-                        if (logical_ands[0][0].length > 0) {
+                        if (logical_ands[0].length > 0) {
                             for (const logical_and of logical_ands[0]) {
                                 types.push({ label: 'Logical AND group ' + logical_and.logical_and_group + ' (' + conditions + ' prereqs)', value: logical_and.logical_and_group });
                             }
