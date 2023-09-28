@@ -80,7 +80,7 @@ async function process_effect(character, effect, source, guildId, target = null)
                     break;
             }
             if (check[0] && check[0].length > 0) {
-                if (!and_groups[prereq.logical_and_group]) {
+                if (and_groups[prereq.logical_and_group] === undefined) {
                     and_groups[prereq.logical_and_group] = true;
                 }
             } else {
