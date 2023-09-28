@@ -5057,6 +5057,10 @@ client.on('interactionCreate', async (interaction) => {
                     new ButtonBuilder().setCustomId(`sheet-${character_id}`).setLabel('Sheet').setStyle(ButtonStyle.Primary),
                     new ButtonBuilder().setCustomId(`inventory-${character_id}`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
                 );
+            var reputation_enabled = await connection.promise().query('select * from game_settings where setting_name = "reputation" and guild_id = ?', [interaction.guildId]);
+            if (reputation_enabled[0].length > 0 && reputation_enabled[0][0].setting_value == true) {
+                buttonActionRow.addComponents(new ButtonBuilder().setCustomId(`reputation-${character_id}`).setLabel('Reputation').setStyle(ButtonStyle.Primary));
+            }
             await interaction.update({ content: msg, components: [buttonActionRow] });
         } else if (interaction.customId.startsWith('inventory-')) {
             var character_id = interaction.customId.split('-')[1];
