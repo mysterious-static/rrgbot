@@ -646,6 +646,13 @@ var worldflag = new SlashCommandBuilder().setName('worldflag')
 var reputation = new SlashCommandBuilder().setName('reputation')
     .setDescription('Reputation management tools')
     .addSubcommand(subcommand =>
+        subcommand.setName('enable')
+            .setDescription('Enable the reputation system (default OFF)')
+            .addBooleanOption(option =>
+                option.setName('enabled')
+                    .setDescription('True to enable the reputation system.')
+                    .setRequired(true)))
+    .addSubcommand(subcommand =>
         subcommand.setName('add')
             .setDescription('Add a reputation')
             .addStringOption(option =>
@@ -705,13 +712,6 @@ var effect = new SlashCommandBuilder().setName('effect')
             .setDescription('Remove an effect.'))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 //Prompt for archetype/character, reputation, tier, item/skill/reputation/archetype/pflag/qflag/message, prompt for whatever's chosen - should have quantity of reward available (-1 for unlimited) if archetype
-
-var setreputationenabled = new SlashCommandBuilder().setName('setreputationenabled')
-    .setDescription('Enable/disable reputation system.')
-    .addBooleanOption(option => option.setName('enabled')
-        .setRequired(true))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
 var sendas = new SlashCommandBuilder().setName('sendas')
     .setDescription('Send message as a character.')
     .addStringOption(option =>
@@ -2702,20 +2702,27 @@ client.on('interactionCreate', async (interaction) => {
                 await interaction.reply({ content: 'World flag added.', ephemeral: true });
             }
         } else if (interaction.commandName == 'reputation') {
+            if (interaction.options.getSubcommand() === 'enable') {
+                let enabled = interaction.options.getBoolean('enabled');
+                await connection.promise().query('replace into game_settings (setting_name, setting_value, guild_id) values (?, ?, ?)', ['reputation', enabled, interaction.guildId]);
+                interaction.reply({ content: 'Reputation system enabled set to ' + enabled, ephemeral: true });
+            }
             if (interaction.options.getSubcommand() === 'add') {
-                var name = interaction.options.getString('name');
-                var description = interaction.options.getString('description');
-                var visibility = interaction.options.getString('visibility');
-                var maximum = interaction.options.getInteger('maximum');
-                var icon = interaction.options.getString('icon');
-                var reputations = await connection.promise().query('select * from reputations where name = ? and guild_id = ?', [name, interaction.guildId]);
+                let name = interaction.options.getString('name');
+                let description = interaction.options.getString('description');
+                let visibility = interaction.options.getString('visibility');
+                let maximum = interaction.options.getInteger('maximum');
+                let icon = interaction.options.getString('icon');
+                let reputations = await connection.promise().query('select * from reputations where name = ? and guild_id = ?', [name, interaction.guildId]);
                 if (reputations[0].length > 0) {
                     await interaction.reply({ content: `You've already added a reputation with name ${name}.`, ephemeral: true });
                 } else {
+                    let cflags;
+                    let wflags;
                     if (visibility == 'cflag') {
-                        var cflags = await connection.promise().query('select * from characterflags where guild_id = ?', [interaction.guildId]);
+                        cflags = await connection.promise().query('select * from characterflags where guild_id = ?', [interaction.guildId]);
                     } else if (visibility == 'wflag') {
-                        var wflags = await connection.promise().query('select * from worldflags where guild_id = ?', [interaction.guildId]);
+                        wflags = await connection.promise().query('select * from worldflags where guild_id = ?', [interaction.guildId]);
                     }
                     if ((visibility == 'cflag' && cflags[0].length == 0) || (visibility == 'wflag' && wflags[0].length == 0)) {
                         await interaction.reply({ mescontentsage: 'No flags of the specified type exist in this game yet.', ephemeral: true });
@@ -3683,6 +3690,8 @@ client.on('interactionCreate', async (interaction) => {
                             new ButtonBuilder().setCustomId(`skills-${current_character[0][0].character_id}`).setLabel('Skills').setStyle(ButtonStyle.Primary),
                             new ButtonBuilder().setCustomId(`inventory-${current_character[0][0].character_id}`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
                         );
+                    // If game settings - reputation enabled, then add the Reputation button too
+                    var reputation_enabled = await connection.promise().query('select * from game_settings where ')
                     await interaction.reply({ content: msg, components: [buttonActionRow], ephemeral: true });
                 } else {
                     interaction.reply({ content: 'Somehow, you don\'t have an active character! If you\'re a player, this means something has gone HORRIBLY WRONG. Please let an Orchestrator know.', ephemeral: true });
