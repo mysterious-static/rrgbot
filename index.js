@@ -1672,7 +1672,7 @@ client.on('interactionCreate', async (interaction) => {
                 let columns = await connection.promise().query('show columns from skills where Type = "text"');
                 let message;
                 let skill = await connection.promise().query('select * from skills where name like ? and guild_id = ?', ['%' + skill_name + '%', interaction.guildId]);
-                if (skill[0].length > 0) {
+                if (skill[0].length > 0) { // CLEAN THIS MESS UP
                     if (skill[0].length == 1) {
                         let keyValues = [];
                         skill_id = skill[0][0].id;
@@ -1687,7 +1687,7 @@ client.on('interactionCreate', async (interaction) => {
                     } else if (skill[0].length > 25) {
                         await interaction.reply({ content: 'Your string match returned more than 25 skills. Please try again with a more specific string match.', ephemeral: true });
                         process = false;
-                    } else {
+                    } else if (skill[0] > 1) {
                         let keyValues = [];
                         for (const skill of skills[0]) {
                             keyValues.push({ label: skill.name, value: skill.id.toString() });
@@ -1696,6 +1696,9 @@ client.on('interactionCreate', async (interaction) => {
                         let selectRow = new ActionRowBuilder().addComponents(selectComponent);
                         message = await interaction.reply({ content: 'Please select a skill from the dropdown to edit.', components: [selectRow], ephemeral: true });
                         //show dropdown for skill, then show dropdown for column, then show modal
+                    } else {
+                        await interaction.reply({ content: 'Your string match didn\'t return any results, try again please', ephemeral: true });
+                        process = false;
                     }
                     if (process) {
                         let collector = message.createMessageComponentCollector();
