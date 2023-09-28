@@ -1668,7 +1668,7 @@ client.on('interactionCreate', async (interaction) => {
                 let skill_name = interaction.options.getString('name');
                 let skill_id;
                 let column_name;
-                let process;
+                let process = true;
                 let columns = await connection.promise().query('show columns from skills where Type = "text"');
                 let message;
                 let skill = await connection.promise().query('select * from skills where name like ? and guild_id = ?', ['%' + skill_name + '%', interaction.guildId]);
@@ -1712,7 +1712,6 @@ client.on('interactionCreate', async (interaction) => {
                                 let selectRow = new ActionRowBuilder().addComponents(selectComponent);
                                 await interaction_second.updates({ content: 'Please select a property from the dropdown to edit.', components: [selectRow] });
                             } else if (interaction_second.customID == 'SkillEditColumnSelector' + interaction_second.member.id) {
-                                console.log('Column selector');
                                 column_name = interaction_second.values[0];
                                 let modal = new ModalBuilder()
                                     .setCustomId('SkillEditModal');
@@ -1734,9 +1733,6 @@ client.on('interactionCreate', async (interaction) => {
                                         interaction.update({ content: 'Successfully updated this skill entry.', components: [] });
                                     }
                                 }
-                            } else {
-                                console.log(interaction_second.customID);
-                                console.log(interaction_second.member.id);
                             }
                         });
                     }
