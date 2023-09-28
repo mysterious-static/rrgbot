@@ -3234,6 +3234,7 @@ client.on('interactionCreate', async (interaction) => {
                             var prereqs = await connection.promise().query('select * from effects_prereqs where effect_id = ?');
                             if (effect.type == 'message') {
                                 label = `Send message`;
+                                description = effect.typedata.slice(0, 18) + '...';
                             } else if (effect.type == 'wflag_inc' || effect.type == 'wflag_set') {
                                 var worldflag = await connection.promise().query('select * from worldflags where id = ?', [effect.type_id]);
                                 label = `Adjust world flag`;
@@ -3365,7 +3366,7 @@ client.on('interactionCreate', async (interaction) => {
                         ];
                         if (logical_ands[0].length > 0) {
                             for (const logical_and of logical_ands[0]) {
-                                types.push({ label: 'Logical AND group ' + logical_and.logical_and_group + ' (' + conditions + ' prereqs)', value: logical_and.logical_and_group });
+                                types.push({ label: 'Logical AND group ' + logical_and.logical_and_group + ' (' + logical_and.conditions + ' prereqs)', value: logical_and.logical_and_group });
                             }
                         }
                         var selectComponent = new StringSelectMenuBuilder().setOptions(types).setCustomId('PrereqLogicalAndSelector').setMinValues(1).setMaxValues(1);
