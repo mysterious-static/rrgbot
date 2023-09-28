@@ -3319,6 +3319,13 @@ client.on('interactionCreate', async (interaction) => {
                                 var stat = await connection.promise().query('select * from stats where id = ?', [effect.type_id]);
                                 label = `Modify stat`;
                                 description = stat[0][0].name;
+                            } else if (effect.type == 'item') {
+                                var item = await connection.promise().query('select * from items where id = ?', [effect.type_id]);
+                                label = `Modify item count`;
+                                description = `${item[0][0].name}, ${effect.type_qty}`;
+                            } else {
+                                label = effect.type;
+                                description = 'Description not implemented for this effect';
                             }
                             description += ` (${prereqs[0].length} prereqs already)`;
                             console.log(label);
