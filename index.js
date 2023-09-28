@@ -1687,7 +1687,7 @@ client.on('interactionCreate', async (interaction) => {
                     } else if (skill[0].length > 25) {
                         await interaction.reply({ content: 'Your string match returned more than 25 skills. Please try again with a more specific string match.', ephemeral: true });
                         process = false;
-                    } else if (skill[0] > 1) {
+                    } else if (skill[0].length > 1) {
                         let keyValues = [];
                         for (const skill of skills[0]) {
                             keyValues.push({ label: skill.name, value: skill.id.toString() });
