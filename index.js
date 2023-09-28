@@ -1710,8 +1710,8 @@ client.on('interactionCreate', async (interaction) => {
                                 }
                                 const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('SkillEditColumnSelector' + interaction_second.member.id).setMinValues(1).setMaxValues(1);
                                 let selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                                await interaction_second.updates({ content: 'Please select a property from the dropdown to edit.', components: [selectRow] });
-                            } else if (interaction_second.customID == 'SkillEditColumnSelector' + interaction_second.member.id) {
+                                await interaction_second.update({ content: 'Please select a property from the dropdown to edit.', components: [selectRow] });
+                            } else if (interaction_second.customId == 'SkillEditColumnSelector' + interaction_second.member.id) {
                                 column_name = interaction_second.values[0];
                                 let modal = new ModalBuilder()
                                     .setCustomId('SkillEditModal');
