@@ -2850,7 +2850,7 @@ client.on('interactionCreate', async (interaction) => {
                         }
                         //add tier
                     } else if (interaction_second.customId == 'RepAlphaSelector') {
-                        var reputations = connection.promise().query('select * from reputations where name like ? and guild_id = ?', ['%' + interaction_second.values[0], interaction.guildId]);
+                        var reputations = await connection.promise().query('select * from reputations where name like ? and guild_id = ?', ['%' + interaction_second.values[0], interaction.guildId]);
                         if (reputations[0].length <= 25) {
                             var reputationsKeyValues = [];
                             for (const reputation of reputations[0]) {
@@ -3080,7 +3080,7 @@ client.on('interactionCreate', async (interaction) => {
                         await interaction_second.update({ content: 'Effect added.', components: [] });
                     } else if (interaction_second.customId == 'TierAlphaSelector') {
                         var reputations = await connection.promise().query('select * from reputations where id = ?', [reputation_id]);
-                        var result_values = connection.promise().query('select * from reputations_tiers where reputation_id = ? and threshold_name like ?', [reputation_id, interaction_second.values[0] + '%']);
+                        var result_values = await connection.promise().query('select * from reputations_tiers where reputation_id = ? and threshold_name like ?', [reputation_id, interaction_second.values[0] + '%']);
                         var selectComponent;
                         var keyValues = [];
                         for (const result_value of result_values[0]) {
@@ -3091,7 +3091,7 @@ client.on('interactionCreate', async (interaction) => {
                         var selectRow = new ActionRowBuilder().addComponents(selectComponent);
                         await interaction_second.update({ content: 'Please select a reputation tier:', components: [selectRow] });
                     } else if (interaction_second.customId == 'RepAlphaSelector') {
-                        var reputations = connection.promise().query('select * from reputations where name like ? and guild_id = ?', ['%' + interaction_second.values[0], interaction.guildId]);
+                        var reputations = await connection.promise().query('select * from reputations where name like ? and guild_id = ?', ['%' + interaction_second.values[0], interaction.guildId]);
                         if (reputations[0].length <= 25) {
                             var reputationsKeyValues = [];
                             for (const reputation of reputations[0]) {
