@@ -3371,7 +3371,7 @@ client.on('interactionCreate', async (interaction) => {
                         }
                         var selectComponent = new StringSelectMenuBuilder().setOptions(types).setCustomId('PrereqLogicalAndSelector').setMinValues(1).setMaxValues(1);
                         var selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                        await interaction_second.update({ content: 'Do you want to add this prerequisite to an existing logical AND group or use an existing one?', components: [selectRow], ephemeral: true });
+                        await interaction_second.update({ content: 'Do you want to add this prerequisite to an existing logical AND group or use a new one?', components: [selectRow], ephemeral: true });
                     } else if (interaction_second.customId === 'PrereqLogicalAndSelector') {
                         if (interaction_second.values[0] == 'new') {
                             var and_groups = await connection.promise().query('select coalesce(max(logical_and_group), 0) as max_val from effects_prereqs where effect_id = ?', [effect_id]);
