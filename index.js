@@ -3315,7 +3315,7 @@ client.on('interactionCreate', async (interaction) => {
                                 description = stat[0][0].name;
                             }
                             description += ` (${prereqs[0].length} prereqs already)`;
-                            var thisEffectKeyValue = { label: label, description: description, value: effect.id };
+                            var thisEffectKeyValue = { label: label, description: description, value: effect.id.toString() };
                             effectsKeyValues.push(thisEffectKeyValue);
                         }
                         var effectSelectComponent = new StringSelectMenuBuilder().setOptions(effectsKeyValues).setCustomId('PrereqEffectSelector').setMinValues(1).setMaxValues(1);
