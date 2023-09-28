@@ -2838,14 +2838,14 @@ client.on('interactionCreate', async (interaction) => {
                         var reputation_id = interaction_second.values[0];
                         var reputations = await connection.promise().query('select rt.*, r.maximum from reputations_tiers rt join reputations r on rt.reputation_id = r.id where rt.threshold_name = ? and rt.reputation_id = ?', [name, reputation_id]);
                         if (reputations[0].length > 0) {
-                            interaction_second.reply({ content: 'A reputation tier with this name already exists for this reputation.' });
+                            interaction_second.update({ content: 'A reputation tier with this name already exists for this reputation.', components: [] });
                         } else {
                             var reputation = await connection.promise().query('select * from reputations where id = ?', [reputation_id]);
                             if (reputation[0][0].maximum < value) {
-                                interaction_second.reply({ content: 'You entered a reputation tier minimum value higher than this reputation\'s maximum value.' });
+                                interaction_second.update({ content: 'You entered a reputation tier minimum value higher than this reputation\'s maximum value.', components: [] });
                             } else {
                                 await connection.promise().query('insert into reputations_tiers (reputation_id, threshold_name, value) values (?, ?, ?)', [reputation_id, name, value]);
-                                interaction_second.reply({ content: "Reputation tier added." });
+                                interaction_second.update({ content: "Reputation tier added.", components: [] });
                             }
                         }
                         //add tier
