@@ -1689,8 +1689,8 @@ client.on('interactionCreate', async (interaction) => {
                         process = false;
                     } else if (skill[0].length > 1) {
                         let keyValues = [];
-                        for (const skill of skills[0]) {
-                            keyValues.push({ label: skill.name, value: skill.id.toString() });
+                        for (const thisSkill of skill[0]) {
+                            keyValues.push({ label: thisSkill.name, value: thisSkill.id.toString() });
                         }
                         const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('SkillEditSkillSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
                         let selectRow = new ActionRowBuilder().addComponents(selectComponent);
