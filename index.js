@@ -3436,9 +3436,9 @@ client.on('interactionCreate', async (interaction) => {
                                 } else if (typeahead_results[0].length == 1) {
                                     var insertedPrereq;
                                     if (prereq_value) {
-                                        insertedPrereq = await connection.promise().query('insert into effects_prereqs (effect_id, prereq_type, prereq_id, logical_and_group, not, prereq_value) values (?, ?, ?, ?, ?, ?)', [effect_id, prereq_type, typeahead_results[0][0].id, logical_and_group, not, prereq_value]);
+                                        insertedPrereq = await connection.promise().query('insert into effects_prereqs (effect_id, prereq_type, prereq_id, logical_and_group, \`not\`, prereq_value) values (?, ?, ?, ?, ?, ?)', [effect_id, prereq_type, typeahead_results[0][0].id, logical_and_group, not, prereq_value]);
                                     } else {
-                                        insertedPrereq = await connection.promise().query('insert into effects_prereqs (effect_id, prereq_type, prereq_id, logical_and_group, not) values (?, ?, ?, ?, ?)', [effect_id, prereq_type, typeahead_results[0][0].id, logical_and_group, not]);
+                                        insertedPrereq = await connection.promise().query('insert into effects_prereqs (effect_id, prereq_type, prereq_id, logical_and_group, \`not\`) values (?, ?, ?, ?, ?)', [effect_id, prereq_type, typeahead_results[0][0].id, logical_and_group, not]);
                                     }
                                     await interaction_second.reply({ content: 'Prereq added.', components: [], ephemeral: true });
                                 } else {
