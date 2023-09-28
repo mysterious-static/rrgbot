@@ -1682,20 +1682,19 @@ client.on('interactionCreate', async (interaction) => {
                         const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('SkillEditColumnSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
                         let selectRow = new ActionRowBuilder().addComponents(selectComponent);
                         message = await interaction.reply({ content: 'Please select a property from the dropdown to edit.', components: [selectRow], ephemeral: true });
+
                         //show dropdown for column to edit, then show modal
+                    } else if (skill[0].length > 25) {
+                        await interaction.reply({ content: 'Your string match returned more than 25 skills. Please try again with a more specific string match.', ephemeral: true });
+                        process = false;
                     } else {
-                        if (skill[0].length > 25) {
-                            await interaction.reply({ content: 'Your string match returned more than 25 skills. Please try again with a more specific string match.', ephemeral: true });
-                            process = false;
-                        } else {
-                            let keyValues = [];
-                            for (const skill of skills[0]) {
-                                keyValues.push({ label: skill.name, value: skill.id.toString() });
-                            }
-                            const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('SkillEditSkillSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
-                            let selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                            message = await interaction.reply({ content: 'Please select a skill from the dropdown to edit.', components: [selectRow], ephemeral: true });
+                        let keyValues = [];
+                        for (const skill of skills[0]) {
+                            keyValues.push({ label: skill.name, value: skill.id.toString() });
                         }
+                        const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('SkillEditSkillSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
+                        let selectRow = new ActionRowBuilder().addComponents(selectComponent);
+                        message = await interaction.reply({ content: 'Please select a skill from the dropdown to edit.', components: [selectRow], ephemeral: true });
                         //show dropdown for skill, then show dropdown for column, then show modal
                     }
                     if (process) {
