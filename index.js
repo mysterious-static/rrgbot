@@ -3281,7 +3281,7 @@ client.on('interactionCreate', async (interaction) => {
                             await interaction_second.update({ content: 'No reputation tiers available for this reputation.', components: [], ephemeral: true });
                         }
                     } else if (interaction_second.customId === 'PrereqRepTierSelector') {
-                        var effects = await connection.promise().query('select e.* from effects e join reputations_tiers_effects rte on e.id = se.effect_id where rte.reputationtier_id = ?', [interaction_second.values[0] + '%']);
+                        var effects = await connection.promise().query('select e.* from effects e join reputations_tiers_effects rte on e.id = rte.effect_id where rte.reputationtier_id = ?', [interaction_second.values[0] + '%']);
                         var effectsKeyValues = [];
                         for (const effect of effects[0]) {
                             let label;
