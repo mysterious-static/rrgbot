@@ -3441,7 +3441,7 @@ client.on('interactionCreate', async (interaction) => {
                                     } else {
                                         insertedPrereq = await connection.promise().query('insert into effects_prereqs (effect_id, prereq_type, prereq_id, logical_and_group, \`not\`) values (?, ?, ?, ?, ?)', [effect_id, prereq_type, typeahead_results[0][0].id, logical_and_group, not]);
                                     }
-                                    await interaction_second.reply({ content: 'Prereq added.', components: [], ephemeral: true });
+                                    await submittedModal.reply({ content: 'Prereq added.', components: [], ephemeral: true });
                                 } else {
                                     var keyValues = [];
                                     for (const result_value of typeahead_results[0]) {
