@@ -63,13 +63,13 @@ async function process_effect(character, effect, source, guildId, target = null)
                     break;
                 case 'archetype':
                     res = await connection.promise().query('select * from characters_archetypes where character_id = ? and archetype_id = ?', [character.id, prereq.prereq_id]);
-                    check[0] = [];
+                    check[0] = new Array();
                     if (res[0].length > 0 && !prereq.not || (res[0].length == 0 && prereq.not)) {
                         check[0].push(true);
                     }
                     break;
                 case 'character':
-                    check[0] = [];
+                    check[0] = new Array();
                     if (character.id == prereq.prereq_id) {
                         if (!prereq.not) {
                             check[0].push(true);
