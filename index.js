@@ -3286,7 +3286,7 @@ client.on('interactionCreate', async (interaction) => {
                         for (const effect of effects[0]) {
                             let label;
                             let description;
-                            var prereqs = await connection.promise().query('select * from effects_prereqs where effect_id = ?');
+                            var prereqs = await connection.promise().query('select * from effects_prereqs where effect_id = ?', [effect.id]);
                             if (effect.type == 'message') {
                                 label = `Send message`;
                             } else if (effect.type == 'wflag_inc' || effect.type == 'wflag_set') {
