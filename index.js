@@ -3390,7 +3390,7 @@ client.on('interactionCreate', async (interaction) => {
                             var and_groups = await connection.promise().query('select coalesce(max(logical_and_group), 0) as max_val from effects_prereqs where effect_id = ?', [effect_id]);
                             if (and_groups[0].length > 0) {
                                 console.log(and_groups[0]);
-                                logical_and_group = and_groups[0][0].max_val;
+                                logical_and_group = and_groups[0][0].max_val + 1;
                             } else {
                                 logical_and_group = 0;
                             }
