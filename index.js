@@ -5164,14 +5164,12 @@ client.on('interactionCreate', async (interaction) => {
                     new ButtonBuilder().setCustomId(`sheet-${character_id}`).setLabel('Sheet').setStyle(ButtonStyle.Primary),
                     new ButtonBuilder().setCustomId(`inventory-asc-${character_id}-1`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
                 );
-            components.push(buttonActionRow);
             let reputation_enabled = await connection.promise().query('select * from game_settings where setting_name = "reputation" and guild_id = ?', [interaction.guildId]);
             if (reputation_enabled[0].length > 0 && reputation_enabled[0][0].setting_value == true) {
                 buttonActionRow.addComponents(new ButtonBuilder().setCustomId(`reputation-asc-${character_id}-1`).setLabel('Reputation').setStyle(ButtonStyle.Primary));
             }
-            if (paginationActionRow) {
-                await interaction.update({ content: msg, components: [components] });
-            }
+            components.push(buttonActionRow);
+            await interaction.update({ content: msg, components: [components] });
         } else if (interaction.customId.startsWith('inventory-')) {
             let sort = interaction.customId.split('-')[1];
             let character_id = interaction.customId.split('-')[2];
@@ -5226,11 +5224,11 @@ client.on('interactionCreate', async (interaction) => {
                     new ButtonBuilder().setCustomId(`sheet-${character_id}`).setLabel('Sheet').setStyle(ButtonStyle.Primary),
                     new ButtonBuilder().setCustomId(`skillpage-asc-${character_id}-1`).setLabel('Skills').setStyle(ButtonStyle.Primary)
                 );
-            components.push(buttonActionRow);
             let reputation_enabled = await connection.promise().query('select * from game_settings where setting_name = "reputation" and guild_id = ?', [interaction.guildId]);
             if (reputation_enabled[0].length > 0 && reputation_enabled[0][0].setting_value == true) {
                 buttonActionRow.addComponents(new ButtonBuilder().setCustomId(`reputation-asc-${character_id}-1`).setLabel('Reputation').setStyle(ButtonStyle.Primary));
             }
+            components.push(buttonActionRow);
             await interaction.update({ content: msg, components: [components] });
         } else if (interaction.customId.startsWith('reputation-')) {
             let sort = interaction.customId.split('-')[1];
@@ -5245,18 +5243,14 @@ client.on('interactionCreate', async (interaction) => {
             var msgStart = `__Reputations__\n`;
             if (character_reputations[0].length > 0) {
                 msg = `__Reputations__\n`
-
-                // after for loop
-                let standing = await connection.promise().query('select * from reputations_tiers rt where value <= ? order by value desc limit 1', [thisReputation.characterStanding]); //`**${thisReputation.name}** (${thisReputation.description}) (${standing[0][0].threshold_name})\n`
-                //let next_standing = await connection.promise().query('select * from reputations_tiers rt where value > ? order by value asc limit 1', [thisReputation.characterStanding]);
-                //eventually use these three numbers to do "0/12000" or whatever
-
                 for (const thisReputation of character_reputations[0]) {
                     maxId = (maxId ? Math.max(maxId, thisReputation.id) : thisReputation.id);
                     minId = (minId ? Math.min(minId, thisReputation.id) : thisReputation.id);
                     if (sort == 'asc' && thisReputation.id >= reputation_id || sort == 'desc' && thisReputation.id <= reputation_id) {
                         if (process_test_msg) {
                             let standing = await connection.promise().query('select * from reputations_tiers rt where value <= ? order by value desc limit 1', [thisReputation.characterStanding]);
+                            //let next_standing = await connection.promise().query('select * from reputations_tiers rt where value > ? order by value asc limit 1', [thisReputation.characterStanding]);
+                            //eventually use these three numbers to do "0/12000" or whatever
                             let test_msg;
                             if (sort == 'desc') {
                                 test_msg = (`**${thisReputation.name}** (${thisReputation.description}) (${standing[0][0].threshold_name})\n`).concat(msg);
