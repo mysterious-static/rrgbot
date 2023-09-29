@@ -5244,6 +5244,7 @@ client.on('interactionCreate', async (interaction) => {
             let minId = false;
             let msgStart = `__Reputations__\n`;
             if (character_reputations[0].length > 0) {
+                let process_test_msg = true;
                 for (const thisReputation of character_reputations[0]) {
                     maxId = (maxId ? Math.max(maxId, thisReputation.id) : thisReputation.id);
                     minId = (minId ? Math.min(minId, thisReputation.id) : thisReputation.id);
