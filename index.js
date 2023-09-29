@@ -746,7 +746,10 @@ var character = new SlashCommandBuilder().setName('character')
     .addSubcommand(subcommand =>
         subcommand.setName('unassign')
             .setDescription('Unassign a character from a player.')
-    )
+            .addUserOption(option =>
+                option.setName('user')
+                    .setDescription('The user with an active player entry.')
+                    .setRequired(true)))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 // Characters Per Player (switching system // bot echoes) - TODO
