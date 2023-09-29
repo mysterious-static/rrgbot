@@ -2658,7 +2658,7 @@ client.on('interactionCreate', async (interaction) => {
                 interaction.reply({ content: 'You haven\'t created any characters yet. Try creating a character first.', ephemeral: true });
             }
         } else if (interaction.commandName == 'modsheet') {
-            let characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
+            var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
             if (characters[0].length > 0) {
                 var charactersAlphabetical;
                 var characterSelectComponent;
