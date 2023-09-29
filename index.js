@@ -111,75 +111,91 @@ async function process_effect(character, effect, source, guildId, target = null)
         }
         switch (effect.type) {
             case 'item':
-                var item_exists = await connection.promise().query('select * from characters_items where character_id = ? and item_id = ?', [character.id, effect.type_id]);
-                if (item_exists[0].length == 1) {
-                    await connection.promise().query('update characters_items set quantity = quantity + ? where character_id = ? and item_id = ?', [effect.type_qty, character.id, effect.type_id]);
-                } else {
-                    await connection.promise().query('insert into characters_items (character_id, item_id, quantity) values (?, ?, ?)', [character.id, effect.type_id, effect.type_qty]);
-                }
-                var item = await connection.promise().query('select * from items where id = ?', effect.type_id);
-                if (effect.type_qty > 0) {
-                    adjusted = 'awarded';
-                } else {
-                    adjusted = 'removed';
-                }
-                message += ` ${adjusted} ${item[0][0].name} x${Math.abs(effect.type_qty)} to ${character.name}`;
-                break;
-            case 'wflag_inc':
-                await connection.promise().query('update worldflags set value = value + ? where id = ?', [effect.type_qty, effect.type_id]);
-                var wflag = await connection.promise().query('select * from worldflags where id = ?', effect.type_id);
-                message += ` ${adjusted} the *${wflag[0][0].name}* world flag by ${Math.abs(effect.type_qty)}`;
-                break;
-            case 'wflag_set':
-                await connection.promise().query('update worldflags set value = ? where id = ?', [effect.type_qty, effect.type_id]);
-                var wflag = await connection.promise().query('select * from worldflags where id = ?', effect.type_id);
-                message += ` set the *${wflag[0][0].name}* world flag to ${effect.type_qty}`;
-                break;
-            case 'cflag_inc':
-                var cflag_exists = await connection.promise().query('select * from characters_characterflags where character_id = ? and characterflag_id = ?', [character.id, effect.type_id]);
-                if (cflag_exists[0].length == 1) {
-                    await connection.promise().query('update characters_characterflags set value = value + ? where character_id = ? and characterflag_id = ?', [effect.type_qty, character.id, effect.type_id]);
-                } else {
-                    await connection.promise().query('insert into characters_characterflags (value, character_id, characterflag_id) values (?, ?, ?)', [effect.type_qty, character.id, effect.type_id]);
-                }
-                var cflag = await connection.promise().query('select * from characterflags where id = ?', effect.type_id);
-                message += ` ${adjusted} ${character.name}'s *${cflag[0][0].name}* character flag by ${Math.abs(effect.type_qty)}`;
-                break;
-            case 'cflag_set':
-                await connection.promise().query('replace into characters_characterflags (value, character_id, characterflag_id) values (?, ?, ?)', [effect.type_qty, character.id, effect.type_id]);
-                var cflag = await connection.promise().query('select * from characterflags where id = ?', effect.type_id);
-                message += ` set ${character.name}'s *${cflag[0][0].name}* character flag to ${effect.type_qty}`;
-                break;
-            case 'skill':
-                await connection.promise().query('insert ignore into skills_characters (character_id, skill_id) values (?, ?)', [character.id, effect.type_id]);
-                var skill = await connection.promise().query('select * from skills where id = ?', effect.type_id);
-                message += ` added *${skill[0][0].name}* to ${character.name}`;
-                break;
-            case 'archetype':
-                await connection.promise().query('insert ignore into characters_archetypes (character_id, archetype_id) values (?, ?)', [character.id, effect.type_id]);
-                var archetype = await connection.promise().query('select * from archetypes where id = ?', effect.type_id);
-                message += ` gave ${character.name} the *${archetype[0][0].name}* archetype`;
-                break;
-            case 'reputation_inc':
-                var old_value;
-                var reputation_exists = await connection.promise().query('select * from characters_reputations where character_id = ? and reputation_id = ?', [character.id, effect.type_id]);
-                if (reputation_exists[0].length == 1) {
-                    await connection.promise().query('update characters_reputations set max_value = greatest(max_value, (value + ?)), value = value + ?  where character_id = ? and reputation_id = ?', [effect.type_qty, effect.type_qty, character.id, effect.type_id]);
-                    old_value = reputation_exists[0][0].max_value;
-                } else {
-                    await connection.promise().query('insert into characters_reputations (character_id, reputation_id, value) values (?, ?, ?)', [character.id, effect.type_id, effect.type_qty]);
-                    old_value = 0;
-                }
-                var reputation = await connection.promise().query('select * from reputations where id = ?', effect.type_id);
-                message += ` ${adjusted} ${character.name}'s standing with *${reputation[0][0].name}* by ${Math.abs(effect.type_qty)}`;
-                var effects = await connection.promise().query('select e.* from effects e join reputations_tiers_effects rte on e.id = rte.effect_id join reputations_tiers rt on rt.id = rte.reputationtier_id where rt.value > ? and rt.value <= ? and rt.reputation_id = ?', [old_value, old_value + effect.type_qty, effect.type_id]);
-                if (effects[0].length > 0) {
-                    for (const thisEffect of effects[0]) {
-                        await process_effect(character, thisEffect, 'reputationtier', guildId);
+                {
+                    var item_exists = await connection.promise().query('select * from characters_items where character_id = ? and item_id = ?', [character.id, effect.type_id]);
+                    if (item_exists[0].length == 1) {
+                        await connection.promise().query('update characters_items set quantity = quantity + ? where character_id = ? and item_id = ?', [effect.type_qty, character.id, effect.type_id]);
+                    } else {
+                        await connection.promise().query('insert into characters_items (character_id, item_id, quantity) values (?, ?, ?)', [character.id, effect.type_id, effect.type_qty]);
                     }
+                    var item = await connection.promise().query('select * from items where id = ?', effect.type_id);
+                    if (effect.type_qty > 0) {
+                        adjusted = 'awarded';
+                    } else {
+                        adjusted = 'removed';
+                    }
+                    message += ` ${adjusted} ${item[0][0].name} x${Math.abs(effect.type_qty)} to ${character.name}`;
+                    break;
                 }
-                break;
-            case 'reputation_set':
+            case 'wflag_inc':
+                {
+                    await connection.promise().query('update worldflags set value = value + ? where id = ?', [effect.type_qty, effect.type_id]);
+                    var wflag = await connection.promise().query('select * from worldflags where id = ?', effect.type_id);
+                    message += ` ${adjusted} the *${wflag[0][0].name}* world flag by ${Math.abs(effect.type_qty)}`;
+                    break;
+                }
+            case 'wflag_set':
+                {
+                    await connection.promise().query('update worldflags set value = ? where id = ?', [effect.type_qty, effect.type_id]);
+                    var wflag = await connection.promise().query('select * from worldflags where id = ?', effect.type_id);
+                    message += ` set the *${wflag[0][0].name}* world flag to ${effect.type_qty}`;
+                    break;
+                }
+            case 'cflag_inc':
+                {
+                    var cflag_exists = await connection.promise().query('select * from characters_characterflags where character_id = ? and characterflag_id = ?', [character.id, effect.type_id]);
+                    if (cflag_exists[0].length == 1) {
+                        await connection.promise().query('update characters_characterflags set value = value + ? where character_id = ? and characterflag_id = ?', [effect.type_qty, character.id, effect.type_id]);
+                    } else {
+                        await connection.promise().query('insert into characters_characterflags (value, character_id, characterflag_id) values (?, ?, ?)', [effect.type_qty, character.id, effect.type_id]);
+                    }
+                    var cflag = await connection.promise().query('select * from characterflags where id = ?', effect.type_id);
+                    message += ` ${adjusted} ${character.name}'s *${cflag[0][0].name}* character flag by ${Math.abs(effect.type_qty)}`;
+                    break;
+                }
+            case 'cflag_set':
+                {
+                    await connection.promise().query('replace into characters_characterflags (value, character_id, characterflag_id) values (?, ?, ?)', [effect.type_qty, character.id, effect.type_id]);
+                    var cflag = await connection.promise().query('select * from characterflags where id = ?', effect.type_id);
+                    message += ` set ${character.name}'s *${cflag[0][0].name}* character flag to ${effect.type_qty}`;
+                    break;
+                }
+            case 'skill':
+                {
+                    await connection.promise().query('insert ignore into skills_characters (character_id, skill_id) values (?, ?)', [character.id, effect.type_id]);
+                    var skill = await connection.promise().query('select * from skills where id = ?', effect.type_id);
+                    message += ` added *${skill[0][0].name}* to ${character.name}`;
+                    break;
+                }
+            case 'archetype':
+                {
+                    await connection.promise().query('insert ignore into characters_archetypes (character_id, archetype_id) values (?, ?)', [character.id, effect.type_id]);
+                    var archetype = await connection.promise().query('select * from archetypes where id = ?', effect.type_id);
+                    message += ` gave ${character.name} the *${archetype[0][0].name}* archetype`;
+                    break;
+                }
+            case 'reputation_inc':
+                {
+                    var old_value;
+                    var reputation_exists = await connection.promise().query('select * from characters_reputations where character_id = ? and reputation_id = ?', [character.id, effect.type_id]);
+                    if (reputation_exists[0].length == 1) {
+                        await connection.promise().query('update characters_reputations set max_value = greatest(max_value, (value + ?)), value = value + ?  where character_id = ? and reputation_id = ?', [effect.type_qty, effect.type_qty, character.id, effect.type_id]);
+                        old_value = reputation_exists[0][0].max_value;
+                    } else {
+                        await connection.promise().query('insert into characters_reputations (character_id, reputation_id, value) values (?, ?, ?)', [character.id, effect.type_id, effect.type_qty]);
+                        old_value = 0;
+                    }
+                    var reputation = await connection.promise().query('select * from reputations where id = ?', effect.type_id);
+                    message += ` ${adjusted} ${character.name}'s standing with *${reputation[0][0].name}* by ${Math.abs(effect.type_qty)}`;
+                    var effects = await connection.promise().query('select e.* from effects e join reputations_tiers_effects rte on e.id = rte.effect_id join reputations_tiers rt on rt.id = rte.reputationtier_id where rt.value > ? and rt.value <= ? and rt.reputation_id = ?', [old_value, old_value + effect.type_qty, effect.type_id]);
+                    if (effects[0].length > 0) {
+                        for (const thisEffect of effects[0]) {
+                            await process_effect(character, thisEffect, 'reputationtier', guildId);
+                        }
+                    }
+                    break;
+                }
+            case 'reputation_set': {
                 var old_value;
                 var reputation_exists = await connection.promise().query('select * from characters_reputations where character_id = ? and reputation_id = ?', [character.id, effect.type_id]);
                 if (reputation_exists[0].length == 1) {
@@ -197,6 +213,7 @@ async function process_effect(character, effect, source, guildId, target = null)
                     }
                 }
                 break;
+            }
             case 'stat_inc':
                 var stat_exists = await connection.promise().query('select * from characters_stats where character_id = ? and stat_id = ?', [character.id, effect.type_id]);
                 if (stat_exists[0].length == 1) {
@@ -3598,10 +3615,10 @@ client.on('interactionCreate', async (interaction) => {
             let parrot_text = interaction.options.getString('message');
             let character = false;
             if (interaction.options.getString('character')) {
-                let character = interaction.options.getString('character');
+                character = interaction.options.getString('character');
             }
+            let characters;
             if (interaction.member.permissions.has('ADMINISTRATOR')) {
-                let characters;
                 if (character) {
                     characters = await connection.promise().query('select * from characters where guild_id = ? and name like ?', [interaction.guildId, '%' + character + '%']);
                 } else {
