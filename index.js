@@ -3246,7 +3246,7 @@ client.on('interactionCreate', async (interaction) => {
                                 const reputationSelectRow = new ActionRowBuilder().addComponents(reputationSelectComponent);
                                 await interaction_second.update({ content: 'Please select the following options:', components: [reputationSelectRow], ephemeral: true });
                             } else if (type == 'skill') {
-                                let skills = await connection.promise().query('select s.* from skills s inner join skills_effects se on s.id = se.skill_id where guild_id = ?', [interaction.guildId]);
+                                let skills = await connection.promise().query('select distinct s.* from skills s inner join skills_effects se on s.id = se.skill_id where guild_id = ?', [interaction.guildId]);
                                 let skillsAlphabetical;
                                 let skillSelectComponent;
                                 if (skills[0].length > 0) {
