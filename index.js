@@ -2,8 +2,8 @@
 const Discord = require('discord.js');
 const { Permissions, ChannelType, ModalBuilder, TextInputBuilder, ActionRowBuilder, ButtonBuilder, EmbedBuilder, TextInputComponent, StringSelectMenuBuilder, RoleSelectMenuBuilder, TextInputStyle, Modal, PermissionFlagsBits, PermissionsBitField, GatewayIntentBits, SlashCommandBuilder, ButtonStyle } = require('discord.js')
 const client = new Discord.Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildWebhooks, GatewayIntentBits.GuildMessageReactions, GatewayIntentBits.GuildEmojisAndStickers, GatewayIntentBits.GuildMembers] });
-var mysql = require('mysql2');
-var connection = mysql.createConnection({
+const mysql = require('mysql2');
+const connection = mysql.createConnection({
     host: process.env.db_host,
     user: process.env.db_user,
     password: process.env.db_pass,
