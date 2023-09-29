@@ -1881,7 +1881,6 @@ client.on('interactionCreate', async (interaction) => {
                                         await interaction_second.update({ content: 'Please select the following options:', components: [skillSelectRow, secondSelectRow] });
                                     } else if (skillSelected && (charactersSelected || archetypesSelected)) {
                                         if (charactersSelected) {
-                                            console.log(charactersSelected);
                                             for (const character_id of charactersSelected) {
                                                 await connection.promise().query('insert ignore into skills_characters (character_id, skill_id) values (?, ?)', [character_id, skillSelected]);
                                             }
@@ -1901,7 +1900,6 @@ client.on('interactionCreate', async (interaction) => {
                             }
                         });
                         collector.on('end', async (collected) => {
-                            console.log(collected);
                             // How do we clean the message up?
                         });
                     } else {
