@@ -1,6 +1,6 @@
 /*jslint es6*/
 const Discord = require('discord.js');
-const { Permissions, ChannelType, ModalBuilder, TextInputBuilder, ActionRowBuilder, ButtonBuilder, EmbedBuilder, TextInputComponent, StringSelectMenuBuilder, RoleSelectMenuBuilder, TextInputStyle, Modal, PermissionFlagsBits, PermissionsBitField, GatewayIntentBits, SlashCommandBuilder, ButtonStyle } = require('discord.js')
+const { ChannelType, ModalBuilder, TextInputBuilder, ActionRowBuilder, ButtonBuilder, EmbedBuilder, TextInputComponent, StringSelectMenuBuilder, RoleSelectMenuBuilder, TextInputStyle, PermissionFlagsBits, PermissionsBitField, GatewayIntentBits, SlashCommandBuilder, ButtonStyle } = require('discord.js')
 const client = new Discord.Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildWebhooks, GatewayIntentBits.GuildMessageReactions, GatewayIntentBits.GuildEmojisAndStickers, GatewayIntentBits.GuildMembers] });
 const mysql = require('mysql2');
 const connection = mysql.createConnection({
@@ -1328,10 +1328,8 @@ client.on('interactionCreate', async (interaction) => {
                     characters = await connection.promise().query('select c.* from players p join players_characters pc on p.id = pc.player_id join charactesr c on pc.character_id = c.id where p.user_id = ? and p.guild_id = ?', [interaction.user.id, interaction.guildId]);
                 }
                 if (characters[0].length > 0) {
-                    let charactersAlphabetical;
                     let characterSelectComponent;
                     if (characters[0].length <= 25) {
-                        charactersAlphabetical = false;
                         let charactersKeyValues = [];
                         for (const character of characters[0]) {
                             let thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
@@ -1339,7 +1337,6 @@ client.on('interactionCreate', async (interaction) => {
                         }
                         characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharAvCharacterSelector').setMinValues(1).setMaxValues(1);
                     } else {
-                        charactersAlphabetical = true;
                         let characters = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
                         let charactersKeyValues = [];
                         for (const character of characters) {
@@ -1490,7 +1487,7 @@ client.on('interactionCreate', async (interaction) => {
                 collector.on('collect', async (interaction_second) => {
                     if (interaction_second.member.id == interaction.member.id) {
                         await connection.promise().query('update players_characters set active = 0 where player_id = ?; update players_characters set active = 1 where player_id = ? and character_id = ?', [player[0][0].id, player[0][0].id, interaction_second.values[0]]);
-                        interaction_second.update({ content: "Active character updated.", components: [] });
+                        await interaction_second.update({ content: "Active character updated.", components: [] });
                         collector.stop();
                     }
                 });
@@ -1809,18 +1806,15 @@ client.on('interactionCreate', async (interaction) => {
             } else if (interaction.options.getSubcommand() == 'assign') {
                 let to_character = interaction.options.getBoolean('to_character');
                 let skills = await connection.promise().query('select * from skills where guild_id = ?', [interaction.guildId]);
-                let skillsAlphabetical;
                 let skillSelectComponent;
                 if (skills[0].length > 0) {
                     if (skills[0].length <= 25) {
-                        skillsAlphabetical = false;
                         let skillsKeyValues = [{ label: 'Select a skill', value: '0' }];
                         for (const skill of skills[0]) {
                             skillsKeyValues.push({ label: skill.name, value: skill.id.toString() });
                         }
                         skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillAssignmentSkillSelector').setMinValues(1).setMaxValues(1);
                     } else {
-                        skillsAlphabetical = true;
                         let skills = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
                         let skillsKeyValues = [];
                         for (const skill of skills) {
@@ -1990,18 +1984,15 @@ client.on('interactionCreate', async (interaction) => {
                 }
             } else if (interaction.options.getSubcommand() == 'addeffect') {
                 let skills = await connection.promise().query('select * from skills where guild_id = ? and (other_targetable = 1 or self_targetable = 1)', [interaction.guildId]);
-                let skillsAlphabetical;
                 let skillSelectComponent;
                 if (skills[0].length > 0) {
                     if (skills[0].length <= 25) {
-                        skillsAlphabetical = false;
                         let skillsKeyValues = [];
                         for (const skill of skills[0]) {
                             skillsKeyValues.push({ label: skill.name, value: skill.id.toString() });
                         }
                         skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillEffectSkillSelector').setMinValues(1).setMaxValues(1);
                     } else {
-                        skillsAlphabetical = true;
                         let skills = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
                         let skillsKeyValues = [];
                         for (const skill of skills) {
@@ -2222,7 +2213,7 @@ client.on('interactionCreate', async (interaction) => {
                 await connection.promise().query('insert into items (name, description, guild_id, consumable, self_targetable, other_targetable) values (?, ?, ?, ?, ?, ?)', [name, description, interaction.guildId, consumable, self_targetable, other_targetable]);
                 interaction.reply({ content: 'Item added!', ephemeral: true });
             } else if (interaction.options.getSubcommand() == 'transfer') {
-                let quantity = interaction.options.getInteger('quantity');
+                let quantity = interaction.options.getInteger('quantity'); //implement in future state
                 let characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
                 if (characters[0].length > 0) {
                     let charactersKeyValues = [];
@@ -3255,7 +3246,6 @@ client.on('interactionCreate', async (interaction) => {
                 let message = await interaction.reply({ content: 'Please select the effect source:', components: [selectRow], ephemeral: true });
                 let collector = message.createMessageComponentCollector();
                 let prereq_type;
-                let prereq_id;
                 let logical_and_group;
                 let not = false;
                 let prereq_value;
@@ -3822,42 +3812,34 @@ client.on('interactionCreate', async (interaction) => {
                 if (interaction.options.getUser('challengee')) {
                     let challenged = interaction.options.getUser('challengee');
                     let queryData = [interaction.user.id, interaction.user.id, challenged.id, challenged.id];
-                    connection.query('select * from rps where (challenger = ? or challenged = ? or challenger = ? or challenged = ?) and (challenger_throw is null or challenged_throw is null);', queryData, function (err, res, fields) {
-                        if (err) {
-                            console.log(err);
-                        } else if (res.length > 0) {
-                            interaction.reply({ content: 'Sorry, it looks like either you or your target is already in a duel!', ephemeral: true });
-                        } else {
-                            queryData = [interaction.user.id, challenged.id, interaction.channel.id];
-                            connection.query('insert into rps (challenger, challenged, channel) values (?, ?, ?)', queryData, async function (err2, res2, fields2) {
-                                //Create buttons, tag both users.
-                                const rpsButtonR = new ButtonBuilder().setCustomId('rpsButtonR').setLabel('Rapid').setStyle('Primary'); // TODO ButtonBuilder doesn't exist in Discord.js v14
-                                const rpsButtonP = new ButtonBuilder().setCustomId('rpsButtonP').setLabel('Precision').setStyle('Primary');
-                                const rpsButtonS = new ButtonBuilder().setCustomId('rpsButtonS').setLabel('Sweeping').setStyle('Primary');
-                                const rpsRow = new ActionRowBuilder().addComponents(rpsButtonR, rpsButtonP, rpsButtonS);
-                                await interaction.reply({ content: '<@' + interaction.user.id + '> has challenged <@' + challenged.id + '> to a duel!', components: [rpsRow] });
-                            });
-                        }
-                    });
-                    //also make sure they're on the same Age.
+                    var rps = await connection.promise().query('select * from rps where (challenger = ? or challenged = ? or challenger = ? or challenged = ?) and (challenger_throw is null or challenged_throw is null);', queryData);
+                    if (rps[0].length > 0) {
+                        interaction.reply({ content: 'Sorry, it looks like either you or your target is already in a duel!', ephemeral: true });
+                    } else {
+                        queryData = [interaction.user.id, challenged.id, interaction.channel.id];
+                        await connection.promise().query('insert into rps (challenger, challenged, channel) values (?, ?, ?)', queryData);
+                        //Create buttons, tag both users.
+                        const rpsButtonR = new ButtonBuilder().setCustomId('rpsButtonR').setLabel('Rapid').setStyle('Primary');
+                        const rpsButtonP = new ButtonBuilder().setCustomId('rpsButtonP').setLabel('Precision').setStyle('Primary');
+                        const rpsButtonS = new ButtonBuilder().setCustomId('rpsButtonS').setLabel('Sweeping').setStyle('Primary');
+                        const rpsRow = new ActionRowBuilder().addComponents(rpsButtonR, rpsButtonP, rpsButtonS);
+                        await interaction.reply({ content: '<@' + interaction.user.id + '> has challenged <@' + challenged.id + '> to a duel!', components: [rpsRow] });
+                    }
+                    //also make sure they're on the same location maybe?
                 } else {
                     let queryData = [interaction.user.id, interaction.user.id];
-                    connection.query('select * from rps where (challenger = ? or challenged = ?) and (challenger_throw is null or challenged_throw is null)', queryData, function (err, res, fields) {
-                        if (err) {
-                            console.log(err);
-                        } else if (res.length > 0) {
-                            interaction.reply({ content: 'Sorry, it looks like you\'re already in a duel!', ephemeral: true });
-                        } else {
-                            queryData = [interaction.user.id, client.user.id, interaction.channel.id];
-                            connection.query('insert into rps (challenger, challenged, channel) values (?, ?, ?)', queryData, async function (err2, res2, fields2) {
-                                const rpsButtonR = new ButtonBuilder().setCustomId('rpsButtonR').setLabel('Rapid').setStyle('Primary');
-                                const rpsButtonP = new ButtonBuilder().setCustomId('rpsButtonP').setLabel('Precision').setStyle('Primary');
-                                const rpsButtonS = new ButtonBuilder().setCustomId('rpsButtonS').setLabel('Sweeping').setStyle('Primary');
-                                const rpsRow = new ActionRowBuilder().addComponents(rpsButtonR, rpsButtonP, rpsButtonS);
-                                await interaction.reply({ content: '<@' + interaction.user + '> has challenged me to a duel!', components: [rpsRow] });
-                            });
-                        }
-                    });
+                    var rps = await connection.promise().query('select * from rps where (challenger = ? or challenged = ?) and (challenger_throw is null or challenged_throw is null)', queryData);
+                    if (rps[0].length > 0) {
+                        interaction.reply({ content: 'Sorry, it looks like you\'re already in a duel!', ephemeral: true });
+                    } else {
+                        queryData = [interaction.user.id, client.user.id, interaction.channel.id];
+                        await connection.promise().query('insert into rps (challenger, challenged, channel) values (?, ?, ?)', queryData);
+                        const rpsButtonR = new ButtonBuilder().setCustomId('rpsButtonR').setLabel('Rapid').setStyle('Primary');
+                        const rpsButtonP = new ButtonBuilder().setCustomId('rpsButtonP').setLabel('Precision').setStyle('Primary');
+                        const rpsButtonS = new ButtonBuilder().setCustomId('rpsButtonS').setLabel('Sweeping').setStyle('Primary');
+                        const rpsRow = new ActionRowBuilder().addComponents(rpsButtonR, rpsButtonP, rpsButtonS);
+                        await interaction.reply({ content: '<@' + interaction.user + '> has challenged me to a duel!', components: [rpsRow] });
+                    }
                 }
             } else if (interaction.commandName == 'rpsmulti') {
                 let current_character = await connection.promise().query('select pc.character_id, c.name from players_characters pc join players p on p.id = pc.player_id join characters c on c.id = pc.character_id where p.user_id = ? and p.guild_id = ? and pc.active = 1', [interaction.user.id, interaction.guildId]);
