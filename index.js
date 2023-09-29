@@ -372,19 +372,6 @@ var restrictmovement = new SlashCommandBuilder().setName('restrictmovement')
             .setRequired(true)
     ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
-
-var characteravatar = new SlashCommandBuilder().setName('characteravatar')
-    .setDescription('Set a character avatar URL.')
-    .addStringOption(option =>
-        option.setName('avatar_url')
-            .setDescription('The URL to the character avatar, must be accessible by the bot')
-            .setRequired(true))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-var characterlocation = new SlashCommandBuilder().setName('characterlocation')
-    .setDescription('Move a character to a specific location.')
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
 var addcharacterarchetype = new SlashCommandBuilder().setName('addcharacterarchetype')
     .setDescription('Add a character-assignable archetype (think "class"). Characters can have multiple archetypes.')
     .addStringOption(option =>
@@ -748,6 +735,16 @@ var character = new SlashCommandBuilder().setName('character')
             .addStringOption(option =>
                 option.setName('avatar_url')
                     .setDescription('The URL to the character avatar, must be accessible by the bot')))
+    .addSubcommand(subcommand =>
+        subcommand.setName('avatar')
+            .setDescription('Set a character avatar URL.')
+            .addStringOption(option =>
+                option.setName('avatar_url')
+                    .setDescription('The URL to the character avatar, must be accessible by the bot')
+                    .setRequired(true)))
+    .addSubcommand(subcommand =>
+        subcommand.setName('move')
+            .setDescription('Move a character to a specific location.'))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 // Characters Per Player (switching system // bot echoes) - TODO
@@ -906,11 +903,9 @@ client.on('ready', async () => {
         resetlocationvis.toJSON(),
         restrictmovement.toJSON(),
         player.toJSON(),
-        characterlocation.toJSON(),
         rps.toJSON(),
         move.toJSON(),
         sheet.toJSON(),
-        characteravatar.toJSON(),
         addcharacterarchetype.toJSON(),
         assignarchetype.toJSON(),
         stat.toJSON(),
@@ -1241,155 +1236,9 @@ client.on('interactionCreate', async (interaction) => {
         } else if (interaction.commandName == 'characterlocation') {
             // Two dropdowns! Ah, ah, ah!
 
-            var locations = await connection.promise().query('select * from movement_locations where guild_id = ?', [interaction.guildId]);
-            if (locations[0].length > 0) {
-                var locationsKeyValues = [{ label: 'Select a location', value: '0' }];
-                for (const location of locations[0]) {
-                    var thisLocationKeyValue = { label: location.friendly_name, value: location.id.toString() };
-                    locationsKeyValues.push(thisLocationKeyValue);
-                }
-                const locationSelectComponent = new StringSelectMenuBuilder().setOptions(locationsKeyValues).setCustomId('LocationMovementSelector').setMinValues(1).setMaxValues(1);
-                var locationSelectRow = new ActionRowBuilder().addComponents(locationSelectComponent);
-                var characters = await connection.promise().query('select distinct c.* from characters c join players_characters pc on pc.character_id = c.id join players p on pc.player_id = p.id where p.guild_id = ? and pc.active = 1', [interaction.guildId]);
-                if (characters[0].length > 0) {
-                    var charactersKeyValues = [{ label: 'Select a character', value: '0' }];
-                    for (const character of characters[0]) {
-                        var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
-                        charactersKeyValues.push(thisCharacterKeyValue);
-                    }
-                    const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterMovementSelector').setMinValues(1).setMaxValues(1);
-                    var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                    var message = await interaction.reply({ content: '', components: [locationSelectRow, characterSelectRow], ephemeral: true });
-                    const collector = message.createMessageComponentCollector({ time: 35000 });
-                    var locationSelected;
-                    var characterSelected;
-                    collector.on('collect', async (interaction_second) => {
-                        if (interaction_second.values[0]) {
-                            if (interaction_second.customId == 'LocationMovementSelector') {
-                                locationSelected = interaction_second.values[0];
-                            } else {
-                                characterSelected = interaction_second.values[0];
-                            }
-                            if (locationSelected && characterSelected) {
-                                var character = await connection.promise().query('select c.*, p.user_id from characters c join players_characters pc on c.id = pc.character_id join players p on p.id = pc.player_id where c.id = ? ', [characterSelected]);
-                                var locations = await connection.promise().query('select * from movement_locations where id in (?, ?)', [character[0][0].location_id, locationSelected]);
-                                await connection.promise().query('update characters set location_id = ? where id = ?', [locationSelected, characterSelected]);
-                                var new_announcements;
-                                var new_name;
-                                var old_announcements;
-                                var old_name;
-                                var character_name = character[0][0].name;
-                                var user = await client.users.fetch(character[0][0].user_id);
-                                for (const location of locations[0]) {
-                                    var channel = await client.channels.cache.get(location.channel_id);
-                                    if (location.id == locationSelected) {
-                                        await channel.permissionOverwrites.edit(user, { ViewChannel: true, SendMessages: true });
-                                        if (location.announcements_channel) {
-                                            new_announcements = await client.channels.cache.get(location.announcements_channel);
-                                            new_name = location.friendly_name;
-                                        }
-                                    } else {
-                                        if (location.global_read == 0) {
-                                            await channel.permissionOverwrites.edit(user, { ViewChannel: false });
-                                        }
-                                        if (location.global_write == 0) {
-                                            await channel.permissionOverwrites.edit(user, { SendMessages: false });
-                                        }
-                                        if (location.announcements_channel) {
-                                            old_announcements = await client.channels.cache.get(location.announcements_channel);
-                                            old_name = location.friendly_name;
-                                        }
-                                    }
-                                }
-                                if (old_announcements && new_name) {
-                                    await old_announcements.send('*' + character_name + ' moves to ' + new_name + '.*');
-                                } else if (old_announcements) {
-                                    await old_announcements.send('*' + character_name + ' leaves for parts unknown.*');
-                                }
-                                if (new_announcements && old_name) {
-                                    await new_announcements.send('*' + character_name + ' arrives from ' + old_name + '.*');
-                                } else if (new_announcements) {
-                                    await new_announcements.send('*' + character_name + ' arrives!*');
-                                }
-                                await interaction_second.update({ content: 'Successfully moved character.', components: [] });
-                                await collector.stop();
-                            } else {
-                                await interaction_second.deferUpdate();
-                            }
-                        } else {
-                            await interaction_second.deferUpdate();
-                        }
-                    });
-                    collector.on('end', async (collected) => {
-                        // How do we clean the message up?
-                    });
-                } else {
-                    interaction.reply({ content: 'You haven\'t created any characters yet. Try creating a character first.', ephemeral: true });
-                }
-            } else {
-                interaction.reply({ content: 'You haven\'t created any locations yet. Try creating a location first.', ephemeral: true });
-            }
-        } else if (interaction.commandName == 'characteravatar') {
-            if (interaction.member.permissions.has('ADMINISTRATOR')) {
-                var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
-            } else {
-                var characters = await connection.promise().query('select c.* from players p join players_characters pc on p.id = pc.player_id join charactesr c on pc.character_id = c.id where p.user_id = ? and p.guild_id = ?', [interaction.user.id, interaction.guildId]);
-                // Check players_characters table for available characters
-            }
-            if (characters[0].length > 0) {
-                var charactersAlphabetical;
-                var characterSelectComponent;
-                if (characters[0].length <= 25) {
-                    charactersAlphabetical = false;
-                    var charactersKeyValues = [{ label: 'Select a character', value: '0' }];
-                    for (const character of characters[0]) {
-                        var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
-                        charactersKeyValues.push(thisCharacterKeyValue);
-                    }
-                    characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharAvCharacterSelector').setMinValues(1).setMaxValues(1);
-                } else {
-                    charactersAlphabetical = true;
-                    var characters = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
-                    var charactersKeyValues = [];
-                    for (const character of characters) {
-                        var thisCharacterKeyValue = { label: character, value: character }
-                        charactersKeyValues.push(thisCharacterKeyValue);
-                    }
-                    characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharAvAlphabetSelector').setMinValues(1).setMaxValues(1);
-                }
 
-                var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                var message = await interaction.reply({ content: 'Please select the following options:', components: [characterSelectRow], ephemeral: true });
-                var collector = message.createMessageComponentCollector();
-                collector.on('collect', async (interaction_second) => {
-                    var characterSelected = interaction_second.values[0];
-                    if (interaction_second.customId == 'CharAvAlphabetSelector') {
-                        if (interaction.member.permissions.has('ADMINISTRATOR')) {
-                            var characters = await connection.promise().query('select * from characters where guild_id = ? and upper(character_name) like "?%"', [interaction.guildId, characterSelected]);
-                        } else {
-                            var characters = await connection.promise().query('select c.* from players p join players_characters pc on p.id = pc.player_id join charactesr c on pc.character_id = c.id where p.user_id = ? and p.guild_id = ? and upper(c.character_name) like "?%"', [interaction.user.id, interaction.guildId, characterSelected]);
-                        }
-                        if (characters[0].length > 0) {
-                            var charactersKeyValues = [{ label: 'Select a character', value: '0' }];
-                            for (const character of characters[0]) {
-                                var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
-                                charactersKeyValues.push(thisCharacterKeyValue);
-                            }
-                            var characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharAvCharacterSelector').setMinValues(1).setMaxValues(1);
-                            var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                            interaction.update({ components: [characterSelectRow] });
-                        } else {
-                            interaction.update({ content: 'No characters with this first letter', components: [] });
-                        }
-                    } else {
-                        var character_information = await connection.promise().query('select * from characters where id = ?', [characterSelected]);
-                        await connection.promise().query('update characters set avatar_url = ? where id = ?', [interaction.options.getString('avatar_url'), character_information[0][0].id]);
-                        await interaction.editReply({ content: 'Character avatar url updated.', components: [] });
-                    }
-                });
-            } else {
-                interaction.reply({ content: 'no characters found!', ephemeral: true });
-            }
+        } else if (interaction.commandName == 'characteravatar') {
+
         } else if (interaction.commandName == 'character') {
             if (interaction.options.getSubcommand() === 'unassign') {
                 var user = interaction.options.getUser('user');
@@ -1473,6 +1322,162 @@ client.on('interactionCreate', async (interaction) => {
                     interaction.reply({ content: 'Created character!', ephemeral: true })
                 } else {
                     interaction.reply({ content: 'A character with this name for this game already exists.', ephemeral: true });
+                }
+            } else if (interaction.options.getSubcommand() === 'avatar') {
+                if (interaction.member.permissions.has('ADMINISTRATOR')) {
+                    var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
+                } else {
+                    var characters = await connection.promise().query('select c.* from players p join players_characters pc on p.id = pc.player_id join charactesr c on pc.character_id = c.id where p.user_id = ? and p.guild_id = ?', [interaction.user.id, interaction.guildId]);
+                    // Check players_characters table for available characters
+                }
+                if (characters[0].length > 0) {
+                    var charactersAlphabetical;
+                    var characterSelectComponent;
+                    if (characters[0].length <= 25) {
+                        charactersAlphabetical = false;
+                        var charactersKeyValues = [{ label: 'Select a character', value: '0' }];
+                        for (const character of characters[0]) {
+                            var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
+                            charactersKeyValues.push(thisCharacterKeyValue);
+                        }
+                        characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharAvCharacterSelector').setMinValues(1).setMaxValues(1);
+                    } else {
+                        charactersAlphabetical = true;
+                        var characters = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
+                        var charactersKeyValues = [];
+                        for (const character of characters) {
+                            var thisCharacterKeyValue = { label: character, value: character }
+                            charactersKeyValues.push(thisCharacterKeyValue);
+                        }
+                        characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharAvAlphabetSelector').setMinValues(1).setMaxValues(1);
+                    }
+
+                    var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                    var message = await interaction.reply({ content: 'Please select the following options:', components: [characterSelectRow], ephemeral: true });
+                    var collector = message.createMessageComponentCollector();
+                    collector.on('collect', async (interaction_second) => {
+                        if (interaction.member.id === interaction_second.member.id) {
+                            var characterSelected = interaction_second.values[0];
+                            if (interaction_second.customId == 'CharAvAlphabetSelector') {
+                                if (interaction.member.permissions.has('ADMINISTRATOR')) {
+                                    var characters = await connection.promise().query('select * from characters where guild_id = ? and upper(character_name) like "?%"', [interaction.guildId, characterSelected]);
+                                } else {
+                                    var characters = await connection.promise().query('select c.* from players p join players_characters pc on p.id = pc.player_id join charactesr c on pc.character_id = c.id where p.user_id = ? and p.guild_id = ? and upper(c.character_name) like "?%"', [interaction.user.id, interaction.guildId, characterSelected]);
+                                }
+                                if (characters[0].length > 0) {
+                                    var charactersKeyValues = [{ label: 'Select a character', value: '0' }];
+                                    for (const character of characters[0]) {
+                                        var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
+                                        charactersKeyValues.push(thisCharacterKeyValue);
+                                    }
+                                    var characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharAvCharacterSelector').setMinValues(1).setMaxValues(1);
+                                    var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                                    interaction.update({ components: [characterSelectRow] });
+                                } else {
+                                    interaction.update({ content: 'No characters with this first letter', components: [] });
+                                    await collector.stop();
+                                }
+                            } else {
+                                var character_information = await connection.promise().query('select * from characters where id = ?', [characterSelected]);
+                                await connection.promise().query('update characters set avatar_url = ? where id = ?', [interaction.options.getString('avatar_url'), character_information[0][0].id]);
+                                await interaction.editReply({ content: 'Character avatar url updated.', components: [] });
+                                await collector.stop();
+                            }
+                        }
+                    });
+                } else {
+                    interaction.reply({ content: 'no characters found!', ephemeral: true });
+                }
+            } else if (interaction.options.getSubcommand() === 'move') {
+                var locations = await connection.promise().query('select * from movement_locations where guild_id = ?', [interaction.guildId]);
+                if (locations[0].length > 0) {
+                    var locationsKeyValues = [{ label: 'Select a location', value: '0' }];
+                    for (const location of locations[0]) {
+                        var thisLocationKeyValue = { label: location.friendly_name, value: location.id.toString() };
+                        locationsKeyValues.push(thisLocationKeyValue);
+                    }
+                    const locationSelectComponent = new StringSelectMenuBuilder().setOptions(locationsKeyValues).setCustomId('LocationMovementSelector').setMinValues(1).setMaxValues(1);
+                    var locationSelectRow = new ActionRowBuilder().addComponents(locationSelectComponent);
+                    var characters = await connection.promise().query('select distinct c.* from characters c join players_characters pc on pc.character_id = c.id join players p on pc.player_id = p.id where p.guild_id = ? and pc.active = 1', [interaction.guildId]);
+                    if (characters[0].length > 0) {
+                        var charactersKeyValues = [{ label: 'Select a character', value: '0' }];
+                        for (const character of characters[0]) {
+                            var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
+                            charactersKeyValues.push(thisCharacterKeyValue);
+                        }
+                        const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterMovementSelector').setMinValues(1).setMaxValues(1);
+                        var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                        var message = await interaction.reply({ content: '', components: [locationSelectRow, characterSelectRow], ephemeral: true });
+                        const collector = message.createMessageComponentCollector({ time: 35000 });
+                        var locationSelected;
+                        var characterSelected;
+                        collector.on('collect', async (interaction_second) => {
+                            if (interaction_second.member.id === interaction.member.id) {
+                                if (interaction_second.values[0]) {
+                                    if (interaction_second.customId == 'LocationMovementSelector') {
+                                        locationSelected = interaction_second.values[0];
+                                    } else {
+                                        characterSelected = interaction_second.values[0];
+                                    }
+                                    if (locationSelected && characterSelected) {
+                                        var character = await connection.promise().query('select c.*, p.user_id from characters c join players_characters pc on c.id = pc.character_id join players p on p.id = pc.player_id where c.id = ? ', [characterSelected]);
+                                        var locations = await connection.promise().query('select * from movement_locations where id in (?, ?)', [character[0][0].location_id, locationSelected]);
+                                        await connection.promise().query('update characters set location_id = ? where id = ?', [locationSelected, characterSelected]);
+                                        var new_announcements;
+                                        var new_name;
+                                        var old_announcements;
+                                        var old_name;
+                                        var character_name = character[0][0].name;
+                                        var user = await client.users.fetch(character[0][0].user_id);
+                                        for (const location of locations[0]) {
+                                            var channel = await client.channels.cache.get(location.channel_id);
+                                            if (location.id == locationSelected) {
+                                                await channel.permissionOverwrites.edit(user, { ViewChannel: true, SendMessages: true });
+                                                if (location.announcements_channel) {
+                                                    new_announcements = await client.channels.cache.get(location.announcements_channel);
+                                                    new_name = location.friendly_name;
+                                                }
+                                            } else {
+                                                if (location.global_read == 0) {
+                                                    await channel.permissionOverwrites.edit(user, { ViewChannel: false });
+                                                }
+                                                if (location.global_write == 0) {
+                                                    await channel.permissionOverwrites.edit(user, { SendMessages: false });
+                                                }
+                                                if (location.announcements_channel) {
+                                                    old_announcements = await client.channels.cache.get(location.announcements_channel);
+                                                    old_name = location.friendly_name;
+                                                }
+                                            }
+                                        }
+                                        if (old_announcements && new_name) {
+                                            await old_announcements.send('*' + character_name + ' moves to ' + new_name + '.*');
+                                        } else if (old_announcements) {
+                                            await old_announcements.send('*' + character_name + ' leaves for parts unknown.*');
+                                        }
+                                        if (new_announcements && old_name) {
+                                            await new_announcements.send('*' + character_name + ' arrives from ' + old_name + '.*');
+                                        } else if (new_announcements) {
+                                            await new_announcements.send('*' + character_name + ' arrives!*');
+                                        }
+                                        await interaction_second.update({ content: 'Successfully moved character.', components: [] });
+                                        await collector.stop();
+                                    } else {
+                                        await interaction_second.deferUpdate();
+                                    }
+                                } else {
+                                    await interaction_second.deferUpdate();
+                                }
+                            }
+                        });
+                        collector.on('end', async (collected) => {
+                            // How do we clean the message up?
+                        });
+                    } else {
+                        interaction.reply({ content: 'You haven\'t created any characters yet. Try creating a character first.', ephemeral: true });
+                    }
+                } else {
+                    interaction.reply({ content: 'You haven\'t created any locations yet. Try creating a location first.', ephemeral: true });
                 }
             }
         } else if (interaction.commandName == 'active') {
