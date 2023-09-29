@@ -193,8 +193,7 @@ async function process_effect(character, effect, source, guildId, target = null)
                             await process_effect(character, thisEffect, 'reputationtier', guildId);
                         }
                     }
-                    break;
-                }
+                } break;
             case 'reputation_set': {
                 var old_value;
                 var reputation_exists = await connection.promise().query('select * from characters_reputations where character_id = ? and reputation_id = ?', [character.id, effect.type_id]);
