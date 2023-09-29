@@ -3305,7 +3305,7 @@ client.on('interactionCreate', async (interaction) => {
                             }
 
                         } else if (interaction_second.customId === 'PrereqSkillAlphaSelector') {
-                            let skills = await connection.promise().query('select s.* from skills s inner join skills_effects se on s.id = se.skill_id where guild_id = ? and name like ?', [interaction.guildId, interaction_second.values[0] + '%']);
+                            let skills = await connection.promise().query('select distinct s.* from skills s inner join skills_effects se on s.id = se.skill_id where guild_id = ? and name like ?', [interaction.guildId, interaction_second.values[0] + '%']);
                             let skillsKeyValues = [];
                             for (const skill of skills[0]) {
                                 let thisSkillKeyValue = { label: skill.name, value: skill.id.toString() };
