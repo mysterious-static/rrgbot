@@ -5171,7 +5171,7 @@ client.on('interactionCreate', async (interaction) => {
                 buttonActionRow.addComponents(new ButtonBuilder().setCustomId(`reputation-asc-${character_id}-1`).setLabel('Reputation').setStyle(ButtonStyle.Primary));
             }
             components.push(buttonActionRow);
-            await interaction.update({ content: msg, components: [components] });
+            await interaction.update({ content: msg, components: components });
         } else if (interaction.customId.startsWith('inventory-')) {
             let sort = interaction.customId.split('-')[1];
             let character_id = interaction.customId.split('-')[2];
@@ -5231,7 +5231,7 @@ client.on('interactionCreate', async (interaction) => {
                 buttonActionRow.addComponents(new ButtonBuilder().setCustomId(`reputation-asc-${character_id}-1`).setLabel('Reputation').setStyle(ButtonStyle.Primary));
             }
             components.push(buttonActionRow);
-            await interaction.update({ content: msg, components: [components] });
+            await interaction.update({ content: msg, components: components });
         } else if (interaction.customId.startsWith('reputation-')) {
             let sort = interaction.customId.split('-')[1];
             let character_id = interaction.customId.split('-')[2];
@@ -5290,7 +5290,7 @@ client.on('interactionCreate', async (interaction) => {
                     new ButtonBuilder().setCustomId(`inventory-asc-${character_id}-1`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
                 );
             components.push(buttonActionRow);
-            await interaction.update({ content: msg, components: [components] });
+            await interaction.update({ content: msg, components: components });
         }
     }
 
