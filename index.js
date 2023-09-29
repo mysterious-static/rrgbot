@@ -10,7 +10,8 @@ const connection = mysql.createConnection({
     database: process.env.db,
     supportBigNumbers: true,
     bigNumberStrings: true,
-    multipleStatements: true
+    multipleStatements: true,
+    debug: true
 });
 connection.connect();
 client.login(process.env.app_token);
