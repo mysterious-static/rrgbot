@@ -5179,7 +5179,7 @@ client.on('interactionCreate', async (interaction) => {
             await interaction.update({ content: msg, components: [buttonActionRow] });
         } else if (interaction.customId.startsWith('skills-')) {
             let character_id = interaction.customId.split('-')[1];
-            let skills = await connection.promise().query('select s.* from skills s left outer join skills_characters sc on s.id = sc.skill_id left outer join skills_archetypes sa on s.id = sa.skill_id left outer join characters_archetypes ca on sa.archetype_id = ca.archetype_id where sc.character_id = ? or ca.character_id = ? order by s.id asc', [character_id]);
+            let skills = await connection.promise().query('select s.* from skills s left outer join skills_characters sc on s.id = sc.skill_id left outer join skills_archetypes sa on s.id = sa.skill_id left outer join characters_archetypes ca on sa.archetype_id = ca.archetype_id where sc.character_id = ? or ca.character_id = ? order by s.id asc', [character_id, character_id]);
             let msg;
             if (skills[0].length > 0) {
                 // union character and archetype skills before continuing maybe? sort by id asc? 
