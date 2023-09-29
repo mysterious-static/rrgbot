@@ -5139,8 +5139,7 @@ client.on('interactionCreate', async (interaction) => {
             if (paginate) {
                 paginationActionRow = new ActionRowBuilder()
                     .addComponents(
-                        new ButtonBuilder().setCustomId(`skillpage-asc-${character_id}-${next_id}`).setLabel('▶️').setStyle(ButtonStyle.Primary),
-                        new ButtonBuilder().setCustomId(`skillpage-desc-${character_id}-${maxSkillId}`).setLabel('⏭️').setStyle(ButtonStyle.Primary)
+                        new ButtonBuilder().setCustomId(`skillpage-asc-${character_id}-${next_id}`).setLabel('▶️').setStyle(ButtonStyle.Primary)
                     );
             }
             const buttonActionRow = new ActionRowBuilder()
@@ -5213,9 +5212,6 @@ client.on('interactionCreate', async (interaction) => {
             let paginationActionRow = false;
             if (paginate) {
                 paginationActionRow = new ActionRowBuilder();
-                if (minSkillId < firstDisplayedId) {
-                    paginationActionRow.addComponents(new ButtonBuilder().setCustomId(`skills-${character_id}`).setLabel('⏮️').setStyle(ButtonStyle.Primary));
-                }
                 if (prev_id && prev_id !== minSkillId) {
                     paginationActionRow.addComponents(new ButtonBuilder().setCustomId(`skillpage-desc-${character_id}-${prev_id}`).setLabel('◀️').setStyle(ButtonStyle.Primary));
                 } else if (minSkillId < firstDisplayedId) {
@@ -5225,9 +5221,6 @@ client.on('interactionCreate', async (interaction) => {
                     paginationActionRow.addComponents(new ButtonBuilder().setCustomId(`skillpage-asc-${character_id}-${next_id}`).setLabel('▶️').setStyle(ButtonStyle.Primary));
                 } else if (maxSkillId > lastDisplayedId) {
                     paginationActionRow.addComponents(new ButtonBuilder().setCustomId(`skillpage-asc-${character_id}-${lastDisplayedId + 1}`).setLabel('▶️').setStyle(ButtonStyle.Primary));
-                }
-                if (maxSkillId > lastDisplayedId) {
-                    paginationActionRow.addComponents(new ButtonBuilder().setCustomId(`skillpage-desc-${character_id}-${maxSkillId}`).setLabel('⏭️').setStyle(ButtonStyle.Primary));
                 }
             }
             const buttonActionRow = new ActionRowBuilder()
