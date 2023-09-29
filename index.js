@@ -1481,9 +1481,11 @@ client.on('interactionCreate', async (interaction) => {
                 var message = await interaction.reply({ content: 'Select a character', components: [characterSelectRow], ephemeral: true });
                 const collector = message.createMessageComponentCollector();
                 collector.on('collect', async (interaction_second) => {
-                    await connection.promise().query('update players_characters set active = 0 where player_id = ?; update players_characters set active = 1 where player_id = ? and character_id = ?', [player[0][0].id, player[0][0].id, interaction_second.values[0]]);
-                    interaction_second.update({ content: "Active character updated.", components: [] });
-                    collector.stop();
+                    if (interaction_second.member.id == interaction.member.id) {
+                        await connection.promise().query('update players_characters set active = 0 where player_id = ?; update players_characters set active = 1 where player_id = ? and character_id = ?', [player[0][0].id, player[0][0].id, interaction_second.values[0]]);
+                        interaction_second.update({ content: "Active character updated.", components: [] });
+                        collector.stop();
+                    }
                 });
             } else {
                 interaction.reply({ content: "You don't have any inactive characters.", ephemeral: true });
@@ -1511,27 +1513,29 @@ client.on('interactionCreate', async (interaction) => {
                 var collector = message.createMessageComponentCollector({ time: 35000 });
                 var selectedArchetype;
                 collector.on('collect', async (interaction_second) => {
-                    if (interaction_second.customId == 'ArchetypeAssignmentSelector') {
-                        selectedArchetype = interaction_second.values[0];
-                        var characters = await connection.promise().query('select distinct characters.* from characters left outer join characters_archetypes ca on characters.id = ca.character_id where guild_id = ? and (ca.archetype_id <> ? or ca.archetype_id is null)', [interaction.guildId, selectedArchetype]);
-                        if (characters[0].length > 0) {
-                            var charactersKeyValues = [];
-                            for (const character of characters[0]) {
-                                charactersKeyValues.push({ label: character.name, value: character.id.toString() });
+                    if (interaction_second.member.id === interaction.member.id) {
+                        if (interaction_second.customId == 'ArchetypeAssignmentSelector') {
+                            selectedArchetype = interaction_second.values[0];
+                            var characters = await connection.promise().query('select distinct characters.* from characters left outer join characters_archetypes ca on characters.id = ca.character_id where guild_id = ? and (ca.archetype_id <> ? or ca.archetype_id is null)', [interaction.guildId, selectedArchetype]);
+                            if (characters[0].length > 0) {
+                                var charactersKeyValues = [];
+                                for (const character of characters[0]) {
+                                    charactersKeyValues.push({ label: character.name, value: character.id.toString() });
+                                }
+                                const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterAssignmentSelector').setMinValues(1).setMaxValues(characters[0].length);
+                                var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                                await interaction_second.update({ content: 'Select a character or characters to assign to this archetype:', components: [characterSelectRow] });
+                            } else {
+                                await interaction_second.update({ content: 'No characters are valid to assign to this archetype.', components: [] });
+                                await collector.stop();
                             }
-                            const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterAssignmentSelector').setMinValues(1).setMaxValues(characters[0].length);
-                            var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                            await interaction_second.update({ content: 'Select a character or characters to assign to this archetype:', components: [characterSelectRow] });
-                        } else {
-                            await interaction_second.update({ content: 'No characters are valid to assign to this archetype.', components: [] });
+                        } else if (interaction_second.customId == 'CharacterAssignmentSelector') {
+                            for (const thisId of interaction_second.values) {
+                                await connection.promise().query('insert into characters_archetypes (character_id, archetype_id) values (?, ?)', [thisId, selectedArchetype]);
+                            }
+                            await interaction_second.update({ content: 'Successfully assigned characters to archetype.', components: [] });
                             await collector.stop();
                         }
-                    } else if (interaction_second.customId == 'CharacterAssignmentSelector') {
-                        for (const thisId of interaction_second.values) {
-                            await connection.promise().query('insert into characters_archetypes (character_id, archetype_id) values (?, ?)', [thisId, selectedArchetype]);
-                        }
-                        await interaction_second.update({ content: 'Successfully assigned characters to archetype.', components: [] });
-                        await collector.stop();
                     }
                 })
 
@@ -1576,27 +1580,29 @@ client.on('interactionCreate', async (interaction) => {
                         var statSelected;
                         var characterSelected;
                         collector.on('collect', async (interaction_second) => {
-                            if (interaction_second.values[0]) {
-                                if (interaction_second.customId == 'StatAssignmentStatSelector') {
-                                    statSelected = interaction_second.values[0];
-                                } else {
-                                    characterSelected = interaction_second.values[0];
-                                }
-                                if (statSelected && characterSelected) {
-                                    var exists = await connection.promise().query('select * from characters_stats where stat_id = ? and character_id = ?', [statSelected, characterSelected]);
-                                    if (exists[0] && exists[0].length > 0) {
-                                        console.log('exists');
-                                        await connection.promise().query('update characters_stats set override_value = ? where character_id = ? and stat_id = ?', [value, characterSelected, statSelected]);
+                            if (interaction_second.member.id === interaction.member.id) {
+                                if (interaction_second.values[0]) {
+                                    if (interaction_second.customId == 'StatAssignmentStatSelector') {
+                                        statSelected = interaction_second.values[0];
                                     } else {
-                                        await connection.promise().query('insert into characters_stats (character_id, stat_id, override_value) values (?, ?, ?)', [characterSelected, statSelected, value]);
+                                        characterSelected = interaction_second.values[0];
                                     }
-                                    await interaction.editReply({ content: 'Successfully updated character stat value.', components: [] });
-                                    await collector.stop();
+                                    if (statSelected && characterSelected) {
+                                        var exists = await connection.promise().query('select * from characters_stats where stat_id = ? and character_id = ?', [statSelected, characterSelected]);
+                                        if (exists[0] && exists[0].length > 0) {
+                                            console.log('exists');
+                                            await connection.promise().query('update characters_stats set override_value = ? where character_id = ? and stat_id = ?', [value, characterSelected, statSelected]);
+                                        } else {
+                                            await connection.promise().query('insert into characters_stats (character_id, stat_id, override_value) values (?, ?, ?)', [characterSelected, statSelected, value]);
+                                        }
+                                        await interaction.editReply({ content: 'Successfully updated character stat value.', components: [] });
+                                        await collector.stop();
+                                    } else {
+                                        await interaction_second.deferUpdate();
+                                    }
                                 } else {
                                     await interaction_second.deferUpdate();
                                 }
-                            } else {
-                                await interaction_second.deferUpdate();
                             }
                         });
                         collector.on('end', async (collected) => {
