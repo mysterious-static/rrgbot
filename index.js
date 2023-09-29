@@ -3320,7 +3320,7 @@ client.on('interactionCreate', async (interaction) => {
                             for (const effect of effects[0]) {
                                 let label;
                                 let description;
-                                let prereqs = await connection.promise().query('select * from effects_prereqs where effect_id = ?', [effect_id]);
+                                let prereqs = await connection.promise().query('select * from effects_prereqs where effect_id = ?', [effect.id]);
                                 if (effect.type == 'message') {
                                     label = `Send message`;
                                     description = effect.typedata.slice(0, 18) + '...';
