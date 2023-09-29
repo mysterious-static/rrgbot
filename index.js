@@ -964,8 +964,8 @@ client.on('interactionCreate', async (interaction) => {
         //REMEMBER - Every entity we create needs to be ABLE to be tied to a Guild ID
         // TOP LEVEL ENTITIES ALWAYS
         if (interaction.commandName == 'addlocation') {
-            var thisChannel = interaction.options.getChannel('channel');
-            var channelexists = await connection.promise().query('select * from movement_locations where guild_id = ? and channel_id = ?', [interaction.guildId, thisChannel.id]);
+            let thisChannel = interaction.options.getChannel('channel');
+            let channelexists = await connection.promise().query('select * from movement_locations where guild_id = ? and channel_id = ?', [interaction.guildId, thisChannel.id]);
             if (channelexists[0].length > 0) {
                 interaction.reply({ content: 'Looks like this channel is already set up as a location. :revolving_hearts:', ephemeral: true });
             } else {
@@ -975,11 +975,11 @@ client.on('interactionCreate', async (interaction) => {
 
         } else if (interaction.commandName == 'locationannouncements') {
             // Channel 1 must be a location, channel 2 can be any channel not a category. This is where the movement announcements will happen for that location. If channel 2 is unset then unset it in DB.
-            var thisChannel = interaction.options.getChannel('location_channel');
-            var channelexists = await connection.promise().query('select * from movement_locations where guild_id = ? and channel_id = ?', [interaction.guildId, thisChannel.id]);
+            let thisChannel = interaction.options.getChannel('location_channel');
+            let channelexists = await connection.promise().query('select * from movement_locations where guild_id = ? and channel_id = ?', [interaction.guildId, thisChannel.id]);
             if (channelexists[0].length > 0) {
                 if (interaction.options.getChannel('announcements_channel')) {
-                    var announcements_channel = interaction.options.getChannel('announcements_channel');
+                    let announcements_channel = interaction.options.getChannel('announcements_channel');
                     await connection.promise().query('update movement_locations set announcements_channel = ? where channel_id = ?', [announcements_channel.id, thisChannel.id]);
                     interaction.reply({ content: 'Should be all set! (changed announcements channel value of ' + thisChannel.toString() + ' to ' + announcements_channel.toString() + ')', ephemeral: true });
                 } else {
@@ -991,22 +991,22 @@ client.on('interactionCreate', async (interaction) => {
             }
         } else if (interaction.commandName == 'allowmovement') {
             if (interaction.options.getChannel('channel')) {
-                var thisChannel = interaction.options.getChannel('channel');
-                var channelexists = await connection.promise().query('select * from movement_locations where guild_id = ? and channel_id = ?', [interaction.guildId, thisChannel.id]);
+                let thisChannel = interaction.options.getChannel('channel');
+                let channelexists = await connection.promise().query('select * from movement_locations where guild_id = ? and channel_id = ?', [interaction.guildId, thisChannel.id]);
                 if (channelexists[0].length > 0) {
-                    var enabled = interaction.options.getBoolean('enabled');
+                    let enabled = interaction.options.getBoolean('enabled');
                     await connection.promise().query('update movement_locations set movement_allowed = ? where channel_id = ?', [enabled, thisChannel.id]);
                     interaction.reply({ content: 'Should be all set! (changed movement allowed value of ' + thisChannel.toString() + ' to ' + enabled + ')', ephemeral: true });
                 } else {
                     interaction.reply({ content: 'Looks like this channel isn\'t a valid location. Try adding it via `/addlocation`. :revolving_hearts:', ephemeral: true });
                 }
             } else {
-                var enabled = interaction.options.getBoolean('enabled');
+                let enabled = interaction.options.getBoolean('enabled');
                 await connection.promise().query('update movement_locations set movement_allowed = ? where guild_id = ? ', [enabled, interaction.guildId]);
                 interaction.reply({ content: 'Should be all set! (changed movement allowed value of ALL locations to ' + enabled + ')', ephemeral: true });
             }
         } else if (interaction.commandName == 'restrictmovement') {
-            var setting_value = interaction.options.getString('restriction_type');
+            let setting_value = interaction.options.getString('restriction_type');
             if (setting_value == 'disabled' || setting_value == 'enabled' || setting_value == 'player_whitelist') {
                 await connection.promise().query('replace into game_settings (setting_name, setting_value, guild_id) values (?, ?, ?)', ['restrictmovement', setting_value, interaction.guildId]);
                 interaction.reply({ content: "Movement restriction set.", ephemeral: true });
@@ -1016,16 +1016,16 @@ client.on('interactionCreate', async (interaction) => {
             //add to whitelist
         } else if (interaction.commandName == 'locationawareness') {
             if (interaction.options.getSubcommand() == 'trading') {
-                var setting_value = interaction.options.getBoolean('enabled');
+                let setting_value = interaction.options.getBoolean('enabled');
                 await connection.promise().query('replace into game_settings (setting_name, setting_value, guild_id) values (?, ?, ?)', ['locationawaretrading', (setting_value ? 1 : 0), interaction.guildId]);
                 interaction.reply({ content: 'Location aware trading set.', ephemeral: true });
             } else if (interaction.options.getSubcommand() == 'skilltarget') {
-                var setting_value = interaction.options.getBoolean('enabled');
+                let setting_value = interaction.options.getBoolean('enabled');
                 await connection.promise().query('replace into game_settings (setting_name, setting_value, guild_id) values (?, ?, ?)', ['locationawareskills', (setting_value ? 1 : 0), interaction.guildId]);
                 interaction.reply({ content: 'Location aware skills set.', ephemeral: true });
             }
         } else if (interaction.commandName == 'addlocationwhitelist') {
-            var characters = await connection.promise().query('select * from characters c where guild_id = ?', [interaction.guildId]);
+            let characters = await connection.promise().query('select * from characters c where guild_id = ?', [interaction.guildId]);
             if (characters[0].length > 0) {
 
             } else {
@@ -1033,7 +1033,7 @@ client.on('interactionCreate', async (interaction) => {
             }
 
         } else if (interaction.commandName == 'removelocationwhitelist') {
-            var characters = await connection.promise().query('select * from characters c where guild_id = ?', [interaction.guildId]);
+            let characters = await connection.promise().query('select * from characters c where guild_id = ?', [interaction.guildId]);
             if (characters[0].length > 0) {
 
             } else {
@@ -1041,16 +1041,16 @@ client.on('interactionCreate', async (interaction) => {
             }
 
         } else if (interaction.commandName == 'resetlocationvis') {
-            var locations = await connection.promise().query('select * from movement_locations where guild_id = ?', [interaction.guildId]);
-            var players = await connection.promise().query('select p.user_id, c.location_id from players p join players_characters pc on p.id = pc.player_id join characters c on c.id = pc.character_id where pc.active = 1');
+            let locations = await connection.promise().query('select * from movement_locations where guild_id = ?', [interaction.guildId]);
+            let players = await connection.promise().query('select p.user_id, c.location_id from players p join players_characters pc on p.id = pc.player_id join characters c on c.id = pc.character_id where pc.active = 1');
             if (locations[0].length > 0) {
                 interaction.deferUpdate();
                 for (const thisLocation of locations[0]) {
-                    var channel = await client.channels.cache.get(thisLocation.channel_id);
+                    let channel = await client.channels.cache.get(thisLocation.channel_id);
                     if (thisLocation.global_read == true) {
                         for (const thisPlayer of players[0]) {
                             console.log(thisPlayer);
-                            var user = await client.users.fetch(thisPlayer.user_id);
+                            let user = await client.users.fetch(thisPlayer.user_id);
                             await channel.permissionOverwrites.edit(user, { ViewChannel: true });
                             if (thisPlayer.location_id == thisLocation.id || thisLocation.global_write == true) {
                                 await channel.permissionOverwrites.edit(user, { SendMessages: true });
@@ -1061,11 +1061,10 @@ client.on('interactionCreate', async (interaction) => {
                     } else {
                         for (const thisPlayer of players[0]) {
                             console.log(thisPlayer);
-                            var user = await client.users.fetch(thisPlayer.user_id);
+                            let user = await client.users.fetch(thisPlayer.user_id);
                             if (thisPlayer.location_id == thisLocation.id) {
                                 await channel.permissionOverwrites.edit(user, { ViewChannel: true, SendMessages: true });
                             } else {
-                                console.log(user);
                                 await channel.permissionOverwrites.edit(user, { ViewChannel: false, SendMessages: false });
                             }
                         }
@@ -1074,30 +1073,27 @@ client.on('interactionCreate', async (interaction) => {
                 interaction.reply({ content: 'Reset done.', ephemeral: true });
             }
         } else if (interaction.commandName == 'locationvisibility') {
-            var thisChannel = await interaction.options.getChannel('location');
-            console.log(thisChannel);
-            var channelexists = await connection.promise().query('select * from movement_locations where guild_id = ? and channel_id = ?', [interaction.guildId, thisChannel.id]);
+            let thisChannel = await interaction.options.getChannel('location');
+            let channelexists = await connection.promise().query('select * from movement_locations where guild_id = ? and channel_id = ?', [interaction.guildId, thisChannel.id]);
             if (channelexists[0].length > 0) {
-                var enabled = interaction.options.getBoolean('enabled');
+                let enabled = interaction.options.getBoolean('enabled');
                 await connection.promise().query('update movement_locations set global_read = ? where channel_id = ?', [enabled, thisChannel.id]);
                 interaction.reply({ content: 'Should be all set! (changed global read value of ' + thisChannel.toString() + ' to ' + enabled + ')', ephemeral: true });
             } else {
                 interaction.reply({ content: 'Looks like this channel isn\'t a valid location. Try adding it via `/addlocation`. :revolving_hearts:', ephemeral: true });
             }
         } else if (interaction.commandName == 'locationglobalwrite') {
-            var thisChannel = await interaction.options.getChannel('location');
-            console.log(thisChannel);
-            var channelexists = await connection.promise().query('select * from movement_locations where guild_id = ? and channel_id = ?', [interaction.guildId, thisChannel.id]);
+            let thisChannel = await interaction.options.getChannel('location');
+            let channelexists = await connection.promise().query('select * from movement_locations where guild_id = ? and channel_id = ?', [interaction.guildId, thisChannel.id]);
             if (channelexists[0].length > 0) {
-                var enabled = interaction.options.getBoolean('enabled');
+                let enabled = interaction.options.getBoolean('enabled');
                 await connection.promise().query('update movement_locations set global_write = ? where channel_id = ?', [enabled, thisChannel.id]);
                 interaction.reply({ content: 'Should be all set! (changed global write value of ' + thisChannel.toString() + ' to ' + enabled + ')', ephemeral: true });
             } else {
                 interaction.reply({ content: 'Looks like this channel isn\'t a valid location. Try adding it via `/addlocation`. :revolving_hearts:', ephemeral: true });
             }
         } else if (interaction.commandName == 'whispercategory') {
-            var channel = interaction.options.getChannel('category');
-            console.log(channel);
+            let channel = interaction.options.getChannel('category');
             if (channel.type === ChannelType.GuildCategory) {
                 await connection.promise().query('replace into game_settings (setting_name, setting_value, guild_id) values (?, ?, ?)', ['whisper_category', channel.id, interaction.guildId]);
                 interaction.reply({ content: "Set the whisper category for this game.", ephemeral: true });
@@ -1106,10 +1102,10 @@ client.on('interactionCreate', async (interaction) => {
             }
 
         } else if (interaction.commandName == 'addwhisper') {
-            var whisper_category = await connection.promise().query('select setting_value from game_settings where guild_id = ? and setting_name = ?', [interaction.guildId, 'whisper_category']);
+            let whisper_category = await connection.promise().query('select setting_value from game_settings where guild_id = ? and setting_name = ?', [interaction.guildId, 'whisper_category']);
             if (whisper_category[0].length > 0) {
-                var timest = Math.floor(Date.now() / 1000);
-                var whisper_channel = await interaction.guild.channels.create({
+                let timest = Math.floor(Date.now() / 1000);
+                let whisper_channel = await interaction.guild.channels.create({
                     name: `whisper-${timest}`,
                     type: ChannelType.GuildText,
                     parent: whisper_category[0][0].setting_value
