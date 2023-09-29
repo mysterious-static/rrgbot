@@ -5113,22 +5113,35 @@ client.on('interactionCreate', async (interaction) => {
             let character_id = interaction.customId.split('-')[1];
             let skills = await connection.promise().query('select distinct s.* from skills s left outer join skills_characters sc on s.id = sc.skill_id left outer join skills_archetypes sa on s.id = sa.skill_id left outer join characters_archetypes ca on sa.archetype_id = ca.archetype_id where sc.character_id = ? or ca.character_id = ? order by s.id asc', [character_id, character_id]);
             let msg;
+            let paginate = false;
+            let next_id = false;
+            let maxSkillId;
             if (skills[0].length > 0) {
                 // union character and archetype skills before continuing maybe? sort by id asc? 
                 msg = `__Skills__\n`;
-                if (skills[0].length > 0) {
-                    for (const thisSkill of skills[0]) {
+                for (const thisSkill of skills[0]) {
 
-                        let test_msg = msg.concat(`**${thisSkill.name}**: ${thisSkill.description} (${thisSkill.type})\n`);
-                        if (test_msg.length > 2000) {
-                            // paginate
-                        } else {
-                            msg = test_msg;
+                    let test_msg = msg.concat(`**${thisSkill.name}**: ${thisSkill.description} (${thisSkill.type})\n`);
+                    if (test_msg.length > 2000) {
+                        if (!next_id) {
+                            next_id = thisSkill.id;
                         }
+                        paginate = true;
+                    } else {
+                        msg = test_msg;
                     }
+                    maxSkillId = thisSkill.id;
                 }
             } else {
                 msg = `You don't have any skills! Hmm. Maybe check with an Orchestrator if you weren't expecting this.`;
+            }
+            let paginationActionRow = false;
+            if (paginate) {
+                paginationActionRow = new ActionRowBuilder()
+                    .addComponents(
+                        new ButtonBuilder().setCustomId(`skillpage-asc-${character_id}-${next_id}`).setLabel('▶️').setStyle(ButtonStyle.Primary),
+                        new ButtonBuilder().setCustomId(`skillpage-desc-${character_id}-${maxSkillId}`).setLabel('⏭️').setStyle(ButtonStyle.Primary)
+                    );
             }
             const buttonActionRow = new ActionRowBuilder()
                 .addComponents(
@@ -5139,7 +5152,81 @@ client.on('interactionCreate', async (interaction) => {
             if (reputation_enabled[0].length > 0 && reputation_enabled[0][0].setting_value == true) {
                 buttonActionRow.addComponents(new ButtonBuilder().setCustomId(`reputation-${character_id}`).setLabel('Reputation').setStyle(ButtonStyle.Primary));
             }
-            await interaction.update({ content: msg, components: [buttonActionRow] });
+            if (paginationActionRow) {
+                await interaction.update({ content: msg, components: [paginationActionRow, buttonActionRow] });
+            } else {
+                await interaction.update({ content: msg, components: [buttonActionRow] });
+            }
+        } else if (interaction.customId.startsWith('skillpage-')) {
+            let sort = interaction.customId.split('-')[1];
+            let character_id = interaction.customId.split('-')[2];
+            let skill_id = interaction.customId.split('-')[3];
+            let skills = await connection.promise().query('select distinct s.* from skills s left outer join skills_characters sc on s.id = sc.skill_id left outer join skills_archetypes sa on s.id = sa.skill_id left outer join characters_archetypes ca on sa.archetype_id = ca.archetype_id and (sc.character_id = ? or ca.character_id = ?) order by s.id ??', [skill_id, character_id, character_id, sort]);
+            let msg;
+            let paginate = false;
+            let firstDisplayedId = false;
+            let lastDisplayedId = false;
+            let prev_id;
+            let next_id;
+            let maxSkillId;
+            let minSkillId;
+            if (skills[0].length > 0) {
+                msg = `__Skills__\n`;
+                for (const thisSkill of skills[0]) {
+                    maxSkillId = (maxSkillId ? Math.max(maxSkillId, thisSkill.id) : thisSkill.id);
+                    minSkillId = (minSkillId ? Math.min(minSkillId, thisSkill.id) : thisSkill.id);
+                    if (sort == 'asc' && thisSkill.id >= skill_id || sort == 'desc' && thisSkill.id <= skill_id) {
+                        firstDisplayedId = (firstDisplayedId ? Math.min(firstDisplayedId, thisSkill.id) : thisSkill.id);
+                        lastDisplayedId = (lastDisplayedId ? Math.max(lastDisplayedId, thisSkill.id) : thisSkill.id);
+                        let test_msg = msg.concat(`**${thisSkill.name}**: ${thisSkill.description} (${thisSkill.type})\n`);
+                        if (test_msg.length > 2000) {
+                            if (!next_id && sort === 'asc') {
+                                next_id = thisSkill.id;
+                            }
+                            if (!prev_id && sort === 'desc') {
+                                prev_id = thisSkill.id;
+                            }
+                        } else {
+                            msg = test_msg;
+                        }
+                    }
+                }
+                if (maxSkillId > next_id || minSkillId < prev_id || minSkillId < firstDisplayedId || maxSkillId > lastDisplayedId) {
+                    paginate = true;
+                }
+            } else {
+                msg = `You don't have any skills! Hmm. Maybe check with an Orchestrator if you weren't expecting this.`;
+            }
+            let paginationActionRow = false;
+            if (paginate) {
+                paginationActionRow = new ActionRowBuilder();
+                if (minSkillId < prev_id) {
+                    paginationActionRow.addComponents(new ButtonBuilder().setCustomId(`skills-${character_id}`).setLabel('⏮️').setStyle(ButtonStyle.Primary));
+                }
+                if (minSkillId < firstDisplayedId) {
+                    paginationActionRow.addComponents(new ButtonBuilder().setCustomId(`skillpage-desc-${character_id}-${prev_id}`).setLabel('◀️').setStyle(ButtonStyle.Primary));
+                }
+                if (maxSkillId > lastDisplayedId) {
+                    paginationActionRow.addComponents(new ButtonBuilder().setCustomId(`skillpage-asc-${character_id}-${next_id}`).setLabel('▶️').setStyle(ButtonStyle.Primary));
+                }
+                if (maxSkillId > next_id) {
+                    paginationActionRow.addComponents(new ButtonBuilder().setCustomId(`skillpage-desc-${character_id}-${maxSkillId}-last`).setLabel('⏭️').setStyle(ButtonStyle.Primary));
+                }
+            }
+            const buttonActionRow = new ActionRowBuilder()
+                .addComponents(
+                    new ButtonBuilder().setCustomId(`sheet-${character_id}`).setLabel('Sheet').setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder().setCustomId(`inventory-${character_id}`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
+                );
+            let reputation_enabled = await connection.promise().query('select * from game_settings where setting_name = "reputation" and guild_id = ?', [interaction.guildId]);
+            if (reputation_enabled[0].length > 0 && reputation_enabled[0][0].setting_value == true) {
+                buttonActionRow.addComponents(new ButtonBuilder().setCustomId(`reputation-${character_id}`).setLabel('Reputation').setStyle(ButtonStyle.Primary));
+            }
+            if (paginationActionRow) {
+                await interaction.update({ content: msg, components: [paginationActionRow, buttonActionRow] });
+            } else {
+                await interaction.update({ content: msg, components: [buttonActionRow] });
+            }
         } else if (interaction.customId.startsWith('inventory-')) {
             let character_id = interaction.customId.split('-')[1];
             let character_items = await connection.promise().query('select i.*, ci.quantity from items i join characters_items ci on i.id = ci.item_id where ci.character_id = ?', [character_id]);
