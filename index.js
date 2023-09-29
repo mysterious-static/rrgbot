@@ -294,7 +294,7 @@ var player = new SlashCommandBuilder().setName('player')
                     .setRequired(true))
             .addBooleanOption(option =>
                 option.setName('create_character')
-                    .setDescription('Create a character? If false, be sure to assign this player a character using /assigncharacter.')
+                    .setDescription('Create a character? If false, be sure to assign this player a character using /character assign.')
                     .setRequired(true)))
     .addSubcommand(subcommand =>
         subcommand.setName('notifchannel')
@@ -373,34 +373,11 @@ var restrictmovement = new SlashCommandBuilder().setName('restrictmovement')
     ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 
-var charactercreate = new SlashCommandBuilder().setName('charactercreate')
-    .setDescription('Create a new character.')
-    .addStringOption(option =>
-        option.setName('name')
-            .setDescription('The character name.')
-            .setRequired(true))
-    .addStringOption(option =>
-        option.setName('description')
-            .setDescription('The character description.')
-            .setRequired(true))
-    .addStringOption(option =>
-        option.setName('avatar_url')
-            .setDescription('The URL to the character avatar, must be accessible by the bot'))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
 var characteravatar = new SlashCommandBuilder().setName('characteravatar')
     .setDescription('Set a character avatar URL.')
     .addStringOption(option =>
         option.setName('avatar_url')
             .setDescription('The URL to the character avatar, must be accessible by the bot')
-            .setRequired(true))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-var assigncharacter = new SlashCommandBuilder().setName('assigncharacter')
-    .setDescription('Assign a character or characters to a player.')
-    .addUserOption(option =>
-        option.setName('user')
-            .setDescription('The user with an active player entry.')
             .setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
@@ -750,6 +727,27 @@ var character = new SlashCommandBuilder().setName('character')
                 option.setName('user')
                     .setDescription('The user with an active player entry.')
                     .setRequired(true)))
+    .addSubcommand(subcommand =>
+        subcommand.setName('assign')
+            .setDescription('Assign a character or characters to a player.')
+            .addUserOption(option =>
+                option.setName('user')
+                    .setDescription('The user with an active player entry.')
+                    .setRequired(true)))
+    .addSubcommand(subcommand =>
+        subcommand.setName('charactercreate')
+            .setDescription('Create a new character.')
+            .addStringOption(option =>
+                option.setName('name')
+                    .setDescription('The character name.')
+                    .setRequired(true))
+            .addStringOption(option =>
+                option.setName('description')
+                    .setDescription('The character description.')
+                    .setRequired(true))
+            .addStringOption(option =>
+                option.setName('avatar_url')
+                    .setDescription('The URL to the character avatar, must be accessible by the bot')))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 // Characters Per Player (switching system // bot echoes) - TODO
@@ -912,8 +910,6 @@ client.on('ready', async () => {
         rps.toJSON(),
         move.toJSON(),
         sheet.toJSON(),
-        assigncharacter.toJSON(),
-        charactercreate.toJSON(),
         characteravatar.toJSON(),
         addcharacterarchetype.toJSON(),
         assignarchetype.toJSON(),
@@ -1333,20 +1329,6 @@ client.on('interactionCreate', async (interaction) => {
             } else {
                 interaction.reply({ content: 'You haven\'t created any locations yet. Try creating a location first.', ephemeral: true });
             }
-        } else if (interaction.commandName == 'charactercreate') {
-            var characterName = interaction.options.getString('name');
-            var description = interaction.options.getString('description');
-            var character = await connection.promise().query('select * from characters where name = ? and guild_id = ?', [characterName, interaction.guildId]);
-            if (character[0].length == 0) {
-                if (interaction.options.getString('avatar_url')) {
-                    var inserted_character = await connection.promise().query('insert into characters (name, guild_id, description, avatar_url) values (?, ?, ?, ?)', [characterName, interaction.guildId, description, interaction.options.getString('avatar_url')]);
-                } else {
-                    var inserted_character = await connection.promise().query('insert into characters (name, guild_id, description) values (?, ?, ?)', [characterName, interaction.guildId, description]);
-                }
-                interaction.reply({ content: 'Created character!', ephemeral: true })
-            } else {
-                interaction.reply({ content: 'A character with this name for this game already exists.', ephemeral: true });
-            }
         } else if (interaction.commandName == 'characteravatar') {
             if (interaction.member.permissions.has('ADMINISTRATOR')) {
                 var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
@@ -1408,41 +1390,8 @@ client.on('interactionCreate', async (interaction) => {
             } else {
                 interaction.reply({ content: 'no characters found!', ephemeral: true });
             }
-        } else if (interaction.commandName == 'assigncharacter') {
-            var user = interaction.options.getUser('user');
-            var player = await connection.promise().query('select * from players where user_id = ? and guild_id = ?', [user.id, interaction.guildId]);
-            if (player[0].length > 0) {
-                var owned_characters = await connection.promise().query('select distinct c.id from characters c join players_characters pc on c.id = pc.character_id join players p on pc.player_id = p.id where c.guild_id = ? and p.user_id = ?', [interaction.guildId, user.id]);
-                var owned = [];
-                if (owned_characters[0].length > 0) {
-                    for (const thisCharacter of owned_characters[0]) {
-                        owned.push(thisCharacter.id);
-                    }
-                    var characters = await connection.promise().query('select * from characters where guild_id = ? and id not in (?)', [interaction.guildId, owned]);
-                } else {
-                    var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
-                }
-                if (characters[0].length > 0) {
-                    var charactersKeyValues = [];
-                    for (const character of characters[0]) {
-                        charactersKeyValues.push({ label: character.name, value: character.id.toString() });
-                    }
-                }
-                const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterAssignmentSelector').setMinValues(1).setMaxValues(characters[0].length);
-                var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                var message = await interaction.reply({ content: 'Select a character or characters to assign to this player:', components: [characterSelectRow], ephemeral: true });
-                const collector = message.createMessageComponentCollector({ time: 35000 });
-                collector.on('collect', async (interaction_second) => {
-                    for (const thisId of interaction_second.values) {
-                        await connection.promise().query('insert into players_characters (player_id, character_id, active) values (?, ?, ?)', [player[0][0].id, thisId, 0]);
-                    }
-                    interaction_second.update({ content: 'Successfully updated character-player relationships.', components: [] });
-                });
-            } else {
-                await interaction.reply({ content: 'The user that you selected isn\'t a valid player.', ephemeral: true });
-            }
         } else if (interaction.commandName == 'character') {
-            if (interaction.options.getSubcommand() == 'unassign') {
+            if (interaction.options.getSubcommand() === 'unassign') {
                 var user = interaction.options.getUser('user');
                 var player = await connection.promise().query('select * from players where user_id = ? and guild_id = ?', [user.id, interaction.guildId]);
                 if (player[0].length > 0) {
@@ -1473,6 +1422,57 @@ client.on('interactionCreate', async (interaction) => {
 
                 } else {
                     await interaction.reply({ content: 'The user that you selected isn\'t a valid player.', ephemeral: true });
+                }
+            } else if (interaction.options.getSubcommand() === 'assign') {
+                let user = interaction.options.getUser('user');
+                let player = await connection.promise().query('select * from players where user_id = ? and guild_id = ?', [user.id, interaction.guildId]);
+                if (player[0].length > 0) {
+                    let owned_characters = await connection.promise().query('select distinct c.id from characters c join players_characters pc on c.id = pc.character_id join players p on pc.player_id = p.id where c.guild_id = ? and p.user_id = ?', [interaction.guildId, user.id]);
+                    let owned = [];
+                    let characters;
+                    if (owned_characters[0].length > 0) {
+                        for (const thisCharacter of owned_characters[0]) {
+                            owned.push(thisCharacter.id);
+                        }
+                        characters = await connection.promise().query('select * from characters where guild_id = ? and id not in (?)', [interaction.guildId, owned]);
+                    } else {
+                        characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
+                    }
+                    let charactersKeyValues;
+                    if (characters[0].length > 0) {
+                        charactersKeyValues = [];
+                        for (const character of characters[0]) {
+                            charactersKeyValues.push({ label: character.name, value: character.id.toString() });
+                        }
+                    }
+                    const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterAssignmentSelector').setMinValues(1).setMaxValues(characters[0].length);
+                    let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                    let message = await interaction.reply({ content: 'Select a character or characters to assign to this player:', components: [characterSelectRow], ephemeral: true });
+                    const collector = message.createMessageComponentCollector({ time: 35000 });
+                    collector.on('collect', async (interaction_second) => {
+                        if (interaction_second.customId == 'CharacterAssignmentSelector' && interaction.member.id == interaction_second.member.id) {
+                            for (const thisId of interaction_second.values) {
+                                await connection.promise().query('insert into players_characters (player_id, character_id, active) values (?, ?, ?)', [player[0][0].id, thisId, 0]);
+                            }
+                            interaction_second.update({ content: 'Successfully updated character-player relationships.', components: [] });
+                        }
+                    });
+                } else {
+                    await interaction.reply({ content: 'The user that you selected isn\'t a valid player.', ephemeral: true });
+                }
+            } else if (interaction.options.getSubcommand() === 'create') {
+                var characterName = interaction.options.getString('name');
+                var description = interaction.options.getString('description');
+                var character = await connection.promise().query('select * from characters where name = ? and guild_id = ?', [characterName, interaction.guildId]);
+                if (character[0].length == 0) {
+                    if (interaction.options.getString('avatar_url')) {
+                        var inserted_character = await connection.promise().query('insert into characters (name, guild_id, description, avatar_url) values (?, ?, ?, ?)', [characterName, interaction.guildId, description, interaction.options.getString('avatar_url')]);
+                    } else {
+                        var inserted_character = await connection.promise().query('insert into characters (name, guild_id, description) values (?, ?, ?)', [characterName, interaction.guildId, description]);
+                    }
+                    interaction.reply({ content: 'Created character!', ephemeral: true })
+                } else {
+                    interaction.reply({ content: 'A character with this name for this game already exists.', ephemeral: true });
                 }
             }
         } else if (interaction.commandName == 'active') {
