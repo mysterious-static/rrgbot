@@ -978,7 +978,7 @@ client.on('interactionCreate', async (interaction) => {
 
         //REMEMBER - Every entity we create needs to be ABLE to be tied to a Guild ID
         // TOP LEVEL ENTITIES ALWAYS
-        if (interaction.commandName == 'addlocation') {
+        if (interaction.commandName === 'addlocation') {
             let thisChannel = interaction.options.getChannel('channel');
             let channelexists = await connection.promise().query('select * from movement_locations where guild_id = ? and channel_id = ?', [interaction.guildId, thisChannel.id]);
             if (channelexists[0].length > 0) {
@@ -988,7 +988,7 @@ client.on('interactionCreate', async (interaction) => {
                 interaction.reply({ content: 'Location added; please use `/locationannouncements` to set the announcements channel for this location.', ephemeral: true });
             }
 
-        } else if (interaction.commandName == 'locationannouncements') {
+        } else if (interaction.commandName === 'locationannouncements') {
             // Channel 1 must be a location, channel 2 can be any channel not a category. This is where the movement announcements will happen for that location. If channel 2 is unset then unset it in DB.
             let thisChannel = interaction.options.getChannel('location_channel');
             let channelexists = await connection.promise().query('select * from movement_locations where guild_id = ? and channel_id = ?', [interaction.guildId, thisChannel.id]);
@@ -1004,7 +1004,7 @@ client.on('interactionCreate', async (interaction) => {
             } else {
                 interaction.reply({ content: 'Looks like this channel isn\'t a valid location. Try adding it via `/addlocation`. :revolving_hearts:', ephemeral: true });
             }
-        } else if (interaction.commandName == 'allowmovement') {
+        } else if (interaction.commandName === 'allowmovement') {
             if (interaction.options.getChannel('channel')) {
                 let thisChannel = interaction.options.getChannel('channel');
                 let channelexists = await connection.promise().query('select * from movement_locations where guild_id = ? and channel_id = ?', [interaction.guildId, thisChannel.id]);
@@ -1020,7 +1020,7 @@ client.on('interactionCreate', async (interaction) => {
                 await connection.promise().query('update movement_locations set movement_allowed = ? where guild_id = ? ', [enabled, interaction.guildId]);
                 interaction.reply({ content: 'Should be all set! (changed movement allowed value of ALL locations to ' + enabled + ')', ephemeral: true });
             }
-        } else if (interaction.commandName == 'restrictmovement') {
+        } else if (interaction.commandName === 'restrictmovement') {
             let setting_value = interaction.options.getString('restriction_type');
             if (setting_value == 'disabled' || setting_value == 'enabled' || setting_value == 'player_whitelist') {
                 await connection.promise().query('replace into game_settings (setting_name, setting_value, guild_id) values (?, ?, ?)', ['restrictmovement', setting_value, interaction.guildId]);
@@ -1029,17 +1029,17 @@ client.on('interactionCreate', async (interaction) => {
                 interaction.reply({ content: 'Please select a valid movement restriction type.', ephemeral: true });
             }
             //add to whitelist
-        } else if (interaction.commandName == 'locationawareness') {
-            if (interaction.options.getSubcommand() == 'trading') {
+        } else if (interaction.commandName === 'locationawareness') {
+            if (interaction.options.getSubcommand() === 'trading') {
                 let setting_value = interaction.options.getBoolean('enabled');
                 await connection.promise().query('replace into game_settings (setting_name, setting_value, guild_id) values (?, ?, ?)', ['locationawaretrading', (setting_value ? 1 : 0), interaction.guildId]);
                 interaction.reply({ content: 'Location aware trading set.', ephemeral: true });
-            } else if (interaction.options.getSubcommand() == 'skilltarget') {
+            } else if (interaction.options.getSubcommand() === 'skilltarget') {
                 let setting_value = interaction.options.getBoolean('enabled');
                 await connection.promise().query('replace into game_settings (setting_name, setting_value, guild_id) values (?, ?, ?)', ['locationawareskills', (setting_value ? 1 : 0), interaction.guildId]);
                 interaction.reply({ content: 'Location aware skills set.', ephemeral: true });
             }
-        } else if (interaction.commandName == 'addlocationwhitelist') {
+        } else if (interaction.commandName === 'addlocationwhitelist') {
             let characters = await connection.promise().query('select * from characters c where guild_id = ?', [interaction.guildId]);
             if (characters[0].length > 0) {
 
@@ -1047,7 +1047,7 @@ client.on('interactionCreate', async (interaction) => {
                 interaction.reply({ content: 'No valid characters were found in this server.', ephemeral: true });
             }
 
-        } else if (interaction.commandName == 'removelocationwhitelist') {
+        } else if (interaction.commandName === 'removelocationwhitelist') {
             let characters = await connection.promise().query('select * from characters c where guild_id = ?', [interaction.guildId]);
             if (characters[0].length > 0) {
 
@@ -1055,7 +1055,7 @@ client.on('interactionCreate', async (interaction) => {
                 interaction.reply({ content: 'No valid characters were found in this server.', ephemeral: true });
             }
 
-        } else if (interaction.commandName == 'resetlocationvis') {
+        } else if (interaction.commandName === 'resetlocationvis') {
             let locations = await connection.promise().query('select * from movement_locations where guild_id = ?', [interaction.guildId]);
             let players = await connection.promise().query('select p.user_id, c.location_id from players p join players_characters pc on p.id = pc.player_id join characters c on c.id = pc.character_id where pc.active = 1');
             if (locations[0].length > 0) {
@@ -1087,7 +1087,7 @@ client.on('interactionCreate', async (interaction) => {
                 }
                 interaction.reply({ content: 'Reset done.', ephemeral: true });
             }
-        } else if (interaction.commandName == 'locationvisibility') {
+        } else if (interaction.commandName === 'locationvisibility') {
             let thisChannel = await interaction.options.getChannel('location');
             let channelexists = await connection.promise().query('select * from movement_locations where guild_id = ? and channel_id = ?', [interaction.guildId, thisChannel.id]);
             if (channelexists[0].length > 0) {
@@ -1097,7 +1097,7 @@ client.on('interactionCreate', async (interaction) => {
             } else {
                 interaction.reply({ content: 'Looks like this channel isn\'t a valid location. Try adding it via `/addlocation`. :revolving_hearts:', ephemeral: true });
             }
-        } else if (interaction.commandName == 'locationglobalwrite') {
+        } else if (interaction.commandName === 'locationglobalwrite') {
             let thisChannel = await interaction.options.getChannel('location');
             let channelexists = await connection.promise().query('select * from movement_locations where guild_id = ? and channel_id = ?', [interaction.guildId, thisChannel.id]);
             if (channelexists[0].length > 0) {
@@ -1107,7 +1107,7 @@ client.on('interactionCreate', async (interaction) => {
             } else {
                 interaction.reply({ content: 'Looks like this channel isn\'t a valid location. Try adding it via `/addlocation`. :revolving_hearts:', ephemeral: true });
             }
-        } else if (interaction.commandName == 'whispercategory') {
+        } else if (interaction.commandName === 'whispercategory') {
             let channel = interaction.options.getChannel('category');
             if (channel.type === ChannelType.GuildCategory) {
                 await connection.promise().query('replace into game_settings (setting_name, setting_value, guild_id) values (?, ?, ?)', ['whisper_category', channel.id, interaction.guildId]);
@@ -1116,7 +1116,7 @@ client.on('interactionCreate', async (interaction) => {
                 interaction.reply({ content: 'please make sure you selected a category and not a channel', ephemeral: true });
             }
 
-        } else if (interaction.commandName == 'addwhisper') {
+        } else if (interaction.commandName === 'addwhisper') {
             let whisper_category = await connection.promise().query('select setting_value from game_settings where guild_id = ? and setting_name = ?', [interaction.guildId, 'whisper_category']);
             if (whisper_category[0].length > 0) {
                 let timest = Math.floor(Date.now() / 1000);
@@ -1131,7 +1131,7 @@ client.on('interactionCreate', async (interaction) => {
             } else {
                 interaction.reply({ content: "Create a whisper category first using `/whispercategory`.", ephemeral: true });
             }
-        } else if (interaction.commandName == 'populatewhisper') {
+        } else if (interaction.commandName === 'populatewhisper') {
             let channel = interaction.options.getChannel('whisperchannel');
             let whisper = await connection.promise().query('select * from whispers where channel_id = ?', [channel.id]);
             if (whisper[0].length > 0) {
@@ -1169,7 +1169,7 @@ client.on('interactionCreate', async (interaction) => {
                     collector.on('collect', async (interaction_second) => {
                         if (interaction_second.member.id === interaction.member.id) {
                             let characterSelected = interaction_second.values[0];
-                            if (interaction_second.customId == 'WhisperPopAlphabetSelector') {
+                            if (interaction_second.customId === 'WhisperPopAlphabetSelector') {
                                 let characters = await connection.promise().query('select * from characters where guild_id = ? and upper(character_name) like "?%"', [interaction.guildId, characterSelected]);
                                 if (characters[0].length > 0) {
                                     let charactersKeyValues = [];
@@ -1206,8 +1206,8 @@ client.on('interactionCreate', async (interaction) => {
             } else {
                 await interaction.reply({ content: 'This channel doesn\'t seem to be a registered whisper.', ephemeral: true });
             }
-        } else if (interaction.commandName == 'player') {
-            if (interaction.options.getSubcommand() == 'notifchannel') {
+        } else if (interaction.commandName === 'player') {
+            if (interaction.options.getSubcommand() === 'notifchannel') {
                 let channel = interaction.options.getChannel('channel');
                 let user = interaction.options.getUser('player');
                 let player = await connection.promise().query('select * from players where guild_id = ? and user_id = ?', [interaction.guildId, user.id]);
@@ -1217,7 +1217,7 @@ client.on('interactionCreate', async (interaction) => {
                 } else {
                     interaction.reply({ content: 'Please make sure you\'re tagging a player in this game. If you need to, set them up with `/player create` first.', ephemeral: true });
                 }
-            } else if (interaction.options.getSubcommand() == 'create') {
+            } else if (interaction.options.getSubcommand() === 'create') {
                 let user = interaction.options.getUser('user');
                 let playerName = interaction.options.getString('player_name');
                 let playerexists = await connection.promise().query('select * from players where user_id = ? and guild_id = ?', [user.id, interaction.guildId]); // Not using member id because it's a pain to get, and this way we could eventually let users look at all their characters in a web view maybe
@@ -1236,7 +1236,7 @@ client.on('interactionCreate', async (interaction) => {
 
                 }
             }
-        } else if (interaction.commandName == 'character') {
+        } else if (interaction.commandName === 'character') {
             if (interaction.options.getSubcommand() === 'unassign') {
                 let user = interaction.options.getUser('user');
                 let player = await connection.promise().query('select * from players where user_id = ? and guild_id = ?', [user.id, interaction.guildId]);
@@ -1254,7 +1254,7 @@ client.on('interactionCreate', async (interaction) => {
                         let message = await interaction.reply({ content: 'Select a character or characters to unassign from this player:', components: [characterSelectRow], ephemeral: true });
                         const collector = message.createMessageComponentCollector({ time: 35000 });
                         collector.on('collect', async (interaction_second) => {
-                            if (interaction_second.customId == 'CharacterUnassignmentSelector' && interaction_second.member.id === interaction.member.id) {
+                            if (interaction_second.customId === 'CharacterUnassignmentSelector' && interaction_second.member.id === interaction.member.id) {
                                 for (const thisId of interaction_second.values) {
                                     await connection.promise().query('delete from players_characters where player_id = ? and character_id = ?', [player[0][0].id, thisId]);
                                 }
@@ -1296,7 +1296,7 @@ client.on('interactionCreate', async (interaction) => {
                     let message = await interaction.reply({ content: 'Select a character or characters to assign to this player:', components: [characterSelectRow], ephemeral: true });
                     const collector = message.createMessageComponentCollector({ time: 35000 });
                     collector.on('collect', async (interaction_second) => {
-                        if (interaction_second.customId == 'CharacterAssignmentSelector' && interaction.member.id == interaction_second.member.id) {
+                        if (interaction_second.customId === 'CharacterAssignmentSelector' && interaction.member.id == interaction_second.member.id) {
                             for (const thisId of interaction_second.values) {
                                 await connection.promise().query('insert into players_characters (player_id, character_id, active) values (?, ?, ?)', [player[0][0].id, thisId, 0]);
                             }
@@ -1352,7 +1352,7 @@ client.on('interactionCreate', async (interaction) => {
                     collector.on('collect', async (interaction_second) => {
                         if (interaction.member.id === interaction_second.member.id) {
                             let characterSelected = interaction_second.values[0];
-                            if (interaction_second.customId == 'CharAvAlphabetSelector') {
+                            if (interaction_second.customId === 'CharAvAlphabetSelector') {
                                 let characters;
                                 if (interaction.member.permissions.has('ADMINISTRATOR')) {
                                     characters = await connection.promise().query('select * from characters where guild_id = ? and upper(character_name) like "?%"', [interaction.guildId, characterSelected]);
@@ -1406,7 +1406,7 @@ client.on('interactionCreate', async (interaction) => {
                         collector.on('collect', async (interaction_second) => {
                             if (interaction_second.member.id === interaction.member.id) {
                                 if (interaction_second.values[0]) {
-                                    if (interaction_second.customId == 'LocationMovementSelector') {
+                                    if (interaction_second.customId === 'LocationMovementSelector') {
                                         locationSelected = interaction_second.values[0];
                                     } else {
                                         characterSelected = interaction_second.values[0];
@@ -1469,7 +1469,7 @@ client.on('interactionCreate', async (interaction) => {
                     interaction.reply({ content: 'You haven\'t created any locations yet. Try creating a location first.', ephemeral: true });
                 }
             }
-        } else if (interaction.commandName == 'active') {
+        } else if (interaction.commandName === 'active') {
             let characters = await connection.promise().query('select c.* from characters c join players_characters pc on pc.character_id = c.id join players p on p.id = pc.player_id where p.user_id = ? and p.guild_id = ? and pc.active = 0', [interaction.user.id, interaction.guildId]);
             let player = await connection.promise().query('select * from players where user_id = ? and guild_id = ?', [interaction.user.id, interaction.guildId]);
             let charactersKeyValues = [];
@@ -1491,7 +1491,7 @@ client.on('interactionCreate', async (interaction) => {
             } else {
                 interaction.reply({ content: "You don't have any inactive characters.", ephemeral: true });
             }
-        } else if (interaction.commandName == 'addcharacterarchetype') {
+        } else if (interaction.commandName === 'addcharacterarchetype') {
             let archetype = interaction.options.getString('archetype');
             let description = interaction.options.getString('description');
             let archetypeExists = await connection.promise().query('select * from archetypes where guild_id = ? and name = ?', [interaction.guildId, archetype]);
@@ -1501,7 +1501,7 @@ client.on('interactionCreate', async (interaction) => {
             } else {
                 interaction.reply({ content: 'Archetype already exists for this game.', ephemeral: true });
             }
-        } else if (interaction.commandName == 'assignarchetype') {
+        } else if (interaction.commandName === 'assignarchetype') {
             let archetypes = await connection.promise().query('select * from archetypes where guild_id = ?', [interaction.guildId]);
             let archetypesKeyValues = [];
             if (archetypes[0].length > 0) {
@@ -1515,7 +1515,7 @@ client.on('interactionCreate', async (interaction) => {
                 let selectedArchetype;
                 collector.on('collect', async (interaction_second) => {
                     if (interaction_second.member.id === interaction.member.id) {
-                        if (interaction_second.customId == 'ArchetypeAssignmentSelector') {
+                        if (interaction_second.customId === 'ArchetypeAssignmentSelector') {
                             selectedArchetype = interaction_second.values[0];
                             let characters = await connection.promise().query('select distinct characters.* from characters left outer join characters_archetypes ca on characters.id = ca.character_id where guild_id = ? and (ca.archetype_id <> ? or ca.archetype_id is null)', [interaction.guildId, selectedArchetype]);
                             let charactersKeyValues = [];
@@ -1530,7 +1530,7 @@ client.on('interactionCreate', async (interaction) => {
                                 await interaction_second.update({ content: 'No characters are valid to assign to this archetype.', components: [] });
                                 await collector.stop();
                             }
-                        } else if (interaction_second.customId == 'CharacterAssignmentSelector') {
+                        } else if (interaction_second.customId === 'CharacterAssignmentSelector') {
                             for (const thisId of interaction_second.values) {
                                 await connection.promise().query('insert into characters_archetypes (character_id, archetype_id) values (?, ?)', [thisId, selectedArchetype]);
                             }
@@ -1544,8 +1544,8 @@ client.on('interactionCreate', async (interaction) => {
             } else {
                 interaction.reply({ content: 'No archetype exists.', ephemeral: true })
             }
-        } else if (interaction.commandName == 'stat') {
-            if (interaction.options.getSubcommand() == 'add') {
+        } else if (interaction.commandName === 'stat') {
+            if (interaction.options.getSubcommand() === 'add') {
                 let name = interaction.options.getString('stat')
                 let defaultValue = interaction.options.getInteger('defaultvalue');
                 let exists = await connection.promise().query('select * from stats where guild_id = ? and name = ?', [interaction.guildId, name]);
@@ -1555,7 +1555,7 @@ client.on('interactionCreate', async (interaction) => {
                 } else {
                     interaction.reply({ content: 'Stat with this name already exists!', ephemeral: true });
                 }
-            } else if (interaction.options.getSubcommand() == 'set') {
+            } else if (interaction.options.getSubcommand() === 'set') {
                 let value = interaction.options.getInteger('value');
                 // Create two dropdowns. For character and stat. See characterlocation for details.
                 let stats = await connection.promise().query('select * from stats where guild_id = ?', [interaction.guildId]);
@@ -1581,7 +1581,7 @@ client.on('interactionCreate', async (interaction) => {
                         collector.on('collect', async (interaction_second) => {
                             if (interaction_second.member.id === interaction.member.id) {
                                 if (interaction_second.values[0]) {
-                                    if (interaction_second.customId == 'StatAssignmentStatSelector') {
+                                    if (interaction_second.customId === 'StatAssignmentStatSelector') {
                                         statSelected = interaction_second.values[0];
                                     } else {
                                         characterSelected = interaction_second.values[0];
@@ -1610,7 +1610,7 @@ client.on('interactionCreate', async (interaction) => {
                 } else {
                     interaction.reply({ content: 'You haven\'t created any characters yet. Try creating a character first.', ephemeral: true });
                 }
-            } else if (interaction.options.getSubcommand() == 'adjust') {
+            } else if (interaction.options.getSubcommand() === 'adjust') {
                 let value = interaction.options.getInteger('value');
                 // Create two dropdowns. For character and stat. See characterlocation for details.
                 let stats = await connection.promise().query('select * from stats where guild_id = ?', [interaction.guildId]);
@@ -1636,7 +1636,7 @@ client.on('interactionCreate', async (interaction) => {
                         collector.on('collect', async (interaction_second) => {
                             if (interaction.member.id === interaction_second.member.id) {
                                 if (interaction_second.values[0]) {
-                                    if (interaction_second.customId == 'StatAssignmentStatSelector') {
+                                    if (interaction_second.customId === 'StatAssignmentStatSelector') {
                                         statSelected = interaction_second.values[0];
                                     } else {
                                         characterSelected = interaction_second.values[0];
@@ -1666,7 +1666,7 @@ client.on('interactionCreate', async (interaction) => {
                     interaction.reply({ content: 'You haven\'t created any characters yet. Try creating a character first.', ephemeral: true });
                 }
             }
-        } else if (interaction.commandName == 'addarchetypestat') {
+        } else if (interaction.commandName === 'addarchetypestat') {
             // stat, description, defaultvalue
             let name = interaction.options.getString('stat');
             let description = interaction.options.getString('description');
@@ -1685,7 +1685,7 @@ client.on('interactionCreate', async (interaction) => {
                     let message = await interaction.reply({ content: 'Archetype stat added! Select archetype(s):', components: [archetypeSelectRow], ephemeral: true });
                     let collector = message.createMessageComponentCollector({ time: 35000 });
                     collector.on('collect', async (interaction_second) => {
-                        if (interaction_second.customId == 'ArchetypeStatAssignmentSelector' && interaction.member.id === interaction_second.member.id) {
+                        if (interaction_second.customId === 'ArchetypeStatAssignmentSelector' && interaction.member.id === interaction_second.member.id) {
                             for (const thisArchetype of interaction_second.values) {
                                 await connection.promise().query('insert into archetypes_archetypestats (archetype_id, archetypestat_id) values (?, ?)', [thisArchetype, addedStat[0].insertId]);
                             }
@@ -1698,8 +1698,8 @@ client.on('interactionCreate', async (interaction) => {
             } else {
                 interaction.reply({ content: 'Stat with this name already exists!', ephemeral: true });
             }
-        } else if (interaction.commandName == 'skilladmin') {
-            if (interaction.options.getSubcommand() == 'edit') {
+        } else if (interaction.commandName === 'skilladmin') {
+            if (interaction.options.getSubcommand() === 'edit') {
                 let skill_name = interaction.options.getString('name');
                 let skill_id;
                 let column_name;
@@ -1738,7 +1738,7 @@ client.on('interactionCreate', async (interaction) => {
                     if (process) {
                         let collector = message.createMessageComponentCollector();
                         collector.on('collect', async (interaction_second) => {
-                            if (interaction_second.customId == 'SkillEditSkillSelector' + interaction_second.member.id) {
+                            if (interaction_second.customId === 'SkillEditSkillSelector' + interaction_second.member.id) {
                                 skill_id = interaction_second.values[0];
                                 let keyValues = [];
                                 skill_id = skill[0][0].id;
@@ -1748,7 +1748,7 @@ client.on('interactionCreate', async (interaction) => {
                                 const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('SkillEditColumnSelector' + interaction_second.member.id).setMinValues(1).setMaxValues(1);
                                 let selectRow = new ActionRowBuilder().addComponents(selectComponent);
                                 await interaction_second.update({ content: 'Please select a property from the dropdown to edit.', components: [selectRow] });
-                            } else if (interaction_second.customId == 'SkillEditColumnSelector' + interaction_second.member.id) {
+                            } else if (interaction_second.customId === 'SkillEditColumnSelector' + interaction_second.member.id) {
                                 column_name = interaction_second.values[0];
                                 let modal = new ModalBuilder()
                                     .setCustomId('SkillEditModal');
@@ -1764,7 +1764,7 @@ client.on('interactionCreate', async (interaction) => {
                                 await interaction_second.showModal(modal);
                                 let submittedModal = await interaction_second.awaitModalSubmit({ time: 60000 });
                                 if (submittedModal) {
-                                    if (submittedModal.customId == 'SkillEditModal' && submittedModal.member.id == interaction.member.id) {
+                                    if (submittedModal.customId === 'SkillEditModal' && submittedModal.member.id == interaction.member.id) {
                                         const newValue = submittedModal.fields.getTextInputValue('newValue');
                                         await connection.promise().query('update skills set ?? = ? where id = ?', [column_name, newValue, skill_id]);
                                         submittedModal.update({ content: 'Successfully updated this skill entry.', components: [] });
@@ -1779,7 +1779,7 @@ client.on('interactionCreate', async (interaction) => {
 
 
             }
-            if (interaction.options.getSubcommand() == 'add') {
+            if (interaction.options.getSubcommand() === 'add') {
                 let name = interaction.options.getString('name');
                 let type = interaction.options.getString('type');
                 let other_targetable = interaction.options.getBoolean('other_targetable');
@@ -1792,7 +1792,7 @@ client.on('interactionCreate', async (interaction) => {
                 } else {
                     interaction.reply({ content: 'Skill with this name already exists!', ephemeral: true });
                 }
-            } else if (interaction.options.getSubcommand() == 'assign') {
+            } else if (interaction.options.getSubcommand() === 'assign') {
                 let to_character = interaction.options.getBoolean('to_character');
                 let skills = await connection.promise().query('select * from skills where guild_id = ?', [interaction.guildId]);
                 let skillSelectComponent;
@@ -1845,11 +1845,11 @@ client.on('interactionCreate', async (interaction) => {
                         collector.on('collect', async (interaction_second) => {
                             if (interaction.member.id === interaction_second.member.id) {
                                 if (interaction_second.values[0]) {
-                                    if (interaction_second.customId == 'SkillAssignmentSkillSelector') {
+                                    if (interaction_second.customId === 'SkillAssignmentSkillSelector') {
                                         skillSelected = interaction_second.values[0];
-                                    } else if (interaction_second.customId == 'SkillAssignmentAlphabetSelector') {
+                                    } else if (interaction_second.customId === 'SkillAssignmentAlphabetSelector') {
                                         alphabetSelected = interaction_second.values[0];
-                                    } else if (interaction_second.customId == 'SkillAssignmentCharacterSelector') {
+                                    } else if (interaction_second.customId === 'SkillAssignmentCharacterSelector') {
                                         charactersSelected = interaction_second.values;
                                     } else {
                                         archetypesSelected = interaction_second.values;
@@ -1894,7 +1894,7 @@ client.on('interactionCreate', async (interaction) => {
                 } else {
                     interaction.reply({ content: 'Please create at least one skill first. <3', ephemeral: true });
                 }
-            } else if (interaction.options.getSubcommand() == 'unassign') {
+            } else if (interaction.options.getSubcommand() === 'unassign') {
                 let to_character = interaction.options.getBoolean('to_character');
                 let unassignSkillRow;
                 if (to_character) {
@@ -1926,9 +1926,9 @@ client.on('interactionCreate', async (interaction) => {
                     let skillSelected;
                     collector.on('collect', async (interaction_second) => {
                         if (interaction_second.member.id === interaction.member.id) {
-                            if (interaction_second.customId == 'SkillUnassignmentCharacterSelector') {
+                            if (interaction_second.customId === 'SkillUnassignmentCharacterSelector') {
                                 characterSelected = interaction_second.values[0];
-                            } else if (interaction_second.customId == 'SkillUnassignmentArchetypeSelector') {
+                            } else if (interaction_second.customId === 'SkillUnassignmentArchetypeSelector') {
                                 archetypeSelected = interaction_second.values[0];
                             } else {
                                 skillSelected = interaction_second.values[0];
@@ -1968,7 +1968,7 @@ client.on('interactionCreate', async (interaction) => {
                 } else {
                     await interaction.reply({ content: "Couldn't find any characters (or archetypes) to unassign skills from.", ephemeral: true });
                 }
-            } else if (interaction.options.getSubcommand() == 'addeffect') {
+            } else if (interaction.options.getSubcommand() === 'addeffect') {
                 let skills = await connection.promise().query('select * from skills where guild_id = ? and (other_targetable = 1 or self_targetable = 1)', [interaction.guildId]);
                 let skillSelectComponent;
                 if (skills[0].length > 0) {
@@ -1995,7 +1995,7 @@ client.on('interactionCreate', async (interaction) => {
                     let target;
                     collector.on('collect', async (interaction_second) => {
                         if (interaction.member.id === interaction_second.member.id) {
-                            if (interaction_second.customId == 'SkillEffectAlphabetSelector') {
+                            if (interaction_second.customId === 'SkillEffectAlphabetSelector') {
                                 let skills = await connection.promise().query('select * from skills where guild_id = ? and (other_targetable = 1 or self_targetable = 1) and name like ?', [interaction.guildId, interaction_second.values[0] + '%']);
                                 let skillsKeyValues = [{ label: 'Select a skill', value: '0' }];
                                 for (const skill of skills[0]) {
@@ -2004,7 +2004,7 @@ client.on('interactionCreate', async (interaction) => {
                                 skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillEffectSkillSelector').setMinValues(1).setMaxValues(1);
                                 let skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
                                 await interaction_second.update({ content: 'Please select a skill to add an effect to:', components: [skillSelectRow] });
-                            } else if (interaction_second.customId == 'SkillEffectSkillSelector') {
+                            } else if (interaction_second.customId === 'SkillEffectSkillSelector') {
                                 selectedSkill = interaction_second.values[0];
                                 let types = [
                                     { label: 'Increment World Flag', value: 'wflag_inc' },
@@ -2023,7 +2023,7 @@ client.on('interactionCreate', async (interaction) => {
                                 let selectComponent = new StringSelectMenuBuilder().setOptions(types).setCustomId('TypeSelector').setMinValues(1).setMaxValues(1);
                                 let selectRow = new ActionRowBuilder().addComponents(selectComponent);
                                 await interaction_second.update({ content: 'Please select a type of effect:', components: [selectRow] });
-                            } else if (interaction_second.customId == 'TypeSelector') {
+                            } else if (interaction_second.customId === 'TypeSelector') {
                                 type = interaction_second.values[0];
                                 let targets = [
                                     { label: 'Skill User', value: 'triggering_character' },
@@ -2032,14 +2032,14 @@ client.on('interactionCreate', async (interaction) => {
                                 let selectComponent = new StringSelectMenuBuilder().setOptions(targets).setCustomId('TargetSelector').setMinValues(1).setMaxValues(1);
                                 let selectRow = new ActionRowBuilder().addComponents(selectComponent);
                                 await interaction_second.update({ content: 'Please select a target for this effect:', components: [selectRow] });
-                            } else if (interaction_second.customId == 'TargetSelector') {
+                            } else if (interaction_second.customId === 'TargetSelector') {
                                 target = interaction_second.values[0];
                                 let visibilities = [{ label: 'Yes', value: '1' }, { label: 'No', value: '0' }];
                                 let selectComponent = new StringSelectMenuBuilder().setOptions(visibilities).setCustomId('VisibilitySelector').setMinValues(1).setMaxValues(1);
                                 let selectRow = new ActionRowBuilder().addComponents(selectComponent);
                                 await interaction_second.update({ content: 'Do you want this effect announced to the player?', components: [selectRow], ephemeral: true });
 
-                            } else if (interaction_second.customId == 'VisibilitySelector') {
+                            } else if (interaction_second.customId === 'VisibilitySelector') {
                                 visible = interaction_second.values[0];
                                 console.log(type);
                                 let modal = new ModalBuilder()
@@ -2165,7 +2165,7 @@ client.on('interactionCreate', async (interaction) => {
                                         }
                                     }
                                 }
-                            } else if (interaction_second.customId == 'TypeaheadSelector') {
+                            } else if (interaction_second.customId === 'TypeaheadSelector') {
                                 let typeahead_id = interaction_second.values[0];
                                 let insertedEffect;
                                 if (type_qty) {
@@ -2185,8 +2185,8 @@ client.on('interactionCreate', async (interaction) => {
                 // Then select action ,visiblity, modal as with reputation tier.
                 // Ask whether the effect will hit the caster or the target
             }
-        } else if (interaction.commandName == 'itemadmin') {
-            if (interaction.options.getSubcommand() == 'add') {
+        } else if (interaction.commandName === 'itemadmin') {
+            if (interaction.options.getSubcommand() === 'add') {
                 let name = interaction.options.getString('itemname')
                 let description = interaction.options.getString('description');
                 let consumable = interaction.options.getBoolean('consumable');
@@ -2194,7 +2194,7 @@ client.on('interactionCreate', async (interaction) => {
                 let other_targetable = interaction.options.getBoolean('other_targetable');
                 await connection.promise().query('insert into items (name, description, guild_id, consumable, self_targetable, other_targetable) values (?, ?, ?, ?, ?, ?)', [name, description, interaction.guildId, consumable, self_targetable, other_targetable]);
                 interaction.reply({ content: 'Item added!', ephemeral: true });
-            } else if (interaction.options.getSubcommand() == 'transfer') {
+            } else if (interaction.options.getSubcommand() === 'transfer') {
                 let quantity = interaction.options.getInteger('quantity'); //implement in future state
                 let characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
                 if (characters[0].length > 0) {
@@ -2210,7 +2210,7 @@ client.on('interactionCreate', async (interaction) => {
                     let itemSelected;
                     collector.on('collect', async (interaction_second) => {
                         if (interaction.member.id === interaction_second.member.id) {
-                            if (interaction_second.customId == 'ItemUnassignmentCharacterSelector') {
+                            if (interaction_second.customId === 'ItemUnassignmentCharacterSelector') {
                                 characterSelected = interaction_second.values[0];
                             } else {
                                 itemSelected = interaction_second.values[0];
@@ -2241,7 +2241,7 @@ client.on('interactionCreate', async (interaction) => {
                     await interaction.reply({ content: "Couldn't find any characters to unassign items from.", ephemeral: true });
                 }
 
-            } else if (interaction.options.getSubcommand() == 'assign') {
+            } else if (interaction.options.getSubcommand() === 'assign') {
                 let quantity = interaction.options.getInteger('quantity');
                 let items = await connection.promise().query('select i.* from items i where i.guild_id = ?', [interaction.guildId]);
                 let itemsAlphabetical;
@@ -2280,11 +2280,11 @@ client.on('interactionCreate', async (interaction) => {
                         collector.on('collect', async (interaction_second) => {
                             if (interaction.member.id === interaction_second.member.id) {
                                 if (interaction_second.values[0]) {
-                                    if (interaction_second.customId == 'ItemAssignmentItemSelector') {
+                                    if (interaction_second.customId === 'ItemAssignmentItemSelector') {
                                         itemSelected = interaction_second.values[0];
-                                    } else if (interaction_second.customId == 'ItemAssignmentAlphabetSelector') {
+                                    } else if (interaction_second.customId === 'ItemAssignmentAlphabetSelector') {
                                         alphabetSelected = interaction_second.values[0];
-                                    } else if (interaction_second.customId == 'ItemAssignmentCharacterSelector') {
+                                    } else if (interaction_second.customId === 'ItemAssignmentCharacterSelector') {
                                         characterSelected = interaction_second.values[0];
                                     }
                                     if (alphabetSelected && !itemSelected) {
@@ -2337,7 +2337,7 @@ client.on('interactionCreate', async (interaction) => {
                 } else {
                     interaction.reply({ content: 'Please create at least one item first. <3', ephemeral: true });
                 }
-            } else if (interaction.options.getSubcommand() == 'addeffect') { // TODO CHANGE TO ITEM
+            } else if (interaction.options.getSubcommand() === 'addeffect') { // TODO CHANGE TO ITEM
                 let items = await connection.promise().query('select * from items where guild_id = ? and (other_targetable = 1 or self_targetable = 1)', [interaction.guildId]);
                 let itemsAlphabetical;
                 let itemSelectComponent;
@@ -2369,7 +2369,7 @@ client.on('interactionCreate', async (interaction) => {
                     let target;
                     collector.on('collect', async (interaction_second) => {
                         if (interaction_second.member.id === interaction.member.id) {
-                            if (interaction_second.customId == 'ItemEffectAlphabetSelector') {
+                            if (interaction_second.customId === 'ItemEffectAlphabetSelector') {
                                 let items = await connection.promise().query('select * from items where guild_id = ? and (other_targetable = 1 or self_targetable = 1) and name like ?', [interaction.guildId, interaction_second.values[0] + '%']);
                                 let itemsKeyValues = [];
                                 for (const item of items[0]) {
@@ -2379,7 +2379,7 @@ client.on('interactionCreate', async (interaction) => {
                                 itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemSelectItemSelector').setMinValues(1).setMaxValues(1);
                                 let itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
                                 await interaction_second.update({ content: 'Please select an item to add an effect to:', components: [itemSelectRow] });
-                            } else if (interaction_second.customId == 'ItemEffectItemSelector') {
+                            } else if (interaction_second.customId === 'ItemEffectItemSelector') {
                                 selectedItem = interaction_second.values[0];
                                 let types = [
                                     { label: 'Increment World Flag', value: 'wflag_inc' },
@@ -2398,7 +2398,7 @@ client.on('interactionCreate', async (interaction) => {
                                 let selectComponent = new StringSelectMenuBuilder().setOptions(types).setCustomId('TypeSelector').setMinValues(1).setMaxValues(1);
                                 let selectRow = new ActionRowBuilder().addComponents(selectComponent);
                                 await interaction_second.update({ content: 'Please select a type of effect:', components: [selectRow] });
-                            } else if (interaction_second.customId == 'TypeSelector') {
+                            } else if (interaction_second.customId === 'TypeSelector') {
                                 type = interaction_second.values[0];
                                 let targets = [
                                     { label: 'Item User', value: 'triggering_character' },
@@ -2407,14 +2407,14 @@ client.on('interactionCreate', async (interaction) => {
                                 let selectComponent = new StringSelectMenuBuilder().setOptions(targets).setCustomId('TargetSelector').setMinValues(1).setMaxValues(1);
                                 let selectRow = new ActionRowBuilder().addComponents(selectComponent);
                                 await interaction_second.update({ content: 'Please select a target for this effect:', components: [selectRow] });
-                            } else if (interaction_second.customId == 'TargetSelector') {
+                            } else if (interaction_second.customId === 'TargetSelector') {
                                 target = interaction_second.values[0];
                                 let visibilities = [{ label: 'Yes', value: '1' }, { label: 'No', value: '0' }];
                                 let selectComponent = new StringSelectMenuBuilder().setOptions(visibilities).setCustomId('VisibilitySelector').setMinValues(1).setMaxValues(1);
                                 let selectRow = new ActionRowBuilder().addComponents(selectComponent);
                                 await interaction_second.update({ content: 'Do you want this effect announced to the player?', components: [selectRow], ephemeral: true });
 
-                            } else if (interaction_second.customId == 'VisibilitySelector') {
+                            } else if (interaction_second.customId === 'VisibilitySelector') {
                                 visible = interaction_second.values[0];
                                 console.log(type);
                                 let modal = new ModalBuilder()
@@ -2540,7 +2540,7 @@ client.on('interactionCreate', async (interaction) => {
                                         }
                                     }
                                 }
-                            } else if (interaction_second.customId == 'TypeaheadSelector') {
+                            } else if (interaction_second.customId === 'TypeaheadSelector') {
                                 let typeahead_id = interaction_second.values[0];
                                 let insertedEffect;
                                 if (type_qty) {
@@ -2560,7 +2560,7 @@ client.on('interactionCreate', async (interaction) => {
                 // Then select action ,visiblity, modal as with reputation tier.
                 // Ask whether the effect will hit the caster or the target
             }
-        } else if (interaction.commandName == 'addworldstat') {
+        } else if (interaction.commandName === 'addworldstat') {
             let name = interaction.options.getString('name');
             let description = interaction.options.getString('description');
             let globallyvisible = interaction.options.getBoolean('globally_visible');
@@ -2572,7 +2572,7 @@ client.on('interactionCreate', async (interaction) => {
             } else {
                 interaction.reply({ content: 'Skill with this name already exists!', ephemeral: true });
             }
-        } else if (interaction.commandName == 'setarchetypestat') {
+        } else if (interaction.commandName === 'setarchetypestat') {
             let value = interaction.options.getInteger('value');
             // Create two dropdowns. For character and stat. See characterlocation for details.
             let stats = await connection.promise().query('select * from archetypestats where guild_id = ?', [interaction.guildId]);
@@ -2591,7 +2591,7 @@ client.on('interactionCreate', async (interaction) => {
                 collector.on('collect', async (interaction_second) => {
                     if (interaction_second.member.id === interaction.member.id) {
                         if (interaction_second.values[0]) {
-                            if (interaction_second.customId == 'ArchetypeStatAssignmentStatSelector') {
+                            if (interaction_second.customId === 'ArchetypeStatAssignmentStatSelector') {
                                 archetypeStatSelected = interaction_second.values[0];
                                 let archetype = await connection.promise().query('select archetype_id from archetypes_archetypestats where archetypestat_id = ?', [archetypeStatSelected]);
                                 let characters = await connection.promise().query('select c.* from characters c join characters_archetypes ca on c.id = ca.character_id where guild_id = ? and ca.archetype_id = ?', [interaction.guildId, archetype[0][0].archetype_id]);
@@ -2630,7 +2630,7 @@ client.on('interactionCreate', async (interaction) => {
             } else {
                 interaction.reply({ content: 'You haven\'t created any characters yet. Try creating a character first.', ephemeral: true });
             }
-        } else if (interaction.commandName == 'modsheet') {
+        } else if (interaction.commandName === 'modsheet') {
             let characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
             if (characters[0].length > 0) {
                 let charactersAlphabetical;
@@ -2657,7 +2657,7 @@ client.on('interactionCreate', async (interaction) => {
                 collector.on('collect', async (interaction_second) => {
                     if (interaction.member.id === interaction_second.member.id) {
                         let characterSelected = interaction_second.values[0];
-                        if (interaction_second.customId == 'ModSheetAlphabetSelector') {
+                        if (interaction_second.customId === 'ModSheetAlphabetSelector') {
                             characters = await connection.promise().query('select * from characters where guild_id = ? and upper(character_name) like "?%"', [interaction.guildId, characterSelected]);
                             if (characters[0].length > 0) {
                                 let charactersKeyValues = [{ label: 'Select a characters', value: '0' }];
@@ -2729,7 +2729,7 @@ client.on('interactionCreate', async (interaction) => {
             }
             //dropdown for characters
             //then generate character sheet ephemeral using the sheet code EXACTLY
-        } else if (interaction.commandName == 'assignspecialstat') {
+        } else if (interaction.commandName === 'assignspecialstat') {
             let stats = await connection.promise().query('select * from stats left outer join stats_specialstats sps on stats.id = sps.stat_id where guild_id = ? and sps.special_type is null', [interaction.guildId]);
             if (stats[0].length > 0) {
                 let typesKeyValues = [
@@ -2750,9 +2750,9 @@ client.on('interactionCreate', async (interaction) => {
                 let typeSelected;
                 collector.on('collect', async (interaction_second) => {
                     if (interaction.member.id === interaction_second.member.id) {
-                        if (interaction_second.customId == 'SpecialStatTypeSelector') {
+                        if (interaction_second.customId === 'SpecialStatTypeSelector') {
                             typeSelected = interaction_second.values[0];
-                        } else if (interaction_second.customId == 'SpecialStatStatSelector') {
+                        } else if (interaction_second.customId === 'SpecialStatStatSelector') {
                             statSelected = interaction_second.values[0];
                         }
 
@@ -2773,19 +2773,19 @@ client.on('interactionCreate', async (interaction) => {
             } else {
                 await interaction.reply({ content: 'There aren\'t any eligible stats for this! Please double-check and ensure that you have a stat that\'s not assigned to a special function.', ephemeral: true });
             }
-        } else if (interaction.commandName == 'characterflag') {
+        } else if (interaction.commandName === 'characterflag') {
             if (interaction.options.getSubcommand() === 'add') {
                 let name = interaction.options.getString('name');
                 await connection.promise().query('insert into characterflags (name, guild_id) values (?, ?)', [name, interaction.guildId]);
                 await interaction.reply({ content: 'Character flag added.', ephemeral: true });
             }
-        } else if (interaction.commandName == 'worldflag') {
+        } else if (interaction.commandName === 'worldflag') {
             if (interaction.options.getSubcommand() === 'add') {
                 let name = interaction.options.getString('name');
                 await connection.promise().query('insert into worldflags (name, guild_id) values (?, ?)', [name, interaction.guildId]);
                 await interaction.reply({ content: 'World flag added.', ephemeral: true });
             }
-        } else if (interaction.commandName == 'reputation') {
+        } else if (interaction.commandName === 'reputation') {
             if (interaction.options.getSubcommand() === 'enable') {
                 let enabled = interaction.options.getBoolean('enabled');
                 await connection.promise().query('replace into game_settings (setting_name, setting_value, guild_id) values (?, ?, ?)', ['reputation', enabled, interaction.guildId]);
@@ -2871,13 +2871,13 @@ client.on('interactionCreate', async (interaction) => {
                                 collector = message.createMessageComponentCollector();
                                 collector.on('collect', async (interaction_third) => {
                                     if (interaction_third.member.id === interaction.member.id) {
-                                        if (interaction_third.customId == 'RepVisCwflagSelector') {
+                                        if (interaction_third.customId === 'RepVisCwflagSelector') {
                                             let cwflag_id = interaction_third.values[0];
                                             await connection.promise().query('insert into reputations (name, guild_id, description, visibility, maximum, start_value, cwflag_id, cwflag_value) values (?, ?, ?, ?, ?, ?, ?, ?)', [name, interaction.guildId, description, visibility, maximum, start_value, cwflag_id, value]);
                                             submittedModal.editReply({ content: 'Reputation added.', components: [] });
                                             collector.stop();
                                             // create modal
-                                        } else if (submittedModal.customId == 'RepVisCwAlphaSelector') {
+                                        } else if (submittedModal.customId === 'RepVisCwAlphaSelector') {
                                             let cwflags;
                                             if (visibility == 'cflag') {
                                                 cwflags = await connection.promise().query('select * from characterflags where guild_id = ? and lower(name) like lower(?) and upper(name) like ?', [interaction.guildId, '%' + cwflag_name + '%', characterSelected + '%']);
@@ -2927,7 +2927,7 @@ client.on('interactionCreate', async (interaction) => {
                 collector = message.createMessageComponentCollector();
                 collector.on('collect', async (interaction_second) => {
                     if (interaction_second.member.id === interaction.member.id) {
-                        if (interaction_second.customId == 'RepSelector') {
+                        if (interaction_second.customId === 'RepSelector') {
                             let reputation_id = interaction_second.values[0];
                             let reputations = await connection.promise().query('select rt.*, r.maximum from reputations_tiers rt join reputations r on rt.reputation_id = r.id where rt.threshold_name = ? and rt.reputation_id = ?', [name, reputation_id]);
                             if (reputations[0].length > 0) {
@@ -2945,7 +2945,7 @@ client.on('interactionCreate', async (interaction) => {
                                 }
                             }
                             //add tier
-                        } else if (interaction_second.customId == 'RepAlphaSelector') {
+                        } else if (interaction_second.customId === 'RepAlphaSelector') {
                             let reputations = await connection.promise().query('select * from reputations where name like ? and guild_id = ?', ['%' + interaction_second.values[0], interaction.guildId]);
                             if (reputations[0].length <= 25) {
                                 let reputationsKeyValues = [];
@@ -2989,7 +2989,7 @@ client.on('interactionCreate', async (interaction) => {
                 let reputation_id;
                 collector.on('collect', async (interaction_second) => {
                     if (interaction_second.member.id === interaction.member.id) {
-                        if (interaction_second.customId == 'RepSelector') {
+                        if (interaction_second.customId === 'RepSelector') {
                             reputation_id = interaction_second.values[0];
                             let result_values = await connection.promise().query('select * from reputations_tiers where reputation_id = ?', [reputation_id]);
                             let selectComponent;
@@ -3013,7 +3013,7 @@ client.on('interactionCreate', async (interaction) => {
                             } else {
                                 await interaction_second.update({ content: 'No reputation tiers available for this reputation.', components: [], ephemeral: true });
                             }
-                        } else if (interaction_second.customId == 'TierSelector') {
+                        } else if (interaction_second.customId === 'TierSelector') {
                             tier_id = interaction_second.values[0];
                             let types = [
                                 { label: 'Increment World Flag', value: 'wflag_inc' },
@@ -3032,14 +3032,14 @@ client.on('interactionCreate', async (interaction) => {
                             const selectComponent = new StringSelectMenuBuilder().setOptions(types).setCustomId('TypeSelector').setMinValues(1).setMaxValues(1);
                             const selectRow = new ActionRowBuilder().addComponents(selectComponent);
                             await interaction_second.update({ content: 'Please select a type of effect:', components: [selectRow], ephemeral: true });
-                        } else if (interaction_second.customId == 'TypeSelector') {
+                        } else if (interaction_second.customId === 'TypeSelector') {
                             type = interaction_second.values[0];
                             let visibilities = [{ label: 'Yes', value: '1' }, { label: 'No', value: '0' }];
                             const selectComponent = new StringSelectMenuBuilder().setOptions(visibilities).setCustomId('VisibilitySelector').setMinValues(1).setMaxValues(1);
                             const selectRow = new ActionRowBuilder().addComponents(selectComponent);
                             await interaction_second.update({ content: 'Do you want this effect announced to the player?', components: [selectRow], ephemeral: true });
 
-                        } else if (interaction_second.customId == 'VisibilitySelector') {
+                        } else if (interaction_second.customId === 'VisibilitySelector') {
                             visible = interaction_second.values[0];
                             console.log(type);
                             let modal = new ModalBuilder()
@@ -3165,7 +3165,7 @@ client.on('interactionCreate', async (interaction) => {
                                     }
                                 }
                             }
-                        } else if (interaction_second.customId == 'TypeaheadSelector') {
+                        } else if (interaction_second.customId === 'TypeaheadSelector') {
                             let typeahead_id = interaction_second.values[0];
                             let insertedEffect;
                             if (type_qty) {
@@ -3176,7 +3176,7 @@ client.on('interactionCreate', async (interaction) => {
                             await connection.promise().query('insert into reputations_tiers_effects (reputationtier_id, effect_id) values (?, ?)', [tier_id, insertedEffect[0].insertId]);
                             await interaction_second.update({ content: 'Effect added.', components: [] });
                             collector.stop();
-                        } else if (interaction_second.customId == 'TierAlphaSelector') {
+                        } else if (interaction_second.customId === 'TierAlphaSelector') {
                             let result_values = await connection.promise().query('select * from reputations_tiers where reputation_id = ? and threshold_name like ?', [reputation_id, interaction_second.values[0] + '%']);
                             let keyValues = [];
                             for (const result_value of result_values[0]) {
@@ -3185,7 +3185,7 @@ client.on('interactionCreate', async (interaction) => {
                             const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('TierSelector').setMinValues(1).setMaxValues(1);
                             const selectRow = new ActionRowBuilder().addComponents(selectComponent);
                             await interaction_second.update({ content: 'Please select a reputation tier:', components: [selectRow] });
-                        } else if (interaction_second.customId == 'RepAlphaSelector') {
+                        } else if (interaction_second.customId === 'RepAlphaSelector') {
                             let reputations = await connection.promise().query('select * from reputations where name like ? and guild_id = ?', ['%' + interaction_second.values[0], interaction.guildId]);
                             if (reputations[0].length <= 25) {
                                 let reputationsKeyValues = [];
@@ -3206,7 +3206,7 @@ client.on('interactionCreate', async (interaction) => {
             } else if (interaction.options.getSubcommand() === 'vieweffects') {
 
             }
-        } else if (interaction.commandName == 'effect') {
+        } else if (interaction.commandName === 'effect') {
             if (interaction.options.getSubcommand() === 'addprereq') {
                 let choices = [
                     { label: 'Reputation Tier', value: 'reputation' },
@@ -3566,7 +3566,7 @@ client.on('interactionCreate', async (interaction) => {
             } else if (interaction.options.getSubcommand() === 'remove') {
 
             }
-        } else if (interaction.commandName == 'sendas') {
+        } else if (interaction.commandName === 'sendas') {
             let parrot_text = interaction.options.getString('message');
             let character = false;
             if (interaction.options.getString('character')) {
@@ -3614,7 +3614,7 @@ client.on('interactionCreate', async (interaction) => {
                     collector.on('collect', async (interaction_second) => {
                         if (interaction_second.member.id === interaction.member.id) {
                             let characterSelected = interaction_second.values[0];
-                            if (interaction_second.customId == 'SendAsAlphabetSelector') {
+                            if (interaction_second.customId === 'SendAsAlphabetSelector') {
                                 let characters;
                                 if (interaction.member.permissions.has('ADMINISTRATOR')) {
                                     characters = await connection.promise().query('select * from characters where guild_id = ? and upper(character_name) like "?%"', [interaction.guildId, characterSelected]);
@@ -3702,7 +3702,7 @@ client.on('interactionCreate', async (interaction) => {
 
         // PLAYER COMMANDS
         else if (isPlayer(interaction.user.id, interaction.guildId) || interaction.member.permissions.has("ADMINISTRATOR")) {
-            if (interaction.commandName == 'move') {
+            if (interaction.commandName === 'move') {
                 let is_enabled = await connection.promise().query('select ml.movement_allowed, ml.id from players join players_characters pc on players.id = pc.player_id join characters c on pc.character_id = c.id join movement_locations ml on ml.id = c.location_id where players.user_id = ? and players.guild_id = ? and pc.active = 1', [interaction.user.id, interaction.guildId]);
                 if (is_enabled[0].length > 0 && is_enabled[0][0].movement_allowed == 1) {
                     let locations = await connection.promise().query('select * from movement_locations where guild_id = ? and movement_allowed = 1 and id <> ?', [interaction.guildId, is_enabled[0][0].id])
@@ -3722,7 +3722,7 @@ client.on('interactionCreate', async (interaction) => {
                 } else {
                     interaction.reply({ content: 'Sorry, but you don\'t seem to be in a location that allows movement right now. Try again another time, or contact the Orchestrators. :purple_heart:', ephemeral: true });
                 }
-            } else if (interaction.commandName == 'sheet') {
+            } else if (interaction.commandName === 'sheet') {
                 let current_character = await connection.promise().query('select character_id from players_characters join players p on p.id = players_characters.player_id where p.user_id = ? and players_characters.active = 1 and p.guild_id = ?', [interaction.user.id, interaction.guildId]);
                 if (current_character[0].length > 0) {
                     let character_information = await connection.promise().query('select * from characters where id = ?', [current_character[0][0].character_id]);
@@ -3812,7 +3812,7 @@ client.on('interactionCreate', async (interaction) => {
                         await interaction.reply({ content: '<@' + interaction.user + '> has challenged me to a duel!', components: [rpsRow] });
                     }
                 }
-            } else if (interaction.commandName == 'rpsmulti') {
+            } else if (interaction.commandName === 'rpsmulti') {
                 let current_character = await connection.promise().query('select pc.character_id, c.name from players_characters pc join players p on p.id = pc.player_id join characters c on c.id = pc.character_id where p.user_id = ? and p.guild_id = ? and pc.active = 1', [interaction.user.id, interaction.guildId]);
                 if (current_character[0].length > 0) {
                     let openMultiRPS = await connection.promise().query('select * from multirps where character_id = ? and open = 1', [current_character[0][0].character_id]);
@@ -3904,10 +3904,10 @@ client.on('interactionCreate', async (interaction) => {
                 } else {
                     interaction.reply({ content: "uhhh do you have an active character?", ephemeral: true });
                 }
-            } else if (interaction.commandName == 'skill') { //TODO: Futureproof with alphabet selector.
+            } else if (interaction.commandName === 'skill') { //TODO: Futureproof with alphabet selector.
                 let current_character = await connection.promise().query('select players_characters.character_id, c.name from players_characters join players p on p.id = players_characters.player_id join characters c on c.id = players_characters.character_id where p.user_id = ? and p.guild_id = ? and players_characters.active = 1', [interaction.user.id, interaction.guildId]);
                 if (current_character[0].length > 0) {
-                    if (interaction.options.getSubcommand() == 'display') {
+                    if (interaction.options.getSubcommand() === 'display') {
                         let skills = await connection.promise().query('select distinct s.* from skills s left outer join skills_characters sc on sc.skill_id = s.id left outer join skills_archetypes sa on sa.skill_id = s.id left outer join characters_archetypes ca on sa.archetype_id = ca.archetype_id where where sc.character_id = ? or ca.character_id = ? order by s.id asc', [current_character[0][0].character_id, current_character[0][0].character_id]);
                         if (skills[0].length > 0) {
                             let skillsKeyValues = [];
@@ -3934,7 +3934,7 @@ client.on('interactionCreate', async (interaction) => {
 
                         //dropdown
                         // put dropdown in thingy
-                    } else if (interaction.options.getSubcommand() == 'use') {
+                    } else if (interaction.options.getSubcommand() === 'use') {
                         let characterskills = await connection.promise().query('select s.* from skills_characters sc join skills s on sc.skill_id = s.id where sc.character_id = ? and (s.other_targetable = 1 or s.self_targetable = 1)', [current_character[0][0].character_id]);
                         let archetypeskills = await connection.promise().query('select s.* from skills s join skills_archetypes sa on sa.skill_id = s.id join characters_archetypes ca on sa.archetype_id = ca.archetype_id where ca.character_id = ? and (s.other_targetable = 1 or s.self_targetable = 1)', [current_character[0][0].character_id]);
                         let skills;
@@ -3962,7 +3962,7 @@ client.on('interactionCreate', async (interaction) => {
                             let collector = message.createMessageComponentCollector();
                             collector.on('collect', async (interaction_second) => {
                                 if (interaction.member.id === interaction_second.member.id) {
-                                    if (interaction_second.customId == 'SkillUseSelector') {
+                                    if (interaction_second.customId === 'SkillUseSelector') {
                                         skillSelected = interaction_second.values[0];
                                         selectedSkill = skills.find(s => s.id == skillSelected);
                                         let characters;
@@ -4035,7 +4035,7 @@ client.on('interactionCreate', async (interaction) => {
                                                 collector.stop();
                                             }
                                         }
-                                    } else if (interaction_second.customId == 'SkillUseAlphabetSelector') {
+                                    } else if (interaction_second.customId === 'SkillUseAlphabetSelector') {
                                         if (location_aware[0].length > 0 && location_aware[0][0].setting_value == 0) {
                                             if (selectedSkill.self_targetable) {
                                                 characters = await connection.promise().query('select * from characters where guild_id = ? and name like ?', [interaction.guildId, interaction_second.values[0] + '%']);
@@ -4064,7 +4064,7 @@ client.on('interactionCreate', async (interaction) => {
                                             collector.stop();
                                         }
 
-                                    } else if (interaction_second.customId == 'SkillUseCharacterSelector') {
+                                    } else if (interaction_second.customId === 'SkillUseCharacterSelector') {
                                         let characterSelected = await connection.promise().query('select * from characters c where id = ?', [interaction_second.values[0]]);
                                         let effects = await connection.promise().query('select e.* from effects e join skills_effects se on se.effect_id = e.id where se.skill_id = ?', [selectedSkill.id]);
                                         for (const thisEffect of effects[0]) {
@@ -4087,8 +4087,8 @@ client.on('interactionCreate', async (interaction) => {
                 } else {
                     interaction.reply({ content: 'You don\'t seem to have an active character. Check in with the mods on this, please.', ephemeral: true });
                 }
-            } else if (interaction.commandName == 'item') {
-                if (interaction.options.getSubcommand() == 'display') {
+            } else if (interaction.commandName === 'item') {
+                if (interaction.options.getSubcommand() === 'display') {
                     let current_character = await connection.promise().query('select pc.character_id, c.name from players_characters pc join players p on p.id = pc.player_id join characters c on c.id = pc.character_id where p.user_id = ? and p.guild_id = ? and pc.active = 1', [interaction.user.id, interaction.guildId]);
                     if (current_character[0].length > 0) {
                         let items = await connection.promise().query('select i.* from items i join characters_items ci on ci.item_id = i.id where ci.character_id = ?', [current_character[0][0].character_id]);
@@ -4118,7 +4118,7 @@ client.on('interactionCreate', async (interaction) => {
                     }
                     //dropdown
                     // put dropdown in thingy
-                } else if (interaction.options.getSubcommand() == 'give') { //TODO: Futureproof this with the alphabet selector.)
+                } else if (interaction.options.getSubcommand() === 'give') { //TODO: Futureproof this with the alphabet selector.)
                     let quantity = interaction.options.getInteger('quantity');
                     if (quantity > 0) {
                         let current_character = await connection.promise().query('select c.location_id, pc.character_id, c.name, c.id from players_characters pc join characters c on c.id = pc.character_id join players p on p.id = pc.player_id where p.user_id = ? and p.guild_id = ? and pc.active = 1', [interaction.user.id, interaction.guildId]);
@@ -4155,7 +4155,7 @@ client.on('interactionCreate', async (interaction) => {
                                     collector.on('collect', async (interaction_second) => {
                                         if (interaction_second.member.id === interaction.member.id) {
                                             if (interaction_second.values[0]) {
-                                                if (interaction_second.customId == 'GiveItemSelector') {
+                                                if (interaction_second.customId === 'GiveItemSelector') {
                                                     itemSelected = interaction_second.values[0];
                                                 } else {
                                                     characterSelected = interaction_second.values[0];
@@ -4213,7 +4213,7 @@ client.on('interactionCreate', async (interaction) => {
                     } else {
                         interaction.reply({ content: 'You can\'t give a negative number or zero of an item.', ephemeral: true });
                     }
-                } else if (interaction.options.getSubcommand() == 'use') {
+                } else if (interaction.options.getSubcommand() === 'use') {
                     let items = await connection.promise().query('select i.* from characters_items ci join items i on ci.item_id = i.id where ci.character_id = ? and (i.other_targetable = 1 or i.self_targetable = 1)', [current_character[0][0].character_id]);
                     let selectedItem;
                     let location_aware;
@@ -4229,7 +4229,7 @@ client.on('interactionCreate', async (interaction) => {
                         let collector = message.createMessageComponentCollector();
                         collector.on('collect', async (interaction_second) => {
                             if (interaction.member.id === interaction_second.member.id) {
-                                if (interaction_second.customId == 'ItemUseSelector') {
+                                if (interaction_second.customId === 'ItemUseSelector') {
                                     itemSelected = interaction_second.values[0];
                                     selectedItem = items.find(i => i.id == selectedItem);
                                     let characters;
@@ -4308,7 +4308,7 @@ client.on('interactionCreate', async (interaction) => {
                                             collector.stop();
                                         }
                                     }
-                                } else if (interaction_second.customId == 'ItemUseAlphabetSelector') {
+                                } else if (interaction_second.customId === 'ItemUseAlphabetSelector') {
                                     if (location_aware[0].length > 0 && location_aware[0][0].setting_value == 0) {
                                         if (selectedItem.self_targetable) {
                                             characters = await connection.promise().query('select * from characters where guild_id = ? and name like ?', [interaction.guildId, interaction_second.values[0] + '%']);
@@ -4336,7 +4336,7 @@ client.on('interactionCreate', async (interaction) => {
                                         collector.stop();
                                     }
 
-                                } else if (interaction_second.customId == 'ItemUseCharacterSelector' + interaction.member.id) {
+                                } else if (interaction_second.customId === 'ItemUseCharacterSelector' + interaction.member.id) {
                                     let characterSelected = await connection.promise().query('select * from characters c where id = ?', [interaction_second.values[0]]);
                                     let effects = await connection.promise().query('select e.* from effects e join items_effects ie on ie.effect_id = e.id where ie.item_id = ?', [selectedItem.id]);
                                     for (const thisEffect of effects[0]) {
@@ -4359,7 +4359,7 @@ client.on('interactionCreate', async (interaction) => {
                         interaction.reply({ content: 'You don\'t seem to have any usable items.', ephemeral: true });
                     }
                 }
-            } else if (interaction.commandName == 'duel') {
+            } else if (interaction.commandName === 'duel') {
                 let isHealthStat = await connection.promise().query('select * from stats join stats_specialstats sps on stats.id = sps.stat_id where stats.guild_id = ? and sps.special_type = "health"', [interaction.guildId]);
                 if (isHealthStat[0].length > 0) {
                     let target = interaction.options.getUser('target');
@@ -4401,7 +4401,7 @@ client.on('interactionCreate', async (interaction) => {
                 } else {
                     await interaction.reply({ content: 'No health stat is set. Check with the Orchestrators, please!', ephemeral: true });
                 }
-            } else if (interaction.commandName == 'deck') {
+            } else if (interaction.commandName === 'deck') {
                 let activeCharacter = await connection.promise().query('select c.* from characters c join players_characters pc on c.id = pc.character_id join players p on pc.player_id = p.id where pc.active = 1 and p.user_id = ? and p.guild_id = ?', [interaction.user.id, interaction.guildId]);
                 if (activeCharacter[0][0]) {
                     let tiles = await connection.promise().query('select * from characters_tiles ct join tiles t on ct.tile_id = t.id where ct.character_id = ?', [activeCharacter[0][0].id]);
@@ -4523,13 +4523,13 @@ client.on('interactionCreate', async (interaction) => {
                     let rolesSelected;
                     collector.on('collect', async (interaction_select) => {
                         if (interaction_select.values[0]) {
-                            if (interaction_select.customId == 'CategorySelector') {
+                            if (interaction_select.customId === 'CategorySelector') {
                                 interaction_select.deferUpdate();
                                 categorySelected = interaction_select.values[0];
                                 const roleSelectComponent = new RoleSelectMenuBuilder().setCustomId('RoleSelector').setMinValues(1).setMaxValues(5);
                                 const roleSelectRow = new ActionRowBuilder().addComponents(roleSelectComponent);
                                 await interaction.editReply({ content: 'Select the roles you want to assign.', components: [roleSelectRow] });
-                            } else if (interaction_select.customId == 'RoleSelector') {
+                            } else if (interaction_select.customId === 'RoleSelector') {
                                 rolesSelected = interaction_select.values;
                                 for (const role of rolesSelected) {
                                     await connection.promise().query('insert into tickets_categories_roles (category_id, role_id) values (?, ?)', [categorySelected, role]);
@@ -4767,7 +4767,7 @@ client.on('interactionCreate', async (interaction) => {
                             let innateSelected;
                             collector.on('collect', async (interaction_second) => {
                                 if (interaction.member.id === interaction_second.member.id) {
-                                    if (interaction_second.customId == 'DuelInnateSelector') {
+                                    if (interaction_second.customId === 'DuelInnateSelector') {
                                         innateSelected = interaction_second.values[0];
                                         await connection.promise().query('insert into duels_innates (duel_id, character_id, skill_id) values (?, ?, ?)', [duel_id, activeCharacter.id, innateSelected]);
                                         interaction_second.update({ content: "Innate selected.", components: [] });
@@ -5260,7 +5260,7 @@ client.on('interactionCreate', async (interaction) => {
             // remove post permission
             // else
             // add read permission, add post permission
-        } else if (interaction.customId == 'TicketCategorySelector') {
+        } else if (interaction.customId === 'TicketCategorySelector') {
             let category_id = interaction.values[0];
             let now = Date.now();
             /* Create Modal and accept input */
