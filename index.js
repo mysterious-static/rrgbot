@@ -1450,8 +1450,10 @@ client.on('interactionCreate', async (interaction) => {
                     let owned = [];
                     if (owned_characters[0].length > 0) {
                         for (const thisCharacter of owned_characters[0]) {
-                            owned.push({ label: thisCharacter.character_name, value: thisCharacter.id.toString() });
+                            console.log(thisCharacter);
+                            owned.push({ label: thisCharacter.name, value: thisCharacter.id.toString() });
                         }
+                        console.log(owned);
                         const characterSelectComponent = new StringSelectMenuBuilder().setOptions(owned).setCustomId('CharacterUnassignmentSelector').setMinValues(1).setMaxValues(characters[0].length);
                         var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
                         var message = await interaction.reply({ content: 'Select a character or characters to unassign from this player:', components: [characterSelectRow], ephemeral: true });
