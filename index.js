@@ -5172,11 +5172,12 @@ client.on('interactionCreate', async (interaction) => {
             let minSkillId;
             if (skills[0].length > 0) {
                 msg = `__Skills__\n`;
+                let process_test_msg = true;
                 for (const thisSkill of skills[0]) {
                     maxSkillId = (maxSkillId ? Math.max(maxSkillId, thisSkill.id) : thisSkill.id);
                     minSkillId = (minSkillId ? Math.min(minSkillId, thisSkill.id) : thisSkill.id);
                     if (sort == 'asc' && thisSkill.id >= skill_id || sort == 'desc' && thisSkill.id <= skill_id) {
-                        if (next_id || prev_id) {
+                        if (process_test_msg) {
                             let test_msg = msg.concat(`**${thisSkill.name}**: ${thisSkill.description} (${thisSkill.type})\n`);
                             if (test_msg.length > 2000) {
                                 if (!next_id && sort === 'asc') {
@@ -5185,10 +5186,11 @@ client.on('interactionCreate', async (interaction) => {
                                 if (!prev_id && sort === 'desc') {
                                     prev_id = thisSkill.id;
                                 }
+                                process_test_msg = false;
                             } else {
                                 msg = test_msg;
                                 firstDisplayedId = (firstDisplayedId ? Math.min(firstDisplayedId, thisSkill.id) : thisSkill.id);
-                        lastDisplayedId = (lastDisplayedId ? Math.max(lastDisplayedId, thisSkill.id) : thisSkill.id);
+                                lastDisplayedId = (lastDisplayedId ? Math.max(lastDisplayedId, thisSkill.id) : thisSkill.id);
                             }
                         }
                     }
