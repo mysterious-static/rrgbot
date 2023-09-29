@@ -2931,58 +2931,61 @@ client.on('interactionCreate', async (interaction) => {
                     }
                 }
             } else if (interaction.options.getSubcommand() === 'tieradd') {
-                var name = interaction.options.getString('name');
-                var value = interaction.options.getInteger('value');
-                var reputations = await connection.promise().query('select * from reputations where guild_id = ?', [interaction.guildId]);
-                var reputationSelectComponent;
+                let name = interaction.options.getString('name');
+                let value = interaction.options.getInteger('value');
+                let reputations = await connection.promise().query('select * from reputations where guild_id = ?', [interaction.guildId]);
+                let reputationSelectComponent;
                 if (reputations[0].length <= 25) {
-                    var reputationsKeyValues = [];
+                    let reputationsKeyValues = [];
                     for (const reputation of reputations[0]) {
-                        var thisReputationKeyValue = { label: reputation.name, value: reputation.id.toString() };
-                        reputationsKeyValues.push(thisReputationKeyValue);
+                        reputationsKeyValues.push({ label: reputation.name, value: reputation.id.toString() });
                     }
                     reputationSelectComponent = new StringSelectMenuBuilder().setOptions(reputationsKeyValues).setCustomId('RepSelector').setMinValues(1).setMaxValues(1);
                 } else {
-                    var reputations = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
-                    var reputationsKeyValues = [];
+                    reputations = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
+                    let reputationsKeyValues = [];
                     for (const reputation of reputations) {
-                        var thisReputationKeyValue = { label: reputation, value: reputation }
-                        reputationsKeyValues.push(thisReputationKeyValue);
+                        reputationsKeyValues.push({ label: reputation, value: reputation });
                     }
                     reputationSelectComponent = new StringSelectMenuBuilder().setOptions(reputationsKeyValues).setCustomId('RepAlphaSelector').setMinValues(1).setMaxValues(1);
                 }
-                var reputationSelectRow = new ActionRowBuilder().addComponents(reputationSelectComponent);
-                var message = await interaction.reply({ content: 'Please select the following options:', components: [reputationSelectRow], ephemeral: true });
+                const reputationSelectRow = new ActionRowBuilder().addComponents(reputationSelectComponent);
+                let message = await interaction.reply({ content: 'Please select the following options:', components: [reputationSelectRow], ephemeral: true });
                 collector = message.createMessageComponentCollector();
                 collector.on('collect', async (interaction_second) => {
-                    if (interaction_second.customId == 'RepSelector') {
-                        var reputation_id = interaction_second.values[0];
-                        var reputations = await connection.promise().query('select rt.*, r.maximum from reputations_tiers rt join reputations r on rt.reputation_id = r.id where rt.threshold_name = ? and rt.reputation_id = ?', [name, reputation_id]);
-                        if (reputations[0].length > 0) {
-                            interaction_second.update({ content: 'A reputation tier with this name already exists for this reputation.', components: [] });
-                        } else {
-                            var reputation = await connection.promise().query('select * from reputations where id = ?', [reputation_id]);
-                            if (reputation[0][0].maximum < value) {
-                                interaction_second.update({ content: 'You entered a reputation tier minimum value higher than this reputation\'s maximum value.', components: [] });
+                    if (interaction_second.member.id === interaction.member.id) {
+                        if (interaction_second.customId == 'RepSelector') {
+                            let reputation_id = interaction_second.values[0];
+                            let reputations = await connection.promise().query('select rt.*, r.maximum from reputations_tiers rt join reputations r on rt.reputation_id = r.id where rt.threshold_name = ? and rt.reputation_id = ?', [name, reputation_id]);
+                            if (reputations[0].length > 0) {
+                                interaction_second.update({ content: 'A reputation tier with this name already exists for this reputation.', components: [] });
+                                collector.stop();
                             } else {
-                                await connection.promise().query('insert into reputations_tiers (reputation_id, threshold_name, value) values (?, ?, ?)', [reputation_id, name, value]);
-                                interaction_second.update({ content: "Reputation tier added.", components: [] });
+                                let reputation = await connection.promise().query('select * from reputations where id = ?', [reputation_id]);
+                                if (reputation[0][0].maximum < value) {
+                                    interaction_second.update({ content: 'You entered a reputation tier minimum value higher than this reputation\'s maximum value.', components: [] });
+                                    collector.stop();
+                                } else {
+                                    await connection.promise().query('insert into reputations_tiers (reputation_id, threshold_name, value) values (?, ?, ?)', [reputation_id, name, value]);
+                                    interaction_second.update({ content: "Reputation tier added.", components: [] });
+                                    collector.stop();
+                                }
                             }
-                        }
-                        //add tier
-                    } else if (interaction_second.customId == 'RepAlphaSelector') {
-                        var reputations = await connection.promise().query('select * from reputations where name like ? and guild_id = ?', ['%' + interaction_second.values[0], interaction.guildId]);
-                        if (reputations[0].length <= 25) {
-                            var reputationsKeyValues = [];
-                            for (const reputation of reputations[0]) {
-                                var thisReputationKeyValue = { label: reputation.name, value: reputation.id.toString() };
-                                reputationsKeyValues.push(thisReputationKeyValue);
+                            //add tier
+                        } else if (interaction_second.customId == 'RepAlphaSelector') {
+                            let reputations = await connection.promise().query('select * from reputations where name like ? and guild_id = ?', ['%' + interaction_second.values[0], interaction.guildId]);
+                            if (reputations[0].length <= 25) {
+                                let reputationsKeyValues = [];
+                                for (const reputation of reputations[0]) {
+                                    reputationsKeyValues.push({ label: reputation.name, value: reputation.id.toString() });
+                                }
+                                let reputationSelectComponent = new StringSelectMenuBuilder().setOptions(reputationsKeyValues).setCustomId('RepSelector').setMinValues(1).setMaxValues(1);
+                                const reputationSelectRow = new ActionRowBuilder().addComponents(reputationSelectComponent);
+                                interaction_second.update({ components: [reputationSelectRow] });
+                            } else {
+                                interaction_second.update({ content: 'No reputations with this first letter', components: [] });
+                                collector.stop();
                             }
-                            reputationSelectComponent = new StringSelectMenuBuilder().setOptions(reputationsKeyValues).setCustomId('RepSelector').setMinValues(1).setMaxValues(1);
-                            var reputationSelectRow = new ActionRowBuilder().addComponents(reputationSelectComponent);
-                            interaction_second.update({ components: [reputationSelectRow] });
-                        } else {
-                            interaction_second.update({ content: 'No reputations with this first letter', components: [] });
                         }
                     }
                 });
@@ -5176,20 +5179,20 @@ client.on('interactionCreate', async (interaction) => {
             await interaction.update({ content: msg, components: [buttonActionRow] });
         } else if (interaction.customId.startsWith('skills-')) {
             let character_id = interaction.customId.split('-')[1];
-            let character_skills = await connection.promise().query('select s.* from skills s join skills_characters sc on s.id = sc.skill_id where sc.character_id = ?', [character_id]);
-            let archetype_skills = await connection.promise().query('select s.* from skills s join skills_archetypes sa on s.id = sa.skill_id join characters_archetypes ca on sa.archetype_id = ca.archetype_id and ca.character_id = ?', [character_id]);
+            let skills = await connection.promise().query('select s.* from skills s left outer join skills_characters sc on s.id = sc.skill_id left outer join skills_archetypes sa on s.id = sa.skill_id left outer join characters_archetypes ca on sa.archetype_id = ca.archetype_id where sc.character_id = ? or ca.character_id = ? order by s.id asc', [character_id]);
             let msg;
-            if (character_skills[0].length > 0 || archetype_skills[0].length > 0) {
+            if (skills[0].length > 0) {
                 // union character and archetype skills before continuing maybe? sort by id asc? 
                 msg = `__Skills__\n`;
-                if (character_skills[0].length > 0) {
-                    for (const thisSkill of character_skills[0]) {
-                        msg = msg.concat(`**${thisSkill.name}** (${thisSkill.type})\n`);
-                    }
-                }
-                if (archetype_skills[0].length > 0) {
-                    for (const thisSkill of archetype_skills[0]) {
-                        msg = msg.concat(`**${thisSkill.name}** (${thisSkill.type})\n`);
+                if (skills[0].length > 0) {
+                    for (const thisSkill of skills[0]) {
+
+                        let test_msg = msg.concat(`**${thisSkill.name}**: ${thisSkill.description} (${thisSkill.type})\n`);
+                        if (test_msg.length > 2000) {
+                            // paginate
+                        } else {
+                            msg = test_msg;
+                        }
                     }
                 }
             } else {
