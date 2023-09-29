@@ -3783,7 +3783,7 @@ client.on('interactionCreate', async (interaction) => {
                 if (interaction.options.getUser('challengee')) {
                     let challenged = interaction.options.getUser('challengee');
                     let queryData = [interaction.user.id, interaction.user.id, challenged.id, challenged.id];
-                    var rps = await connection.promise().query('select * from rps where (challenger = ? or challenged = ? or challenger = ? or challenged = ?) and (challenger_throw is null or challenged_throw is null);', queryData);
+                    let rps = await connection.promise().query('select * from rps where (challenger = ? or challenged = ? or challenger = ? or challenged = ?) and (challenger_throw is null or challenged_throw is null);', queryData);
                     if (rps[0].length > 0) {
                         interaction.reply({ content: 'Sorry, it looks like either you or your target is already in a duel!', ephemeral: true });
                     } else {
@@ -3799,7 +3799,7 @@ client.on('interactionCreate', async (interaction) => {
                     //also make sure they're on the same location maybe?
                 } else {
                     let queryData = [interaction.user.id, interaction.user.id];
-                    var rps = await connection.promise().query('select * from rps where (challenger = ? or challenged = ?) and (challenger_throw is null or challenged_throw is null)', queryData);
+                    let rps = await connection.promise().query('select * from rps where (challenger = ? or challenged = ?) and (challenger_throw is null or challenged_throw is null)', queryData);
                     if (rps[0].length > 0) {
                         interaction.reply({ content: 'Sorry, it looks like you\'re already in a duel!', ephemeral: true });
                     } else {
