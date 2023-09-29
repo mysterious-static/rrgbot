@@ -2658,97 +2658,97 @@ client.on('interactionCreate', async (interaction) => {
                 interaction.reply({ content: 'You haven\'t created any characters yet. Try creating a character first.', ephemeral: true });
             }
         } else if (interaction.commandName == 'modsheet') {
-            var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
+            let characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
             if (characters[0].length > 0) {
-                var charactersAlphabetical;
-                var characterSelectComponent;
+                let charactersAlphabetical;
+                let characterSelectComponent;
                 if (characters[0].length <= 25) {
                     charactersAlphabetical = false;
-                    var charactersKeyValues = [{ label: 'Select a characters', value: '0' }];
+                    let charactersKeyValues = [];
                     for (const character of characters[0]) {
-                        var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
-                        charactersKeyValues.push(thisCharacterKeyValue);
+                        charactersKeyValues.push({ label: character.name, value: character.id.toString() });
                     }
                     characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ModSheetCharacterSelector').setMinValues(1).setMaxValues(1);
                 } else {
                     charactersAlphabetical = true;
-                    var characters = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
-                    var charactersKeyValues = [];
+                    characters = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
+                    let charactersKeyValues = [];
                     for (const character of characters) {
-                        var thisCharacterKeyValue = { label: character, value: character }
-                        charactersKeyValues.push(thisCharacterKeyValue);
+                        charactersKeyValues.push({ label: character, value: character });
                     }
                     characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ModSheetAlphabetSelector').setMinValues(1).setMaxValues(1);
                 }
-                var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                var message = await interaction.reply({ content: 'Please select the following options:', components: [characterSelectRow], ephemeral: true });
-                var collector = message.createMessageComponentCollector();
+                let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                let message = await interaction.reply({ content: 'Please select a character:', components: [characterSelectRow], ephemeral: true });
+                let collector = message.createMessageComponentCollector();
                 collector.on('collect', async (interaction_second) => {
-                    var characterSelected = interaction_second.values[0];
-                    if (interaction_second.customId == 'ModSheetAlphabetSelector') {
-                        var characters = await connection.promise().query('select * from characters where guild_id = ? and upper(character_name) like "?%"', [interaction.guildId, characterSelected]);
-                        if (characters[0].length > 0) {
-                            var charactersKeyValues = [{ label: 'Select a characters', value: '0' }];
-                            for (const character of characters[0]) {
-                                var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
-                                charactersKeyValues.push(thisCharacterKeyValue);
+                    if (interaction.member.id === interaction_second.member.id) {
+                        let characterSelected = interaction_second.values[0];
+                        if (interaction_second.customId == 'ModSheetAlphabetSelector') {
+                            characters = await connection.promise().query('select * from characters where guild_id = ? and upper(character_name) like "?%"', [interaction.guildId, characterSelected]);
+                            if (characters[0].length > 0) {
+                                let charactersKeyValues = [{ label: 'Select a characters', value: '0' }];
+                                for (const character of characters[0]) {
+                                    charactersKeyValues.push({ label: character.name, value: character.id.toString() });
+                                }
+                                const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ModSheetCharacterSelector').setMinValues(1).setMaxValues(1);
+                                const characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                                interaction.update({ components: [characterSelectRow] });
+                            } else {
+                                interaction.update({ content: 'No characters with this first letter', components: [] });
+                                collector.stop();
                             }
-                            var characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ModSheetCharacterSelector').setMinValues(1).setMaxValues(1);
-                            var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                            interaction.update({ components: [characterSelectRow] });
                         } else {
-                            interaction.update({ content: 'No characters with this first letter', components: [] });
-                        }
-                    } else {
-                        var character_information = await connection.promise().query('select * from characters where id = ?', [characterSelected]);
-                        var character_archetypes = await connection.promise().query('select * from archetypes a join characters_archetypes ca on ca.archetype_id = a.id where ca.character_id = ?', [characterSelected]);
-                        var character_stats = await connection.promise().query('select s.*, cs.override_value from stats s left outer join characters_stats cs on cs.stat_id = s.id and cs.character_id = ? where guild_id = ? order by s.id asc', [characterSelected, interaction.guildId]);
-                        var archetype_stats = await connection.promise().query('select ars.*, ca2.override_value from archetypestats ars join archetypes_archetypestats aa on ars.id = aa.archetypestat_id join characters_archetypes ca on aa.archetype_id = ca.archetype_id and ca.character_id = ? left outer join characters_archetypestats ca2 on ca2.stat_id = ars.id and ca2.character_id = ?', [characterSelected, characterSelected]);
-                        var world_stats = [[]]; //TODO
-                        var msg = `**${character_information[0][0].name}** - ${character_information[0][0].description}\n`
-                        if (character_archetypes[0].length > 0) {
-                            msg = msg.concat(`\n__Archetypes__\n`);
-                            for (const thisArchetype of character_archetypes[0]) {
-                                msg = msg.concat(`**${thisArchetype.name}** - ${thisArchetype.description}\n`);
-                            }
-                        }
-                        if (character_stats[0].length > 0 || archetype_stats[0].length > 0 || world_stats[0].length > 0) {
-                            msg = msg.concat(`\n__Stats__\n`);
-                        }
-                        if (character_stats[0].length > 0) {
-                            for (const thisStat of character_stats[0]) {
-                                if (typeof thisStat.override_value !== 'undefined' && thisStat.override_value != null) {
-                                    msg = msg.concat(`**${thisStat.name}** - ${thisStat.override_value}\n`);
-                                } else { // TODO else if thisStat has an ARCHETYPE override value
-                                    msg = msg.concat(`**${thisStat.name}** - ${thisStat.default_value}\n`);
-                                }
-
-                            }
-                        }
-                        if (archetype_stats[0].length > 0) {
-                            for (const thisStat of archetype_stats[0]) {
-                                if (typeof thisStat.override_value !== 'undefined' && thisStat.override_value != null) {
-                                    msg = msg.concat(`**${thisStat.name}** - ${thisStat.override_value}\n`);
-                                } else { // TODO else if thisStat has an ARCHETYPE override value
-                                    msg = msg.concat(`**${thisStat.name}** - ${thisStat.default_value}\n`);
+                            let character_information = await connection.promise().query('select * from characters where id = ?', [characterSelected]);
+                            let character_archetypes = await connection.promise().query('select * from archetypes a join characters_archetypes ca on ca.archetype_id = a.id where ca.character_id = ?', [characterSelected]);
+                            let character_stats = await connection.promise().query('select s.*, cs.override_value from stats s left outer join characters_stats cs on cs.stat_id = s.id and cs.character_id = ? where guild_id = ? order by s.id asc', [characterSelected, interaction.guildId]);
+                            let archetype_stats = await connection.promise().query('select ars.*, ca2.override_value from archetypestats ars join archetypes_archetypestats aa on ars.id = aa.archetypestat_id join characters_archetypes ca on aa.archetype_id = ca.archetype_id and ca.character_id = ? left outer join characters_archetypestats ca2 on ca2.stat_id = ars.id and ca2.character_id = ?', [characterSelected, characterSelected]);
+                            let world_stats = [[]]; //TODO
+                            let msg = `**${character_information[0][0].name}** - ${character_information[0][0].description}\n`
+                            if (character_archetypes[0].length > 0) {
+                                msg = msg.concat(`\n__Archetypes__\n`);
+                                for (const thisArchetype of character_archetypes[0]) {
+                                    msg = msg.concat(`**${thisArchetype.name}** - ${thisArchetype.description}\n`);
                                 }
                             }
-                        }
-                        if (world_stats[0].length > 0) {
-                            // TODO
-                        }
-                        const buttonActionRow = new ActionRowBuilder()
-                            .addComponents(
-                                new ButtonBuilder().setCustomId(`skills-${characterSelected}`).setLabel('Skills').setStyle(ButtonStyle.Primary),
-                                new ButtonBuilder().setCustomId(`inventory-${characterSelected}`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
-                            );
+                            if (character_stats[0].length > 0 || archetype_stats[0].length > 0 || world_stats[0].length > 0) {
+                                msg = msg.concat(`\n__Stats__\n`);
+                            }
+                            if (character_stats[0].length > 0) {
+                                for (const thisStat of character_stats[0]) {
+                                    if (typeof thisStat.override_value !== 'undefined' && thisStat.override_value != null) {
+                                        msg = msg.concat(`**${thisStat.name}** - ${thisStat.override_value}\n`);
+                                    } else { // TODO else if thisStat has an ARCHETYPE override value
+                                        msg = msg.concat(`**${thisStat.name}** - ${thisStat.default_value}\n`);
+                                    }
 
-                        var reputation_enabled = await connection.promise().query('select * from game_settings where setting_name = "reputation" and guild_id = ?', [interaction.guildId]);
-                        if (reputation_enabled[0].length > 0 && reputation_enabled[0][0].setting_value == true) {
-                            buttonActionRow.addComponents(new ButtonBuilder().setCustomId(`reputation-${characterSelected}`).setLabel('Reputation').setStyle(ButtonStyle.Primary));
+                                }
+                            }
+                            if (archetype_stats[0].length > 0) {
+                                for (const thisStat of archetype_stats[0]) {
+                                    if (typeof thisStat.override_value !== 'undefined' && thisStat.override_value != null) {
+                                        msg = msg.concat(`**${thisStat.name}** - ${thisStat.override_value}\n`);
+                                    } else { // TODO else if thisStat has an ARCHETYPE override value
+                                        msg = msg.concat(`**${thisStat.name}** - ${thisStat.default_value}\n`);
+                                    }
+                                }
+                            }
+                            if (world_stats[0].length > 0) {
+                                // TODO
+                            }
+                            const buttonActionRow = new ActionRowBuilder()
+                                .addComponents(
+                                    new ButtonBuilder().setCustomId(`skills-${characterSelected}`).setLabel('Skills').setStyle(ButtonStyle.Primary),
+                                    new ButtonBuilder().setCustomId(`inventory-${characterSelected}`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
+                                );
+
+                            let reputation_enabled = await connection.promise().query('select * from game_settings where setting_name = "reputation" and guild_id = ?', [interaction.guildId]);
+                            if (reputation_enabled[0].length > 0 && reputation_enabled[0][0].setting_value == true) {
+                                buttonActionRow.addComponents(new ButtonBuilder().setCustomId(`reputation-${characterSelected}`).setLabel('Reputation').setStyle(ButtonStyle.Primary));
+                            }
+                            await interaction_second.update({ content: msg, components: [buttonActionRow] });
+                            await collector.stop();
                         }
-                        await interaction_second.update({ content: msg, components: [buttonActionRow] });
-                        await collector.stop();
                     }
                 });
             } else {
@@ -2757,42 +2757,44 @@ client.on('interactionCreate', async (interaction) => {
             //dropdown for characters
             //then generate character sheet ephemeral using the sheet code EXACTLY
         } else if (interaction.commandName == 'assignspecialstat') {
-            var stats = await connection.promise().query('select * from stats left outer join stats_specialstats sps on stats.id = sps.stat_id where guild_id = ? and sps.special_type is null', [interaction.guildId]);
+            let stats = await connection.promise().query('select * from stats left outer join stats_specialstats sps on stats.id = sps.stat_id where guild_id = ? and sps.special_type is null', [interaction.guildId]);
             if (stats[0].length > 0) {
-                var typesKeyValues = [
+                let typesKeyValues = [
                     { label: 'Health', value: 'health' },
                     { label: 'Movement Speed', value: 'movement' }
                 ];
-                var statsKeyValues = [];
+                let statsKeyValues = [];
                 for (const stat of stats[0]) {
                     statsKeyValues.push({ label: stat.name, value: stat.id.toString() });
                 }
                 const typeSelectComponent = new StringSelectMenuBuilder().setOptions(typesKeyValues).setCustomId('SpecialStatTypeSelector').setMinValues(1).setMaxValues(1);
-                var typeSelectRow = new ActionRowBuilder().addComponents(typeSelectComponent);
+                const typeSelectRow = new ActionRowBuilder().addComponents(typeSelectComponent);
                 const statSelectComponent = new StringSelectMenuBuilder().setOptions(statsKeyValues).setCustomId('SpecialStatStatSelector').setMinValues(1).setMaxValues(1);
-                var statSelectRow = new ActionRowBuilder().addComponents(statSelectComponent);
-                var message = await interaction.reply({ content: 'Please select the following options:', components: [typeSelectRow, statSelectRow], ephemeral: true });
-                var collector = message.createMessageComponentCollector();
-                var statSelected;
-                var typeSelected;
+                const statSelectRow = new ActionRowBuilder().addComponents(statSelectComponent);
+                let message = await interaction.reply({ content: 'Please select the following options:', components: [typeSelectRow, statSelectRow], ephemeral: true });
+                let collector = message.createMessageComponentCollector();
+                let statSelected;
+                let typeSelected;
                 collector.on('collect', async (interaction_second) => {
-                    if (interaction_second.customId == 'SpecialStatTypeSelector') {
-                        typeSelected = interaction_second.values[0];
-                    } else if (interaction_second.customId == 'SpecialStatStatSelector') {
-                        statSelected = interaction_second.values[0];
-                    }
-
-                    if (statSelected && typeSelected) {
-                        var exists = await connection.promise().query('select * from stats_specialstats join stats on stats_specialstats.stat_id = stats.id where special_type = ? and stats.guild_id = ?', [typeSelected, interaction.guildId]);
-                        if (exists[0].length > 0) {
-                            await connection.promise().query('update stats_specialstats set stat_id = ? where stat_id = ?', [statSelected, exists[0][0].stat_id]);
-                        } else {
-                            await connection.promise().query('insert into stats_specialstats (stat_id, special_type) values (?, ?)', [statSelected, typeSelected]);
+                    if (interaction.member.id === interaction_second.member.id) {
+                        if (interaction_second.customId == 'SpecialStatTypeSelector') {
+                            typeSelected = interaction_second.values[0];
+                        } else if (interaction_second.customId == 'SpecialStatStatSelector') {
+                            statSelected = interaction_second.values[0];
                         }
-                        await interaction_second.update({ content: 'Updated special stat.', components: [] });
-                        await collector.stop();
-                    } else {
-                        await interaction_second.deferUpdate();
+
+                        if (statSelected && typeSelected) {
+                            var exists = await connection.promise().query('select * from stats_specialstats join stats on stats_specialstats.stat_id = stats.id where special_type = ? and stats.guild_id = ?', [typeSelected, interaction.guildId]);
+                            if (exists[0].length > 0) {
+                                await connection.promise().query('update stats_specialstats set stat_id = ? where stat_id = ?', [statSelected, exists[0][0].stat_id]);
+                            } else {
+                                await connection.promise().query('insert into stats_specialstats (stat_id, special_type) values (?, ?)', [statSelected, typeSelected]);
+                            }
+                            await interaction_second.update({ content: 'Updated special stat.', components: [] });
+                            await collector.stop();
+                        } else {
+                            await interaction_second.deferUpdate();
+                        }
                     }
                 });
             } else {
@@ -2800,13 +2802,13 @@ client.on('interactionCreate', async (interaction) => {
             }
         } else if (interaction.commandName == 'characterflag') {
             if (interaction.options.getSubcommand() === 'add') {
-                var name = interaction.options.getString('name');
+                let name = interaction.options.getString('name');
                 await connection.promise().query('insert into characterflags (name, guild_id) values (?, ?)', [name, interaction.guildId]);
                 await interaction.reply({ content: 'Character flag added.', ephemeral: true });
             }
         } else if (interaction.commandName == 'worldflag') {
             if (interaction.options.getSubcommand() === 'add') {
-                var name = interaction.options.getString('name');
+                let name = interaction.options.getString('name');
                 await connection.promise().query('insert into worldflags (name, guild_id) values (?, ?)', [name, interaction.guildId]);
                 await interaction.reply({ content: 'World flag added.', ephemeral: true });
             }
@@ -4868,8 +4870,8 @@ client.on('interactionCreate', async (interaction) => {
                                         }
                                     }
                                     if (rounds[0].length > 0) {
-                                        var prevRdWinner = false;
-                                        var prevRdSpecial = false;
+                                        let prevRdWinner = false;
+                                        let prevRdSpecial = false;
                                         for (const round of rounds[0]) {
                                             // Per-round health calcluation based on 
                                             //  - Round winner
@@ -4910,20 +4912,21 @@ client.on('interactionCreate', async (interaction) => {
                                     if (computedPlayerHealth < 0) {
                                         computedPlayerHealth = 0;
                                     }
-                                    var embed = new EmbedBuilder()
+                                    let embed = new EmbedBuilder()
                                         .setTitle(`DUEL: ${player[0][0].name} v. ${target[0][0].name}`)
                                         .setDescription(`Round ${displayRound}`)
                                         .addFields(
                                             { name: player[0][0].name, value: `${healthStat[0][0].name}: ${computedPlayerHealth}`, inline: true }, // active skills, innates, etc
                                             { name: target[0][0].name, value: `${healthStat[0][0].name}: ${computedTargetHealth}`, inline: true } // active skills, innates, etc
                                         );
-                                    var duelButtonR = new ButtonBuilder().setCustomId('duelButtonR' + duel_id).setLabel('Rapid').setStyle('Primary'); // TODO ButtonBuilder doesn't exist in Discord.js v14
-                                    var duelButtonP = new ButtonBuilder().setCustomId('duelButtonP' + duel_id).setLabel('Precision').setStyle('Primary');
-                                    var duelButtonS = new ButtonBuilder().setCustomId('duelButtonS' + duel_id).setLabel('Sweeping').setStyle('Primary');
+                                    let duelButtonR = new ButtonBuilder().setCustomId('duelButtonR' + duel_id).setLabel('Rapid').setStyle('Primary'); // TODO ButtonBuilder doesn't exist in Discord.js v14
+                                    let duelButtonP = new ButtonBuilder().setCustomId('duelButtonP' + duel_id).setLabel('Precision').setStyle('Primary');
+                                    let duelButtonS = new ButtonBuilder().setCustomId('duelButtonS' + duel_id).setLabel('Sweeping').setStyle('Primary');
+                                    let duelButtonSkill;
                                     if (displayRound > 1) {
-                                        var duelButtonSkill = new ButtonBuilder().setCustomId('duelButtonSkill' + duel_id).setLabel('Use Special').setStyle('Primary');
+                                        duelButtonSkill = new ButtonBuilder().setCustomId('duelButtonSkill' + duel_id).setLabel('Use Special').setStyle('Primary');
                                     } else {
-                                        var duelButtonSkill = new ButtonBuilder().setCustomId('duelButtonSkill' + duel_id).setLabel('Declare Innates').setStyle('Primary');
+                                        duelButtonSkill = new ButtonBuilder().setCustomId('duelButtonSkill' + duel_id).setLabel('Declare Innates').setStyle('Primary');
                                     }
                                     const rpsRow = new ActionRowBuilder().addComponents(duelButtonR, duelButtonP, duelButtonS, duelButtonSkill);
                                     if (computedPlayerHealth > 0 && computedTargetHealth > 0) {
@@ -4933,7 +4936,7 @@ client.on('interactionCreate', async (interaction) => {
                                         await interaction.message.edit({ embeds: [embed], components: [] });
                                     }
                                     // END DUEL REDRAW BLOCK
-                                    var skill = await connection.promise().query('select * from skills where id = ?', [innateSelected]);
+                                    let skill = await connection.promise().query('select * from skills where id = ?', [innateSelected]);
                                     await interaction.channel.send(`${activeCharacter.name} uses ${skill[0][0].name}: ${skill[0][0].description}`);
                                     await collector.stop();
                                 } else {
@@ -4947,10 +4950,10 @@ client.on('interactionCreate', async (interaction) => {
                     }
                 } else {
                     // Get the R/P/S...
-                    var rpsThrow = interaction.customId.match(/[a-zA-Z]+/g).join("").slice(-1);
+                    let rpsThrow = interaction.customId.match(/[a-zA-Z]+/g).join("").slice(-1);
                     // activeCharacter is still set
                     // duelInfo is set
-                    var currentRound = await connection.promise().query('select * from duels_rounds where duel_id = ? order by round_id desc limit 1', [duel_id]);
+                    let currentRound = await connection.promise().query('select * from duels_rounds where duel_id = ? order by round_id desc limit 1', [duel_id]);
                     if (currentRound[0].length > 0 && !(currentRound[0][0].player_throw && currentRound[0][0].target_throw)) {
                         if (activeCharacter.id == duelInfo.player_id) {
                             await connection.promise().query('update duels_rounds set player_throw = ? where id = ?', [rpsThrow, currentRound[0][0].id]);
@@ -4974,8 +4977,8 @@ client.on('interactionCreate', async (interaction) => {
                     }
                     currentRound = await connection.promise().query('select * from duels_rounds where duel_id = ? order by round_id desc limit 1', [duel_id]);
                     if (currentRound[0][0].player_throw && currentRound[0][0].target_throw) {
-                        var player = await connection.promise().query('select c.* from characters c where id = ?', [duelInfo.player_id]);
-                        var target = await connection.promise().query('select c.* from characters c where id = ?', [duelInfo.target_id]);
+                        let player = await connection.promise().query('select c.* from characters c where id = ?', [duelInfo.player_id]);
+                        let target = await connection.promise().query('select c.* from characters c where id = ?', [duelInfo.target_id]);
                         if ((currentRound[0][0].player_throw == 'R' && currentRound[0][0].target_throw == 'S') || (currentRound[0][0].player_throw == 'P' && currentRound[0][0].target_throw == 'R') || (currentRound[0][0].player_throw == 'S' && currentRound[0][0].target_throw == 'P')) {
                             await connection.promise().query('update duels_rounds set winner_id = ? where id = ?', [duelInfo.player_id, currentRound[0][0].id]);
                             interaction.channel.send(`${player[0][0].name} defeats ${target[0][0].name} (${currentRound[0][0].player_throw} > ${currentRound[0][0].target_throw})`);
@@ -4989,32 +4992,35 @@ client.on('interactionCreate', async (interaction) => {
                         rounds = await connection.promise().query('select * from duels_rounds where duel_id = ? order by round_id asc', [duel_id]);
 
                         // BEGIN DUEL REDRAW BLOCK
-                        var healthStat = await connection.promise().query('select * from stats join stats_specialstats sps on stats.id = sps.stat_id where stats.guild_id = ? and sps.special_type = "health"', [interaction.guildId]);
-                        var isCustomPlayerHealth = await connection.promise().query('select override_value from characters_stats where character_id = ? and stat_id = ?', [player[0][0].id, healthStat[0][0].id]);
-                        var isCustomTargetHealth = await connection.promise().query('select override_value from characters_stats where character_id = ? and stat_id = ?', [target[0][0].id, healthStat[0][0].id]);
-                        var results = await connection.promise().query('select * from duels_rounds where duel_id = ? order by round_id desc limit 1', [duel_id]);
+                        let healthStat = await connection.promise().query('select * from stats join stats_specialstats sps on stats.id = sps.stat_id where stats.guild_id = ? and sps.special_type = "health"', [interaction.guildId]);
+                        let isCustomPlayerHealth = await connection.promise().query('select override_value from characters_stats where character_id = ? and stat_id = ?', [player[0][0].id, healthStat[0][0].id]);
+                        let isCustomTargetHealth = await connection.promise().query('select override_value from characters_stats where character_id = ? and stat_id = ?', [target[0][0].id, healthStat[0][0].id]);
+                        let results = await connection.promise().query('select * from duels_rounds where duel_id = ? order by round_id desc limit 1', [duel_id]);
+                        let displayRound;
                         if (results[0].length > 0) {
-                            var currentRound = results[0][0];
+                            let currentRound = results[0][0];
                             if (currentRound.winner_id) {
-                                var displayRound = currentRound.round_id + 1;
+                                displayRound = currentRound.round_id + 1;
                             } else {
-                                var displayRound = currentRound.round_id;
+                                displayRound = currentRound.round_id;
                             }
                         } else {
-                            var displayRound = 1;
+                            displayRound = 1;
                         }
                         //HEALTH CALCS
+                        let computedPlayerHealth;
+                        let computedTargetHealth;
                         if (isCustomPlayerHealth[0].length > 0) {
-                            var computedPlayerHealth = isCustomPlayerHealth[0][0].override_value;
+                            computedPlayerHealth = isCustomPlayerHealth[0][0].override_value;
                         } else {
-                            var computedPlayerHealth = healthStat[0][0].default_value;
+                            computedPlayerHealth = healthStat[0][0].default_value;
                         }
                         if (isCustomTargetHealth[0].length > 0) {
-                            var computedTargetHealth = isCustomTargetHealth[0][0].override_value;
+                            computedTargetHealth = isCustomTargetHealth[0][0].override_value;
                         } else {
-                            var computedTargetHealth = healthStat[0][0].default_value;
+                            computedTargetHealth = healthStat[0][0].default_value;
                         }
-                        var innates = await connection.promise().query('select di.*, sce.strength, sce.effect from duels_innates di join skills_combateffects sce on di.skill_id = sce.skill_id where duel_id = ?', duel_id);
+                        let innates = await connection.promise().query('select di.*, sce.strength, sce.effect from duels_innates di join skills_combateffects sce on di.skill_id = sce.skill_id where duel_id = ?', duel_id);
                         if (innates[0].length > 0) {
                             for (const innate of innates[0]) {
                                 if (innate.effect = 'add_health') {
@@ -5027,8 +5033,8 @@ client.on('interactionCreate', async (interaction) => {
                             }
                         }
                         if (rounds[0].length > 0) {
-                            var prevRdWinner = false;
-                            var prevRdSpecial = false;
+                            let prevRdWinner = false;
+                            let prevRdSpecial = false;
                             for (const round of rounds[0]) {
                                 // Per-round health calcluation based on 
                                 //  - Round winner
@@ -5068,20 +5074,21 @@ client.on('interactionCreate', async (interaction) => {
                         if (computedPlayerHealth < 0) {
                             computedPlayerHealth = 0;
                         }
-                        var embed = new EmbedBuilder()
+                        let embed = new EmbedBuilder()
                             .setTitle(`DUEL: ${player[0][0].name} v. ${target[0][0].name}`)
                             .setDescription(`Round ${displayRound}`)
                             .addFields(
                                 { name: player[0][0].name, value: `${healthStat[0][0].name}: ${computedPlayerHealth}`, inline: true }, // active skills, innates, etc
                                 { name: target[0][0].name, value: `${healthStat[0][0].name}: ${computedTargetHealth}`, inline: true } // active skills, innates, etc
                             );
-                        var duelButtonR = new ButtonBuilder().setCustomId('duelButtonR' + duel_id).setLabel('Rapid').setStyle('Primary'); // TODO ButtonBuilder doesn't exist in Discord.js v14
-                        var duelButtonP = new ButtonBuilder().setCustomId('duelButtonP' + duel_id).setLabel('Precision').setStyle('Primary');
-                        var duelButtonS = new ButtonBuilder().setCustomId('duelButtonS' + duel_id).setLabel('Sweeping').setStyle('Primary');
+                        let duelButtonR = new ButtonBuilder().setCustomId('duelButtonR' + duel_id).setLabel('Rapid').setStyle('Primary'); // TODO ButtonBuilder doesn't exist in Discord.js v14
+                        let duelButtonP = new ButtonBuilder().setCustomId('duelButtonP' + duel_id).setLabel('Precision').setStyle('Primary');
+                        let duelButtonS = new ButtonBuilder().setCustomId('duelButtonS' + duel_id).setLabel('Sweeping').setStyle('Primary');
+                        let duelButtonSkill;
                         if (displayRound > 1) {
-                            var duelButtonSkill = new ButtonBuilder().setCustomId('duelButtonSkill' + duel_id).setLabel('Use Special').setStyle('Primary');
+                            duelButtonSkill = new ButtonBuilder().setCustomId('duelButtonSkill' + duel_id).setLabel('Use Special').setStyle('Primary');
                         } else {
-                            var duelButtonSkill = new ButtonBuilder().setCustomId('duelButtonSkill' + duel_id).setLabel('Declare Innates').setStyle('Primary');
+                            duelButtonSkill = new ButtonBuilder().setCustomId('duelButtonSkill' + duel_id).setLabel('Declare Innates').setStyle('Primary');
                         }
                         const rpsRow = new ActionRowBuilder().addComponents(duelButtonR, duelButtonP, duelButtonS, duelButtonSkill);
                         if (computedPlayerHealth > 0 && computedTargetHealth > 0) {
@@ -5108,13 +5115,13 @@ client.on('interactionCreate', async (interaction) => {
                 await interaction.reply({ content: "You're not a participant in this duel!", ephemeral: true });
             }
         } else if (interaction.customId.startsWith('sheet-')) {
-            var character_id = interaction.customId.split('-')[1];
-            var character_information = await connection.promise().query('select * from characters where id = ?', [character_id]);
-            var character_archetypes = await connection.promise().query('select * from archetypes a join characters_archetypes ca on ca.archetype_id = a.id where ca.character_id = ?', [character_id]);
-            var character_stats = await connection.promise().query('select s.*, cs.override_value from stats s left outer join characters_stats cs on cs.stat_id = s.id and cs.character_id = ? where guild_id = ? order by s.id asc', [character_id, interaction.guildId]);
-            var archetype_stats = await connection.promise().query('select ars.*, ca2.override_value from archetypestats ars join archetypes_archetypestats aa on ars.id = aa.archetypestat_id join characters_archetypes ca on aa.archetype_id = ca.archetype_id and ca.character_id = ? left outer join characters_archetypestats ca2 on ca2.stat_id = ars.id and ca2.character_id = ? order by ars.id asc', [character_id, character_id]);
-            var world_stats = [[]]; //TODO
-            var msg = `**${character_information[0][0].name}** - ${character_information[0][0].description}\n`
+            let character_id = interaction.customId.split('-')[1];
+            let character_information = await connection.promise().query('select * from characters where id = ?', [character_id]);
+            let character_archetypes = await connection.promise().query('select * from archetypes a join characters_archetypes ca on ca.archetype_id = a.id where ca.character_id = ?', [character_id]);
+            let character_stats = await connection.promise().query('select s.*, cs.override_value from stats s left outer join characters_stats cs on cs.stat_id = s.id and cs.character_id = ? where guild_id = ? order by s.id asc', [character_id, interaction.guildId]);
+            let archetype_stats = await connection.promise().query('select ars.*, ca2.override_value from archetypestats ars join archetypes_archetypestats aa on ars.id = aa.archetypestat_id join characters_archetypes ca on aa.archetype_id = ca.archetype_id and ca.character_id = ? left outer join characters_archetypestats ca2 on ca2.stat_id = ars.id and ca2.character_id = ? order by ars.id asc', [character_id, character_id]);
+            let world_stats = [[]]; //TODO
+            let msg = `**${character_information[0][0].name}** - ${character_information[0][0].description}\n`
             if (character_archetypes[0].length > 0) {
                 msg = msg.concat(`\n__Archetypes__\n`);
                 for (const thisArchetype of character_archetypes[0]) {
@@ -5152,17 +5159,19 @@ client.on('interactionCreate', async (interaction) => {
                     new ButtonBuilder().setCustomId(`inventory-${character_id}`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
                 );
 
-            var reputation_enabled = await connection.promise().query('select * from game_settings where setting_name = "reputation" and guild_id = ?', [interaction.guildId]);
+            let reputation_enabled = await connection.promise().query('select * from game_settings where setting_name = "reputation" and guild_id = ?', [interaction.guildId]);
             if (reputation_enabled[0].length > 0 && reputation_enabled[0][0].setting_value == true) {
                 buttonActionRow.addComponents(new ButtonBuilder().setCustomId(`reputation-${character_id}`).setLabel('Reputation').setStyle(ButtonStyle.Primary));
             }
             await interaction.update({ content: msg, components: [buttonActionRow] });
         } else if (interaction.customId.startsWith('skills-')) {
-            var character_id = interaction.customId.split('-')[1];
-            var character_skills = await connection.promise().query('select s.* from skills s join skills_characters sc on s.id = sc.skill_id where sc.character_id = ?', [character_id]);
-            var archetype_skills = await connection.promise().query('select s.* from skills s join skills_archetypes sa on s.id = sa.skill_id join characters_archetypes ca on sa.archetype_id = ca.archetype_id and ca.character_id = ?', [character_id]);
+            let character_id = interaction.customId.split('-')[1];
+            let character_skills = await connection.promise().query('select s.* from skills s join skills_characters sc on s.id = sc.skill_id where sc.character_id = ?', [character_id]);
+            let archetype_skills = await connection.promise().query('select s.* from skills s join skills_archetypes sa on s.id = sa.skill_id join characters_archetypes ca on sa.archetype_id = ca.archetype_id and ca.character_id = ?', [character_id]);
+            let msg;
             if (character_skills[0].length > 0 || archetype_skills[0].length > 0) {
-                var msg = `__Skills__\n`;
+                // union character and archetype skills before continuing maybe? sort by id asc? 
+                msg = `__Skills__\n`;
                 if (character_skills[0].length > 0) {
                     for (const thisSkill of character_skills[0]) {
                         msg = msg.concat(`**${thisSkill.name}** (${thisSkill.type})\n`);
@@ -5174,29 +5183,34 @@ client.on('interactionCreate', async (interaction) => {
                     }
                 }
             } else {
-                var msg = `You don't have any skills! Hmm. Maybe check with an Orchestrator if you weren't expecting this.`;
+                msg = `You don't have any skills! Hmm. Maybe check with an Orchestrator if you weren't expecting this.`;
             }
             const buttonActionRow = new ActionRowBuilder()
                 .addComponents(
                     new ButtonBuilder().setCustomId(`sheet-${character_id}`).setLabel('Sheet').setStyle(ButtonStyle.Primary),
                     new ButtonBuilder().setCustomId(`inventory-${character_id}`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
                 );
-            var reputation_enabled = await connection.promise().query('select * from game_settings where setting_name = "reputation" and guild_id = ?', [interaction.guildId]);
+            let reputation_enabled = await connection.promise().query('select * from game_settings where setting_name = "reputation" and guild_id = ?', [interaction.guildId]);
             if (reputation_enabled[0].length > 0 && reputation_enabled[0][0].setting_value == true) {
                 buttonActionRow.addComponents(new ButtonBuilder().setCustomId(`reputation-${character_id}`).setLabel('Reputation').setStyle(ButtonStyle.Primary));
             }
             await interaction.update({ content: msg, components: [buttonActionRow] });
         } else if (interaction.customId.startsWith('inventory-')) {
-            var character_id = interaction.customId.split('-')[1];
-            var character_items = await connection.promise().query('select i.*, ci.quantity from items i join characters_items ci on i.id = ci.item_id where ci.character_id = ?', [character_id]);
-
+            let character_id = interaction.customId.split('-')[1];
+            let character_items = await connection.promise().query('select i.*, ci.quantity from items i join characters_items ci on i.id = ci.item_id where ci.character_id = ?', [character_id]);
+            let msg;
             if (character_items[0].length > 0) {
-                var msg = '__Items__\n';
+                msg = '__Items__\n';
                 for (const thisItem of character_items[0]) {
-                    msg = msg.concat(`**${thisItem.name}**: ${thisItem.description} *(x${thisItem.quantity})*\n`);
+                    let test_msg = msg.concat(`**${thisItem.name}**: ${thisItem.description} *(x${thisItem.quantity})*\n`);
+                    if (test_msg.length > 2000) {
+                        //paginate
+                    } else {
+                        msg = test_msg;
+                    }
                 }
             } else {
-                var msg = `Your inventory is empty. If you believe you have received this message in error, please contact an Orchestrator.`;
+                msg = `Your inventory is empty. If you believe you have received this message in error, please contact an Orchestrator.`;
             }
 
             const buttonActionRow = new ActionRowBuilder()
@@ -5204,22 +5218,27 @@ client.on('interactionCreate', async (interaction) => {
                     new ButtonBuilder().setCustomId(`sheet-${character_id}`).setLabel('Sheet').setStyle(ButtonStyle.Primary),
                     new ButtonBuilder().setCustomId(`skills-${character_id}`).setLabel('Skills').setStyle(ButtonStyle.Primary)
                 );
-            var reputation_enabled = await connection.promise().query('select * from game_settings where setting_name = "reputation" and guild_id = ?', [interaction.guildId]);
+            let reputation_enabled = await connection.promise().query('select * from game_settings where setting_name = "reputation" and guild_id = ?', [interaction.guildId]);
             if (reputation_enabled[0].length > 0 && reputation_enabled[0][0].setting_value == true) {
                 buttonActionRow.addComponents(new ButtonBuilder().setCustomId(`reputation-${character_id}`).setLabel('Reputation').setStyle(ButtonStyle.Primary));
             }
             await interaction.update({ content: msg, components: [buttonActionRow] });
         } else if (interaction.customId.startsWith('reputation-')) {
-            var character_id = interaction.customId.split('-')[1];
-            var character_reputations = await connection.promise().query('select r.*, cr.value as characterStanding from reputations r join characters_reputations cr on r.id = cr.reputation_id left outer join characters_characterflags cc on (r.visibility = "cflag" and r.cwflag_id = cc.characterflag_id) left outer join worldflags w on (r.visibility = "wflag" and r.cwflag_id = w.id) where cr.character_id = ? and (r.visibility = "always" or (r.visibility = "cflag" and cc.value is not null and cc.value >= r.cwflag_value) or (r.visibility = "wflag" and w.value is not null and w.value >= r.cwflag_value))', [character_id]); // Filter this by cflag visibility
+            let character_id = interaction.customId.split('-')[1];
+            let character_reputations = await connection.promise().query('select r.*, cr.value as characterStanding from reputations r join characters_reputations cr on r.id = cr.reputation_id left outer join characters_characterflags cc on (r.visibility = "cflag" and r.cwflag_id = cc.characterflag_id) left outer join worldflags w on (r.visibility = "wflag" and r.cwflag_id = w.id) where cr.character_id = ? and (r.visibility = "always" or (r.visibility = "cflag" and cc.value is not null and cc.value >= r.cwflag_value) or (r.visibility = "wflag" and w.value is not null and w.value >= r.cwflag_value))', [character_id]); // Filter this by cflag visibility
             let msg;
             if (character_reputations[0].length > 0) {
                 msg = `__Reputations__\n`
                 for (const thisReputation of character_reputations[0]) {
-                    var standing = await connection.promise().query('select * from reputations_tiers rt where value <= ? order by value desc limit 1', [thisReputation.characterStanding]);
+                    let standing = await connection.promise().query('select * from reputations_tiers rt where value <= ? order by value desc limit 1', [thisReputation.characterStanding]);
                     //var next_standing = await connection.promise().query('select * from reputations_tiers rt where value > ? order by value asc limit 1', [thisReputation.characterStanding]);
                     //eventually use these three numbers to do "0/12000" or whatever
-                    msg = msg.concat(`**${thisReputation.name}** (${thisReputation.description}) (${standing[0][0].threshold_name})\n`);
+                    let test_msg = msg.concat(`**${thisReputation.name}** (${thisReputation.description}) (${standing[0][0].threshold_name})\n`);
+                    if (test_msg.length > 2000) {
+                        //paginate
+                    } else {
+                        msg = test_msg;
+                    }
                 }
             } else {
                 msg = `You don't have any reputations encountered yet.`;
