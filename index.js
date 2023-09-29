@@ -5130,7 +5130,7 @@ client.on('interactionCreate', async (interaction) => {
                     } else {
                         msg = test_msg;
                     }
-                    maxSkillId = thisSkill.id;
+                    maxSkillId = (maxSkillId ? Math.max(maxSkillId, thisSkill.id) : thisSkill.id);
                 }
             } else {
                 msg = `You don't have any skills! Hmm. Maybe check with an Orchestrator if you weren't expecting this.`;
