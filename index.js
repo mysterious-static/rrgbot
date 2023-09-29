@@ -5218,9 +5218,13 @@ client.on('interactionCreate', async (interaction) => {
                 }
                 if (prev_id && prev_id !== minSkillId) {
                     paginationActionRow.addComponents(new ButtonBuilder().setCustomId(`skillpage-desc-${character_id}-${prev_id}`).setLabel('◀️').setStyle(ButtonStyle.Primary));
+                } else if (minSkillId < firstDisplayedId) {
+                    paginationActionRow.addComponents(new ButtonBuilder().setCustomId(`skillpage-desc-${character_id}-${firstDisplayedId - 1}`).setLabel('◀️').setStyle(ButtonStyle.Primary));
                 }
                 if (next_id && next_id !== maxSkillId) {
                     paginationActionRow.addComponents(new ButtonBuilder().setCustomId(`skillpage-asc-${character_id}-${next_id}`).setLabel('▶️').setStyle(ButtonStyle.Primary));
+                } else if (maxSkillId > lastDisplayedId) {
+                    paginationActionRow.addComponents(new ButtonBuilder().setCustomId(`skillpage-asc-${character_id}-${lastDisplayedId + 1}`).setLabel('▶️').setStyle(ButtonStyle.Primary));
                 }
                 if (maxSkillId > lastDisplayedId) {
                     paginationActionRow.addComponents(new ButtonBuilder().setCustomId(`skillpage-desc-${character_id}-${maxSkillId}`).setLabel('⏭️').setStyle(ButtonStyle.Primary));
