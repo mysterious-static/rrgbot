@@ -4676,7 +4676,7 @@ client.on('interactionCreate', async (interaction) => {
                 if (err) {
                     console.log(err);
                 } else if (res.length > 0 && (rpsthrow == "R" || rpsthrow == "P" || rpsthrow == "S")) {
-                    var valid = 1;
+                    let valid = 1;
                     let queryData;
                     if (res[0].challenged == interaction.user.id && !res[0].challenged_throw) {
                         queryData = ['challenged_throw', rpsthrow, res[0].id, res[0].id];
