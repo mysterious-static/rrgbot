@@ -5237,7 +5237,7 @@ client.on('interactionCreate', async (interaction) => {
             let character_id = interaction.customId.split('-')[2];
             let reputation_id = interaction.customId.split('-')[3];
             let character_reputations = await connection.promise().query(`select r.*, cr.value as characterStanding from reputations r join characters_reputations cr on r.id = cr.reputation_id left outer join characters_characterflags cc on (r.visibility = "cflag" and r.cwflag_id = cc.characterflag_id) left outer join worldflags w on (r.visibility = "wflag" and r.cwflag_id = w.id) where cr.character_id = ? and (r.visibility = "always" or (r.visibility = "cflag" and cc.value is not null and cc.value >= r.cwflag_value) or (r.visibility = "wflag" and w.value is not null and w.value >= r.cwflag_value)) order by r.id ${sort}`, [character_id]); // Filter this by cflag visibility
-            let msg;
+            let msg = '';
             let firstDisplayedId = false;
             let lastDisplayedId = false;
             let maxId = false;
