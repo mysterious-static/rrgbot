@@ -5180,7 +5180,12 @@ client.on('interactionCreate', async (interaction) => {
                     minSkillId = (minSkillId ? Math.min(minSkillId, thisSkill.id) : thisSkill.id);
                     if (sort == 'asc' && thisSkill.id >= skill_id || sort == 'desc' && thisSkill.id <= skill_id) {
                         if (process_test_msg) {
-                            let test_msg = msg.concat(`**${thisSkill.name}**: ${thisSkill.description} (${thisSkill.type})\n`);
+                            let test_msg;
+                            if (sort == 'desc') {
+                                test_msg = (`**${thisSkill.name}**: ${thisSkill.description} (${thisSkill.type})\n`).concat(msg);
+                            } else {
+                                test_msg = msg.concat(`**${thisSkill.name}**: ${thisSkill.description} (${thisSkill.type})\n`)
+                            }
                             if (test_msg.length > 2000) {
                                 if (!next_id && sort === 'asc') {
                                     next_id = thisSkill.id;
