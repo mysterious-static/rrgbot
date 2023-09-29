@@ -1454,7 +1454,7 @@ client.on('interactionCreate', async (interaction) => {
                             owned.push({ label: thisCharacter.name, value: thisCharacter.id.toString() });
                         }
                         console.log(owned);
-                        const characterSelectComponent = new StringSelectMenuBuilder().setOptions(owned).setCustomId('CharacterUnassignmentSelector').setMinValues(1).setMaxValues(characters[0].length);
+                        const characterSelectComponent = new StringSelectMenuBuilder().setOptions(owned).setCustomId('CharacterUnassignmentSelector').setMinValues(1).setMaxValues(owned_characters[0].length);
                         var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
                         var message = await interaction.reply({ content: 'Select a character or characters to unassign from this player:', components: [characterSelectRow], ephemeral: true });
                         const collector = message.createMessageComponentCollector({ time: 35000 });
