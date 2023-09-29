@@ -2717,7 +2717,7 @@ client.on('interactionCreate', async (interaction) => {
 
                             let reputation_enabled = await connection.promise().query('select * from game_settings where setting_name = "reputation" and guild_id = ?', [interaction.guildId]);
                             if (reputation_enabled[0].length > 0 && reputation_enabled[0][0].setting_value == true) {
-                                buttonActionRow.addComponents(new ButtonBuilder().setCustomId(`reputation-${characterSelected}`).setLabel('Reputation').setStyle(ButtonStyle.Primary));
+                                buttonActionRow.addComponents(new ButtonBuilder().setCustomId(`reputation-asc-${characterSelected}-1`).setLabel('Reputation').setStyle(ButtonStyle.Primary));
                             }
                             await interaction_second.update({ content: msg, components: [buttonActionRow] });
                             await collector.stop();
@@ -3770,7 +3770,7 @@ client.on('interactionCreate', async (interaction) => {
                     // If game settings - reputation enabled, then add the Reputation button too
                     let reputation_enabled = await connection.promise().query('select * from game_settings where setting_name = "reputation" and guild_id = ?', [interaction.guildId]);
                     if (reputation_enabled[0].length > 0 && reputation_enabled[0][0].setting_value == true) {
-                        buttonActionRow.addComponents(new ButtonBuilder().setCustomId(`reputation-${current_character[0][0].character_id}`).setLabel('Reputation').setStyle(ButtonStyle.Primary));
+                        buttonActionRow.addComponents(new ButtonBuilder().setCustomId(`reputation-asc-${current_character[0][0].character_id}-1`).setLabel('Reputation').setStyle(ButtonStyle.Primary));
                     }
                     await interaction.reply({ content: msg, components: [buttonActionRow], ephemeral: true });
                 } else {
@@ -5106,7 +5106,7 @@ client.on('interactionCreate', async (interaction) => {
 
             let reputation_enabled = await connection.promise().query('select * from game_settings where setting_name = "reputation" and guild_id = ?', [interaction.guildId]);
             if (reputation_enabled[0].length > 0 && reputation_enabled[0][0].setting_value == true) {
-                buttonActionRow.addComponents(new ButtonBuilder().setCustomId(`reputation-${character_id}`).setLabel('Reputation').setStyle(ButtonStyle.Primary));
+                buttonActionRow.addComponents(new ButtonBuilder().setCustomId(`reputation-asc-${character_id}-1`).setLabel('Reputation').setStyle(ButtonStyle.Primary));
             }
             await interaction.update({ content: msg, components: [buttonActionRow] });
         } else if (interaction.customId.startsWith('skillpage-')) {
@@ -5167,7 +5167,7 @@ client.on('interactionCreate', async (interaction) => {
             components.push(buttonActionRow);
             let reputation_enabled = await connection.promise().query('select * from game_settings where setting_name = "reputation" and guild_id = ?', [interaction.guildId]);
             if (reputation_enabled[0].length > 0 && reputation_enabled[0][0].setting_value == true) {
-                buttonActionRow.addComponents(new ButtonBuilder().setCustomId(`reputation-${character_id}`).setLabel('Reputation').setStyle(ButtonStyle.Primary));
+                buttonActionRow.addComponents(new ButtonBuilder().setCustomId(`reputation-asc-${character_id}-1`).setLabel('Reputation').setStyle(ButtonStyle.Primary));
             }
             if (paginationActionRow) {
                 await interaction.update({ content: msg, components: [components] });
@@ -5226,30 +5226,67 @@ client.on('interactionCreate', async (interaction) => {
                     new ButtonBuilder().setCustomId(`sheet-${character_id}`).setLabel('Sheet').setStyle(ButtonStyle.Primary),
                     new ButtonBuilder().setCustomId(`skillpage-asc-${character_id}-1`).setLabel('Skills').setStyle(ButtonStyle.Primary)
                 );
+            components.push(buttonActionRow);
             let reputation_enabled = await connection.promise().query('select * from game_settings where setting_name = "reputation" and guild_id = ?', [interaction.guildId]);
             if (reputation_enabled[0].length > 0 && reputation_enabled[0][0].setting_value == true) {
-                buttonActionRow.addComponents(new ButtonBuilder().setCustomId(`reputation-${character_id}`).setLabel('Reputation').setStyle(ButtonStyle.Primary));
+                buttonActionRow.addComponents(new ButtonBuilder().setCustomId(`reputation-asc-${character_id}-1`).setLabel('Reputation').setStyle(ButtonStyle.Primary));
             }
             await interaction.update({ content: msg, components: [components] });
         } else if (interaction.customId.startsWith('reputation-')) {
-            let character_id = interaction.customId.split('-')[1];
-            let character_reputations = await connection.promise().query('select r.*, cr.value as characterStanding from reputations r join characters_reputations cr on r.id = cr.reputation_id left outer join characters_characterflags cc on (r.visibility = "cflag" and r.cwflag_id = cc.characterflag_id) left outer join worldflags w on (r.visibility = "wflag" and r.cwflag_id = w.id) where cr.character_id = ? and (r.visibility = "always" or (r.visibility = "cflag" and cc.value is not null and cc.value >= r.cwflag_value) or (r.visibility = "wflag" and w.value is not null and w.value >= r.cwflag_value))', [character_id]); // Filter this by cflag visibility
+            let sort = interaction.customId.split('-')[1];
+            let character_id = interaction.customId.split('-')[2];
+            let reputation_id = interaction.customId.split('-')[3];
+            let character_reputations = await connection.promise().query(`select r.*, cr.value as characterStanding from reputations r join characters_reputations cr on r.id = cr.reputation_id left outer join characters_characterflags cc on (r.visibility = "cflag" and r.cwflag_id = cc.characterflag_id) left outer join worldflags w on (r.visibility = "wflag" and r.cwflag_id = w.id) where cr.character_id = ? and (r.visibility = "always" or (r.visibility = "cflag" and cc.value is not null and cc.value >= r.cwflag_value) or (r.visibility = "wflag" and w.value is not null and w.value >= r.cwflag_value)) order by r.id ${sort}`, [character_id]); // Filter this by cflag visibility
             let msg;
+            let firstDisplayedId = false;
+            let lastDisplayedId = false;
+            let maxId = false;
+            let minId = false;
+            var msgStart = `__Reputations__\n`;
             if (character_reputations[0].length > 0) {
                 msg = `__Reputations__\n`
+
+                // after for loop
+                let standing = await connection.promise().query('select * from reputations_tiers rt where value <= ? order by value desc limit 1', [thisReputation.characterStanding]); //`**${thisReputation.name}** (${thisReputation.description}) (${standing[0][0].threshold_name})\n`
+                //let next_standing = await connection.promise().query('select * from reputations_tiers rt where value > ? order by value asc limit 1', [thisReputation.characterStanding]);
+                //eventually use these three numbers to do "0/12000" or whatever
+
                 for (const thisReputation of character_reputations[0]) {
-                    let standing = await connection.promise().query('select * from reputations_tiers rt where value <= ? order by value desc limit 1', [thisReputation.characterStanding]);
-                    //let next_standing = await connection.promise().query('select * from reputations_tiers rt where value > ? order by value asc limit 1', [thisReputation.characterStanding]);
-                    //eventually use these three numbers to do "0/12000" or whatever
-                    let test_msg = msg.concat(`**${thisReputation.name}** (${thisReputation.description}) (${standing[0][0].threshold_name})\n`);
-                    if (test_msg.length > 2000) {
-                        //paginate
-                    } else {
-                        msg = test_msg;
+                    maxId = (maxId ? Math.max(maxId, thisReputation.id) : thisReputation.id);
+                    minId = (minId ? Math.min(minId, thisReputation.id) : thisReputation.id);
+                    if (sort == 'asc' && thisReputation.id >= reputation_id || sort == 'desc' && thisReputation.id <= reputation_id) {
+                        if (process_test_msg) {
+                            let standing = await connection.promise().query('select * from reputations_tiers rt where value <= ? order by value desc limit 1', [thisReputation.characterStanding]);
+                            let test_msg;
+                            if (sort == 'desc') {
+                                test_msg = (`**${thisReputation.name}** (${thisReputation.description}) (${standing[0][0].threshold_name})\n`).concat(msg);
+                            } else {
+                                test_msg = msg.concat(`**${thisReputation.name}** (${thisReputation.description}) (${standing[0][0].threshold_name})\n`)
+                            }
+                            if (test_msg.length > 1990) { // 2000 characters minus "__Items__\n"
+                                process_test_msg = false;
+                            } else {
+                                msg = test_msg;
+                                firstDisplayedId = (firstDisplayedId ? Math.min(firstDisplayedId, thisReputation.id) : thisReputation.id);
+                                lastDisplayedId = (lastDisplayedId ? Math.max(lastDisplayedId, thisReputation.id) : thisReputation.id);
+                            }
+                        }
                     }
                 }
+                msg = msgStart.concat(msg);
             } else {
                 msg = `You don't have any reputations encountered yet.`;
+            }
+            let components = [];
+            if (minId < firstDisplayedId || maxId > lastDisplayedId) {
+                let paginationActionRow = new ActionRowBuilder();
+                if (minId < firstDisplayedId) {
+                    paginationActionRow.addComponents(new ButtonBuilder().setCustomId(`reputation-desc-${character_id}-${firstDisplayedId - 1}`).setLabel('◀️').setStyle(ButtonStyle.Primary));
+                }
+                if (maxId > lastDisplayedId) {
+                    paginationActionRow.addComponents(new ButtonBuilder().setCustomId(`reputation-asc-${character_id}-${lastDisplayedId + 1}`).setLabel('▶️').setStyle(ButtonStyle.Primary));
+                }
+                components.push(paginationActionRow);
             }
             const buttonActionRow = new ActionRowBuilder()
                 .addComponents(
@@ -5257,7 +5294,8 @@ client.on('interactionCreate', async (interaction) => {
                     new ButtonBuilder().setCustomId(`skillpage-asc-${character_id}-1`).setLabel('Skills').setStyle(ButtonStyle.Primary),
                     new ButtonBuilder().setCustomId(`inventory-asc-${character_id}-1`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
                 );
-            await interaction.update({ content: msg, components: [buttonActionRow] });
+            components.push(buttonActionRow);
+            await interaction.update({ content: msg, components: [components] });
         }
     }
 
