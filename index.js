@@ -1058,7 +1058,6 @@ client.on('interactionCreate', async (interaction) => {
                                 await channel.permissionOverwrites.edit(user, { SendMessages: false });
                             }
                         }
-                        // get all players if active character in location set send message true else false.
                     } else {
                         for (const thisPlayer of players[0]) {
                             console.log(thisPlayer);
@@ -1070,7 +1069,6 @@ client.on('interactionCreate', async (interaction) => {
                                 await channel.permissionOverwrites.edit(user, { ViewChannel: false, SendMessages: false });
                             }
                         }
-                        // get all players, for each player if active character is in location then set read and send true else false.
                     }
                 }
                 interaction.reply({ content: 'Reset done.', ephemeral: true });
@@ -1108,8 +1106,6 @@ client.on('interactionCreate', async (interaction) => {
             }
 
         } else if (interaction.commandName == 'addwhisper') {
-
-            // interaction.options.getInteger() = duration in hours
             var whisper_category = await connection.promise().query('select setting_value from game_settings where guild_id = ? and setting_name = ?', [interaction.guildId, 'whisper_category']);
             if (whisper_category[0].length > 0) {
                 var timest = Math.floor(Date.now() / 1000);
@@ -1124,7 +1120,6 @@ client.on('interactionCreate', async (interaction) => {
             } else {
                 interaction.reply({ content: "Create a whisper category first using `/whispercategory`.", ephemeral: true });
             }
-            //create channel and log in db
         } else if (interaction.commandName == 'populatewhisper') {
             var channel = interaction.options.getChannel('whisperchannel');
             var whisper = await connection.promise().query('select * from whispers where channel_id = ?', [channel.id]);
@@ -1322,7 +1317,6 @@ client.on('interactionCreate', async (interaction) => {
                     var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
                 } else {
                     var characters = await connection.promise().query('select c.* from players p join players_characters pc on p.id = pc.player_id join charactesr c on pc.character_id = c.id where p.user_id = ? and p.guild_id = ?', [interaction.user.id, interaction.guildId]);
-                    // Check players_characters table for available characters
                 }
                 if (characters[0].length > 0) {
                     var charactersAlphabetical;
