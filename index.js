@@ -2711,7 +2711,7 @@ client.on('interactionCreate', async (interaction) => {
                             }
                             const buttonActionRow = new ActionRowBuilder()
                                 .addComponents(
-                                    new ButtonBuilder().setCustomId(`skills-${characterSelected}`).setLabel('Skills').setStyle(ButtonStyle.Primary),
+                                    new ButtonBuilder().setCustomId(`skillpage-asc-${characterSelected}-1`).setLabel('Skills').setStyle(ButtonStyle.Primary),
                                     new ButtonBuilder().setCustomId(`inventory-${characterSelected}`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
                                 );
 
@@ -3764,7 +3764,7 @@ client.on('interactionCreate', async (interaction) => {
                     }
                     const buttonActionRow = new ActionRowBuilder()
                         .addComponents(
-                            new ButtonBuilder().setCustomId(`skills-${current_character[0][0].character_id}`).setLabel('Skills').setStyle(ButtonStyle.Primary),
+                            new ButtonBuilder().setCustomId(`skillpage-asc-${current_character[0][0].character_id}-1`).setLabel('Skills').setStyle(ButtonStyle.Primary),
                             new ButtonBuilder().setCustomId(`inventory-${current_character[0][0].character_id}`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
                         );
                     // If game settings - reputation enabled, then add the Reputation button too
@@ -5100,7 +5100,7 @@ client.on('interactionCreate', async (interaction) => {
             }
             const buttonActionRow = new ActionRowBuilder()
                 .addComponents(
-                    new ButtonBuilder().setCustomId(`skills-${character_id}`).setLabel('Skills').setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder().setCustomId(`skillpage-asc-${character_id}-1`).setLabel('Skills').setStyle(ButtonStyle.Primary),
                     new ButtonBuilder().setCustomId(`inventory-${character_id}`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
                 );
 
@@ -5258,7 +5258,7 @@ client.on('interactionCreate', async (interaction) => {
             const buttonActionRow = new ActionRowBuilder()
                 .addComponents(
                     new ButtonBuilder().setCustomId(`sheet-${character_id}`).setLabel('Sheet').setStyle(ButtonStyle.Primary),
-                    new ButtonBuilder().setCustomId(`skills-${character_id}`).setLabel('Skills').setStyle(ButtonStyle.Primary)
+                    new ButtonBuilder().setCustomId(`skillpage-asc-${character_id}-1`).setLabel('Skills').setStyle(ButtonStyle.Primary)
                 );
             let reputation_enabled = await connection.promise().query('select * from game_settings where setting_name = "reputation" and guild_id = ?', [interaction.guildId]);
             if (reputation_enabled[0].length > 0 && reputation_enabled[0][0].setting_value == true) {
@@ -5288,7 +5288,7 @@ client.on('interactionCreate', async (interaction) => {
             const buttonActionRow = new ActionRowBuilder()
                 .addComponents(
                     new ButtonBuilder().setCustomId(`sheet-${character_id}`).setLabel('Sheet').setStyle(ButtonStyle.Primary),
-                    new ButtonBuilder().setCustomId(`skills-${character_id}`).setLabel('Skills').setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder().setCustomId(`skillpage-asc-${character_id}-1`).setLabel('Skills').setStyle(ButtonStyle.Primary),
                     new ButtonBuilder().setCustomId(`inventory-${character_id}`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
                 );
             await interaction.update({ content: msg, components: [buttonActionRow] });
