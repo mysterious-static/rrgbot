@@ -5176,18 +5176,20 @@ client.on('interactionCreate', async (interaction) => {
                     maxSkillId = (maxSkillId ? Math.max(maxSkillId, thisSkill.id) : thisSkill.id);
                     minSkillId = (minSkillId ? Math.min(minSkillId, thisSkill.id) : thisSkill.id);
                     if (sort == 'asc' && thisSkill.id >= skill_id || sort == 'desc' && thisSkill.id <= skill_id) {
-                        firstDisplayedId = (firstDisplayedId ? Math.min(firstDisplayedId, thisSkill.id) : thisSkill.id);
+                        if (next_id || prev_id) {
+                            let test_msg = msg.concat(`**${thisSkill.name}**: ${thisSkill.description} (${thisSkill.type})\n`);
+                            if (test_msg.length > 2000) {
+                                if (!next_id && sort === 'asc') {
+                                    next_id = thisSkill.id;
+                                }
+                                if (!prev_id && sort === 'desc') {
+                                    prev_id = thisSkill.id;
+                                }
+                            } else {
+                                msg = test_msg;
+                                firstDisplayedId = (firstDisplayedId ? Math.min(firstDisplayedId, thisSkill.id) : thisSkill.id);
                         lastDisplayedId = (lastDisplayedId ? Math.max(lastDisplayedId, thisSkill.id) : thisSkill.id);
-                        let test_msg = msg.concat(`**${thisSkill.name}**: ${thisSkill.description} (${thisSkill.type})\n`);
-                        if (test_msg.length > 2000) {
-                            if (!next_id && sort === 'asc') {
-                                next_id = thisSkill.id;
                             }
-                            if (!prev_id && sort === 'desc') {
-                                prev_id = thisSkill.id;
-                            }
-                        } else {
-                            msg = test_msg;
                         }
                     }
                 }
