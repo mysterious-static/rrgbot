@@ -1233,12 +1233,6 @@ client.on('interactionCreate', async (interaction) => {
 
                 }
             }
-        } else if (interaction.commandName == 'characterlocation') {
-            // Two dropdowns! Ah, ah, ah!
-
-
-        } else if (interaction.commandName == 'characteravatar') {
-
         } else if (interaction.commandName == 'character') {
             if (interaction.options.getSubcommand() === 'unassign') {
                 var user = interaction.options.getUser('user');
