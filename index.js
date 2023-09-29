@@ -4275,142 +4275,144 @@ client.on('interactionCreate', async (interaction) => {
                         interaction.reply({ content: 'You can\'t give a negative number or zero of an item.', ephemeral: true });
                     }
                 } else if (interaction.options.getSubcommand() == 'use') {
-                    var items = await connection.promise().query('select i.* from characters_items ci join items i on ci.item_id = i.id where ci.character_id = ? and (i.other_targetable = 1 or i.self_targetable = 1)', [current_character[0][0].character_id]);
-                    var selectedItem;
-                    var location_aware;
-                    var characterDetails = await connection.promise().query('select * from characters where id = ?', [current_character[0][0].character_id]);
+                    let items = await connection.promise().query('select i.* from characters_items ci join items i on ci.item_id = i.id where ci.character_id = ? and (i.other_targetable = 1 or i.self_targetable = 1)', [current_character[0][0].character_id]);
+                    let selectedItem;
+                    let location_aware;
+                    let characterDetails = await connection.promise().query('select * from characters where id = ?', [current_character[0][0].character_id]);
                     if (items) {
-                        var itemsKeyValues = [];
+                        let itemsKeyValues = [];
                         for (const item of items) {
-                            var thisItemKeyValue = { label: item.name, value: item.id.toString() };
-                            itemsKeyValues.push(thisItemKeyValue);
+                            itemsKeyValues.push({ label: item.name, value: item.id.toString() });
                         }
-                        const itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemUseSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
-                        var itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
-                        var message = await interaction.reply({ content: 'Select an item to use:', components: [itemSelectRow], ephemeral: true });
-                        var collector = message.createMessageComponentCollector();
+                        const itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemUseSelector').setMinValues(1).setMaxValues(1);
+                        const itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
+                        let message = await interaction.reply({ content: 'Select an item to use:', components: [itemSelectRow], ephemeral: true });
+                        let collector = message.createMessageComponentCollector();
                         collector.on('collect', async (interaction_second) => {
-                            if (interaction_second.customId == 'ItemUseSelector' + interaction.member.id) {
-                                itemSelected = interaction_second.values[0];
-                                selectedItem = items.find(i => i.id == selectedItem);
-                                var characters;
-                                location_aware = await connection.promise().query('select setting_value from game_settings where guild_id = ? and setting_name = ?', [interaction.guildId, 'locationawareskills']);
-                                if (location_aware[0].length > 0 && location_aware[0][0].setting_value == 0) {
-                                    if (selectedItem.self_targetable) {
-                                        if (selectedItem.other_targetable) {
-                                            characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
+                            if (interaction.member.id === interaction_second.member.id) {
+                                if (interaction_second.customId == 'ItemUseSelector') {
+                                    itemSelected = interaction_second.values[0];
+                                    selectedItem = items.find(i => i.id == selectedItem);
+                                    let characters;
+                                    location_aware = await connection.promise().query('select setting_value from game_settings where guild_id = ? and setting_name = ?', [interaction.guildId, 'locationawareskills']);
+                                    if (location_aware[0].length > 0 && location_aware[0][0].setting_value == 0) {
+                                        if (selectedItem.self_targetable) {
+                                            if (selectedItem.other_targetable) {
+                                                characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
+                                            } else {
+                                                let characterSelected = await connection.promise().query('select * from characters c where id = ?', [characterDetails[0][0].id]);
+                                                let effects = await connection.promise().query('select e.* from effects e join items_effects ie on se.effect_id = e.id where ie.item_id = ?', [selectedItem.id]);
+                                                for (const thisEffect of effects[0]) {
+                                                    if (thisEffect.target == 'triggering_character') {
+                                                        process_effect(characterDetails[0][0], thisEffect, 'item', interaction.guildId)
+                                                    } else if (thisEffect.target == 'target') {
+                                                        process_effect(characterDetails[0][0], thisEffect, 'item', interaction.guildId, characterSelected[0][0]);
+                                                    } //potentially *specific* effects at some poitn in the future
+                                                }
+                                                if (selectedItem.consumable) {
+                                                    await connection.promise().query('update characters_items set quantity = quantity - 1 where item_id = ? and character_id = ?', [selectedItem.id, characterDetails[0][0].id]);
+                                                }
+                                                await interaction_second.update({ content: 'Successfully used the item!', components: [] });
+                                                collector.stop();
+                                            }
                                         } else {
-                                            var characterSelected = await connection.promise().query('select * from characters c where id = ?', [characterDetails[0][0].id]);
-                                            var effects = await connection.promise().query('select e.* from effects e join items_effects ie on se.effect_id = e.id where ie.item_id = ?', [selectedItem.id]);
-                                            for (const thisEffect of effects[0]) {
-                                                if (thisEffect.target == 'triggering_character') {
-                                                    process_effect(characterDetails[0][0], thisEffect, 'item', interaction.guildId)
-                                                } else if (thisEffect.target == 'target') {
-                                                    process_effect(characterDetails[0][0], thisEffect, 'item', interaction.guildId, characterSelected[0][0]);
-                                                } //potentially *specific* effects at some poitn in the future
-                                            }
-                                            if (selectedItem.consumable) {
-                                                await connection.promise().query('update characters_items set quantity = quantity - 1 where item_id = ? and character_id = ?', [selectedItem.id, characterDetails[0][0].id]);
-                                            }
-                                            interaction_second.update({ content: 'Successfully used the item!', components: [] });
+                                            characters = await connection.promise().query('select * from characters where guild_id = ? and id != ?', [interaction.guildId, characterDetails[0][0].id]);
                                         }
                                     } else {
-                                        characters = await connection.promise().query('select * from characters where guild_id = ? and id != ?', [interaction.guildId, characterDetails[0][0].id]);
-                                    }
-                                } else {
-                                    if (selectedItem.self_targetable) {
-                                        if (selectedItem.other_targetable) {
-                                            characters = await connection.promise().query('select * from characters where guild_id = ? and location_id = ?', [interaction.guildId, characterDetails[0][0].location_id]);
+                                        if (selectedItem.self_targetable) {
+                                            if (selectedItem.other_targetable) {
+                                                characters = await connection.promise().query('select * from characters where guild_id = ? and location_id = ?', [interaction.guildId, characterDetails[0][0].location_id]);
+                                            } else {
+                                                let characterSelected = await connection.promise().query('select * from characters c where id = ?', [characterDetails[0][0].id]);
+                                                let effects = await connection.promise().query('select e.* from effects e join items_effects se on ie.effect_id = e.id where ie.item_id = ?', [selectedItem.id]);
+                                                for (const thisEffect of effects[0]) {
+                                                    if (thisEffect.target == 'triggering_character') {
+                                                        process_effect(characterDetails[0][0], thisEffect, 'item', interaction.guildId)
+                                                    } else if (thisEffect.target == 'target') {
+                                                        process_effect(characterDetails[0][0], thisEffect, 'item', interaction.guildId, characterSelected[0][0]);
+                                                    } //potentially *specific* effects at some poitn in the future
+                                                }
+                                                if (selectedItem.consumable) {
+                                                    await connection.promise().query('update characters_items set quantity = quantity - 1 where item_id = ? and character_id = ?', [selectedItem.id, characterDetails[0][0].id]);
+                                                }
+                                                await interaction_second.update({ content: 'Successfully used the item!', components: [] });
+                                                collector.stop();
+                                            }
                                         } else {
-                                            var characterSelected = await connection.promise().query('select * from characters c where id = ?', [characterDetails[0][0].id]);
-                                            var effects = await connection.promise().query('select e.* from effects e join items_effects se on ie.effect_id = e.id where ie.item_id = ?', [selectedItem.id]);
-                                            for (const thisEffect of effects[0]) {
-                                                if (thisEffect.target == 'triggering_character') {
-                                                    process_effect(characterDetails[0][0], thisEffect, 'item', interaction.guildId)
-                                                } else if (thisEffect.target == 'target') {
-                                                    process_effect(characterDetails[0][0], thisEffect, 'item', interaction.guildId, characterSelected[0][0]);
-                                                } //potentially *specific* effects at some poitn in the future
+                                            characters = await connection.promise().query('select * from characters where guild_id = ? and location_id = ? and id != ?', [interaction.guildId, characterDetails[0][0].location_id, characterDetails[0][0].id]);
+                                        }
+                                    }
+                                    if (!(selectedItem.self_targetable && !selectedItem.other_targetable)) {
+                                        if (characters[0].length > 0) {
+                                            let charactersAlphabetical;
+                                            let characterSelectComponent;
+                                            if (characters[0].length <= 25) {
+                                                charactersAlphabetical = false;
+                                                let charactersKeyValues = [];
+                                                for (const character of characters[0]) {
+                                                    charactersKeyValues.push({ label: character.name, value: character.id.toString() });
+                                                }
+                                                characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ItemUseCharacterSelector').setMinValues(1).setMaxValues(1);
+                                            } else {
+                                                charactersAlphabetical = true;
+                                                let characters = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
+                                                let charactersKeyValues = [];
+                                                for (const character of characters) {
+                                                    charactersKeyValues.push({ label: character, value: character });
+                                                }
+                                                characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ItemUseAlphabetSelector').setMinValues(1).setMaxValues(1);
                                             }
-                                            if (selectedItem.consumable) {
-                                                await connection.promise().query('update characters_items set quantity = quantity - 1 where item_id = ? and character_id = ?', [selectedItem.id, characterDetails[0][0].id]);
-                                            }
-                                            interaction_second.update({ content: 'Successfully used the item!', components: [] });
+                                            const characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                                            await interaction_second.update({ content: 'Select a character to target with this item:', components: [characterSelectRow], ephemeral: true });
+                                        } else {
+                                            await interaction_second.update({ content: 'No valid characters found.', components: [] });
+                                            collector.stop();
+                                        }
+                                    }
+                                } else if (interaction_second.customId == 'ItemUseAlphabetSelector') {
+                                    if (location_aware[0].length > 0 && location_aware[0][0].setting_value == 0) {
+                                        if (selectedItem.self_targetable) {
+                                            characters = await connection.promise().query('select * from characters where guild_id = ? and name like ?', [interaction.guildId, interaction_second.values[0] + '%']);
+                                        } else {
+                                            characters = await connection.promise().query('select * from characters where guild_id = ? and id != ? and name like ?', [interaction.guildId, characterDetails[0][0].id, interaction_second.values[0] + '%']);
                                         }
                                     } else {
-                                        characters = await connection.promise().query('select * from characters where guild_id = ? and location_id = ? and id != ?', [interaction.guildId, characterDetails[0][0].location_id, characterDetails[0][0].id]);
+                                        if (selectedItem.self_targetable) {
+                                            characters = await connection.promise().query('select * from characters where guild_id = ? and location_id = ? and name like ?', [interaction.guildId, characterDetails[0][0].location_id, interaction_second.values[0] + '%']);
+                                        } else {
+                                            characters = await connection.promise().query('select * from characters where guild_id = ? and location_id = ? and id != ? and name like ?', [interaction.guildId, characterDetails[0][0].location_id, characterDetails[0][0].id, interaction_second.values[0] + '%']);
+                                        }
                                     }
-                                }
-                                if (!(selectedItem.self_targetable && !selectedItem.other_targetable)) {
                                     if (characters[0].length > 0) {
-                                        var charactersAlphabetical;
-                                        var characterSelectComponent;
-                                        if (characters[0].length <= 25) {
-                                            charactersAlphabetical = false;
-                                            var charactersKeyValues = [{ label: 'Select a characters', value: '0' }];
-                                            for (const character of characters[0]) {
-                                                var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
-                                                charactersKeyValues.push(thisCharacterKeyValue);
-                                            }
-                                            characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ItemUseCharacterSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
-                                        } else {
-                                            charactersAlphabetical = true;
-                                            var characters = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
-                                            var charactersKeyValues = [];
-                                            for (const character of characters) {
-                                                var thisCharacterKeyValue = { label: character, value: character }
-                                                charactersKeyValues.push(thisCharacterKeyValue);
-                                            }
-                                            characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ItemUseAlphabetSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
+                                        charactersAlphabetical = false;
+                                        let charactersKeyValues = [];
+                                        for (const character of characters[0]) {
+                                            charactersKeyValues.push({ label: character.name, value: character.id.toString() });
                                         }
-                                        var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                                        const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ItemUseCharacterSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
+                                        const characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
                                         await interaction_second.update({ content: 'Select a character to target with this item:', components: [characterSelectRow], ephemeral: true });
                                     } else {
-                                        interaction_second.update({ content: 'No valid characters found.', components: [] });
+                                        await interaction_second.update({ content: 'No valid characters found.', components: [] });
+                                        collector.stop();
                                     }
-                                }
-                            } else if (interaction_second.customId == 'ItemUseAlphabetSelector' + interaction.member.id) {
-                                if (location_aware[0].length > 0 && location_aware[0][0].setting_value == 0) {
-                                    if (selectedItem.self_targetable) {
-                                        characters = await connection.promise().query('select * from characters where guild_id = ? and name like ?', [interaction.guildId, interaction_second.values[0] + '%']);
-                                    } else {
-                                        characters = await connection.promise().query('select * from characters where guild_id = ? and id != ? and name like ?', [interaction.guildId, characterDetails[0][0].id, interaction_second.values[0] + '%']);
-                                    }
-                                } else {
-                                    if (selectedItem.self_targetable) {
-                                        characters = await connection.promise().query('select * from characters where guild_id = ? and location_id = ? and name like ?', [interaction.guildId, characterDetails[0][0].location_id, interaction_second.values[0] + '%']);
-                                    } else {
-                                        characters = await connection.promise().query('select * from characters where guild_id = ? and location_id = ? and id != ? and name like ?', [interaction.guildId, characterDetails[0][0].location_id, characterDetails[0][0].id, interaction_second.values[0] + '%']);
-                                    }
-                                }
-                                if (characters[0].length > 0) {
-                                    var characterSelectComponent;
-                                    charactersAlphabetical = false;
-                                    var charactersKeyValues = [{ label: 'Select a character', value: '0' }];
-                                    for (const character of characters[0]) {
-                                        var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
-                                        charactersKeyValues.push(thisCharacterKeyValue);
-                                    }
-                                    characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ItemUseCharacterSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
-                                    var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                                    await interaction_second.update({ content: 'Select a character to target with this item:', components: [characterSelectRow], ephemeral: true });
-                                } else {
-                                    interaction_second.update({ content: 'No valid characters found.', components: [] });
-                                }
 
-                            } else if (interaction_second.customId == 'ItemUseCharacterSelector' + interaction.member.id) {
-                                var characterSelected = await connection.promise().query('select * from characters c where id = ?', [interaction_second.values[0]]);
-                                var effects = await connection.promise().query('select e.* from effects e join items_effects ie on ie.effect_id = e.id where ie.item_id = ?', [selectedItem.id]);
-                                for (const thisEffect of effects[0]) {
-                                    if (thisEffect.target == 'triggering_character') {
-                                        process_effect(characterDetails[0][0], thisEffect, 'item', interaction.guildId)
-                                    } else if (thisEffect.target == 'target') {
-                                        process_effect(characterDetails[0][0], thisEffect, 'item', interaction.guildId, characterSelected[0][0]);
-                                    } //potentially *specific* effects at some poitn in the future
+                                } else if (interaction_second.customId == 'ItemUseCharacterSelector' + interaction.member.id) {
+                                    let characterSelected = await connection.promise().query('select * from characters c where id = ?', [interaction_second.values[0]]);
+                                    let effects = await connection.promise().query('select e.* from effects e join items_effects ie on ie.effect_id = e.id where ie.item_id = ?', [selectedItem.id]);
+                                    for (const thisEffect of effects[0]) {
+                                        if (thisEffect.target == 'triggering_character') {
+                                            process_effect(characterDetails[0][0], thisEffect, 'item', interaction.guildId)
+                                        } else if (thisEffect.target == 'target') {
+                                            process_effect(characterDetails[0][0], thisEffect, 'item', interaction.guildId, characterSelected[0][0]);
+                                        } //potentially *specific* effects at some poitn in the future
+                                    }
+                                    if (selectedItem.consumable) {
+                                        await connection.promise().query('update characters_items set quantity = quantity - 1 where item_id = ? and character_id = ?', [selectedItem.id, characterDetails[0][0].id]);
+                                    }
+                                    await interaction_second.update({ content: 'Successfully used the item!', components: [] });
+                                    collector.stop();
                                 }
-                                if (selectedItem.consumable) {
-                                    await connection.promise().query('update characters_items set quantity = quantity - 1 where item_id = ? and character_id = ?', [selectedItem.id, characterDetails[0][0].id]);
-                                }
-                                interaction_second.update({ content: 'Successfully used the item!', components: [] });
                             }
 
                         });
@@ -4423,38 +4425,40 @@ client.on('interactionCreate', async (interaction) => {
                     }
                 }
             } else if (interaction.commandName == 'duel') {
-                var isHealthStat = await connection.promise().query('select * from stats join stats_specialstats sps on stats.id = sps.stat_id where stats.guild_id = ? and sps.special_type = "health"', [interaction.guildId]);
+                let isHealthStat = await connection.promise().query('select * from stats join stats_specialstats sps on stats.id = sps.stat_id where stats.guild_id = ? and sps.special_type = "health"', [interaction.guildId]);
                 if (isHealthStat[0].length > 0) {
-                    var target = interaction.options.getUser('target');
-                    var player = await connection.promise().query('select c.* from characters c join players_characters pc on c.id = pc.character_id join players p on pc.player_id = p.id where pc.active = 1 and p.user_id = ? and p.guild_id = ?', [interaction.user.id, interaction.guildId]);
-                    var target = await connection.promise().query('select c.* from characters c join players_characters pc on c.id = pc.character_id join players p on pc.player_id = p.id where pc.active = 1 and p.user_id = ? and p.guild_id = ?', [target.id, interaction.guildId]);
+                    let target = interaction.options.getUser('target');
+                    let player = await connection.promise().query('select c.* from characters c join players_characters pc on c.id = pc.character_id join players p on pc.player_id = p.id where pc.active = 1 and p.user_id = ? and p.guild_id = ?', [interaction.user.id, interaction.guildId]);
+                    target = await connection.promise().query('select c.* from characters c join players_characters pc on c.id = pc.character_id join players p on pc.player_id = p.id where pc.active = 1 and p.user_id = ? and p.guild_id = ?', [target.id, interaction.guildId]);
                     if (player[0][0] && target[0][0]) {
-                        var isCustomPlayerHealth = await connection.promise().query('select override_value from characters_stats where character_id = ? and stat_id = ?', [player[0][0].id, isHealthStat[0][0].id]);
-                        var isCustomTargetHealth = await connection.promise().query('select override_value from characters_stats where character_id = ? and stat_id = ?', [target[0][0].id, isHealthStat[0][0].id]);
+                        let isCustomPlayerHealth = await connection.promise().query('select override_value from characters_stats where character_id = ? and stat_id = ?', [player[0][0].id, isHealthStat[0][0].id]);
+                        let isCustomTargetHealth = await connection.promise().query('select override_value from characters_stats where character_id = ? and stat_id = ?', [target[0][0].id, isHealthStat[0][0].id]);
+                        let computedPlayerHealth;
+                        let computedTargetHealth;
                         if (isCustomPlayerHealth[0].length > 0) {
-                            var computedPlayerHealth = isCustomPlayerHealth[0][0].override_value;
+                            computedPlayerHealth = isCustomPlayerHealth[0][0].override_value;
                         } else {
-                            var computedPlayerHealth = isHealthStat[0][0].default_value;
+                            computedPlayerHealth = isHealthStat[0][0].default_value;
                         }
                         if (isCustomTargetHealth[0].length > 0) {
-                            var computedTargetHealth = isCustomTargetHealth[0][0].override_value;
+                            computedTargetHealth = isCustomTargetHealth[0][0].override_value;
                         } else {
-                            var computedTargetHealth = isHealthStat[0][0].default_value;
+                            computedTargetHealth = isHealthStat[0][0].default_value;
                         }
-                        var embed = new EmbedBuilder()
+                        let embed = new EmbedBuilder()
                             .setTitle(`DUEL: ${player[0][0].name} v. ${target[0][0].name}`)
                             .setDescription(`Round 1`)
                             .addFields(
                                 { name: player[0][0].name, value: `${isHealthStat[0][0].name}: ${computedPlayerHealth}`, inline: true }, // active skills, innates, etc
                                 { name: target[0][0].name, value: `${isHealthStat[0][0].name}: ${computedTargetHealth}`, inline: true } // active skills, innates, etc
                             );
-                        var duel = await connection.promise().query('insert into duels (player_id, target_id) values (?, ?)', [player[0][0].id, target[0][0].id]);
-                        var duelButtonR = new ButtonBuilder().setCustomId('duelButtonR' + duel[0].insertId).setLabel('Rapid').setStyle('Primary'); // TODO ButtonBuilder doesn't exist in Discord.js v14
-                        var duelButtonP = new ButtonBuilder().setCustomId('duelButtonP' + duel[0].insertId).setLabel('Precision').setStyle('Primary');
-                        var duelButtonS = new ButtonBuilder().setCustomId('duelButtonS' + duel[0].insertId).setLabel('Sweeping').setStyle('Primary');
-                        var duelButtonSkill = new ButtonBuilder().setCustomId('duelButtonSkill' + duel[0].insertId).setLabel('Declare Innates').setStyle('Primary');
+                        let duel = await connection.promise().query('insert into duels (player_id, target_id) values (?, ?)', [player[0][0].id, target[0][0].id]);
+                        const duelButtonR = new ButtonBuilder().setCustomId('duelButtonR' + duel[0].insertId).setLabel('Rapid').setStyle('Primary'); // TODO ButtonBuilder doesn't exist in Discord.js v14
+                        const duelButtonP = new ButtonBuilder().setCustomId('duelButtonP' + duel[0].insertId).setLabel('Precision').setStyle('Primary');
+                        const duelButtonS = new ButtonBuilder().setCustomId('duelButtonS' + duel[0].insertId).setLabel('Sweeping').setStyle('Primary');
+                        const duelButtonSkill = new ButtonBuilder().setCustomId('duelButtonSkill' + duel[0].insertId).setLabel('Declare Innates').setStyle('Primary');
                         const rpsRow = new ActionRowBuilder().addComponents(duelButtonR, duelButtonP, duelButtonS, duelButtonSkill);
-                        var msg = interaction.reply({ embeds: [embed], components: [rpsRow] });
+                        let msg = interaction.reply({ embeds: [embed], components: [rpsRow] });
                         // buttons rps + skill; skill offers dropdown using interaction.followUp
                     } else {
                         await interaction.reply({ content: 'Either you aren\'t an active character or your target isn\'t. Please double check!', ephemeral: true });
@@ -4463,11 +4467,11 @@ client.on('interactionCreate', async (interaction) => {
                     await interaction.reply({ content: 'No health stat is set. Check with the Orchestrators, please!', ephemeral: true });
                 }
             } else if (interaction.commandName == 'deck') {
-                var activeCharacter = await connection.promise().query('select c.* from characters c join players_characters pc on c.id = pc.character_id join players p on pc.player_id = p.id where pc.active = 1 and p.user_id = ? and p.guild_id = ?', [interaction.user.id, interaction.guildId]);
+                let activeCharacter = await connection.promise().query('select c.* from characters c join players_characters pc on c.id = pc.character_id join players p on pc.player_id = p.id where pc.active = 1 and p.user_id = ? and p.guild_id = ?', [interaction.user.id, interaction.guildId]);
                 if (activeCharacter[0][0]) {
-                    var tiles = await connection.promise().query('select * from characters_tiles ct join tiles t on ct.tile_id = t.id where ct.character_id = ?', [activeCharacter[0][0].id]);
+                    let tiles = await connection.promise().query('select * from characters_tiles ct join tiles t on ct.tile_id = t.id where ct.character_id = ?', [activeCharacter[0][0].id]);
                     if (tiles[0].length > 0) {
-                        var messageText = '';
+                        let messageText = '';
                         for (const thisTile of tiles[0]) {
                             messageText += `**${thisTile.name}**: rarity ${thisTile.rarity} (type \`/tile\` for more details)\n`;
                         }
@@ -4483,12 +4487,12 @@ client.on('interactionCreate', async (interaction) => {
                 }
             } else if (interaction.commandName === 'roll') {
                 //dice, sides, public, fixed_add
-                var dice = interaction.options.getInteger('dice');
-                var sides = interaction.options.getInteger('sides');
-                var total = 0;
-                var indivDice = [];
+                let dice = interaction.options.getInteger('dice');
+                let sides = interaction.options.getInteger('sides');
+                let total = 0;
+                let indivDice = [];
                 for (i = 1; i <= dice; i++) {
-                    var thisValue = Math.floor(Math.random() * sides + 1);
+                    let thisValue = Math.floor(Math.random() * sides + 1);
                     indivDice.push(thisValue);
                     total += thisValue;
                 }
@@ -4501,22 +4505,22 @@ client.on('interactionCreate', async (interaction) => {
                     interaction.reply({ content: '`' + dice + 'd' + sides + (interaction.options.getInteger('fixed_add') ? ' + ' + interaction.options.getInteger('fixed_add').toString() : '') + ' = ' + indivDice + (interaction.options.getInteger('fixed_add') ? ' + ' + interaction.options.getInteger('fixed_add') : '') + ' = ' + total + '`', ephemeral: true });
                 }
             } else if (interaction.commandName === 'addticketcategory') {
-                var name = interaction.options.getString('name');
-                var categories = await connection.promise().query('select * from tickets_categories where guildid = ? and name = ?', [interaction.guild.id, name]);
+                let name = interaction.options.getString('name');
+                let categories = await connection.promise().query('select * from tickets_categories where guildid = ? and name = ?', [interaction.guild.id, name]);
                 if (categories[0].length > 0) {
                     interaction.reply({ content: 'You already have a category with that name.', ephemeral: true });
                 } else {
                     await connection.promise().query('insert into tickets_categories (guildid, name) values (?, ?)', [interaction.guild.id, name]);
-                    var channel = await connection.promise().query('select * from game_settings where setting_name = "ticket_channel" and guild_id = ?', [interaction.guild.id]);
+                    let channel = await connection.promise().query('select * from game_settings where setting_name = "ticket_channel" and guild_id = ?', [interaction.guild.id]);
                     if (channel[0].length > 0) {
-                        var message = await connection.promise().query('select * from game_settings where setting_name = "ticket_message" and guild_id = ?', [interaction.guild.id]);
-                        var categories = await connection.promise().query('select * from tickets_categories where guildid = ?', [interaction.guild.id]);
+                        let message = await connection.promise().query('select * from game_settings where setting_name = "ticket_message" and guild_id = ?', [interaction.guild.id]);
+                        let categories = await connection.promise().query('select * from tickets_categories where guildid = ?', [interaction.guild.id]);
                         if (categories[0].length > 25) {
                             await connection.promise().query('delete from tickets_categories where guildid = ? and name = ?', [interaction.guild.id, name]);
                             interaction.reply({ content: 'You have more than 25 ticket categories. Please delete some and try adding this again.', ephemeral: true });
                         } else {
-                            var channel = await client.channels.cache.get(channel[0][0].setting_value);
-                            var categoriesKeyValues = [];
+                            let channel = await client.channels.cache.get(channel[0][0].setting_value);
+                            let categoriesKeyValues = [];
                             const embeddedMessage = new EmbedBuilder()
                                 .setColor(0x770000)
                                 .setTitle('Ticket System')
@@ -4525,8 +4529,8 @@ client.on('interactionCreate', async (interaction) => {
                                 categoriesKeyValues.push({ label: `${category.name}`, value: category.id.toString() });
                             }
                             const categorySelectComponent = new StringSelectMenuBuilder().setOptions(categoriesKeyValues).setCustomId('TicketCategorySelector').setMinValues(1).setMaxValues(1);
-                            var categorySelectRow = new ActionRowBuilder().addComponents(categorySelectComponent);
-                            var message = await channel.messages.fetch(message[0][0].setting_value).then(msg => msg.edit({ embeds: [embeddedMessage], components: [categorySelectRow] }));
+                            const categorySelectRow = new ActionRowBuilder().addComponents(categorySelectComponent);
+                            await channel.messages.fetch(message[0][0].setting_value).then(msg => msg.edit({ embeds: [embeddedMessage], components: [categorySelectRow] }));
                             interaction.reply({ content: 'Created category.', ephemeral: true });
                         }
                     } else {
@@ -4534,15 +4538,15 @@ client.on('interactionCreate', async (interaction) => {
                     }
                 }
             } else if (interaction.commandName === 'ticketchannel') {
-                var audit_channel = await connection.promise().query('select * from game_settings where setting_name = "audit_channel" and guild_id = ?', [interaction.guild.id]);
+                let audit_channel = await connection.promise().query('select * from game_settings where setting_name = "audit_channel" and guild_id = ?', [interaction.guild.id]);
                 if (audit_channel[0].length > 0) {
-                    var categories = await connection.promise().query('select * from tickets_categories where guildid = ?', [interaction.guild.id]);
+                    let categories = await connection.promise().query('select * from tickets_categories where guildid = ?', [interaction.guild.id]);
                     if (categories[0].length > 0) {
-                        var existing_channel = await connection.promise().query('select * from game_settings where setting_name = "ticket_channel" and guild_id = ?', [interaction.guild.id]);
+                        let existing_channel = await connection.promise().query('select * from game_settings where setting_name = "ticket_channel" and guild_id = ?', [interaction.guild.id]);
                         if (existing_channel[0].length > 0) {
-                            var channel = await client.channels.cache.get(existing_channel[0][0].setting_value);
-                            var existing_message = await connection.promise().query('select * from game_settings where setting_name = "ticket_message" and guild_id = ?', [interaction.guild.id]);
-                            var message = await channel.messages.fetch(existing_message[0][0].setting_value).then(msg => msg.delete());
+                            let channel = await client.channels.cache.get(existing_channel[0][0].setting_value);
+                            let existing_message = await connection.promise().query('select * from game_settings where setting_name = "ticket_message" and guild_id = ?', [interaction.guild.id]);
+                            await channel.messages.fetch(existing_message[0][0].setting_value).then(msg => msg.delete());
                             await connection.promise().query('update game_settings set setting_value = ? where setting_name = "ticket_channel" and guild_id = ?', [interaction.options.getChannel('channel').id, interaction.guild.id]);
                         } else {
                             await connection.promise().query('insert into game_settings (setting_name, guild_id, setting_value) values (?, ?, ?)', ["ticket_channel", interaction.guild.id, interaction.options.getChannel('channel').id]) // really shouldnt we consolidate these into an replace into or whatever
@@ -4551,13 +4555,13 @@ client.on('interactionCreate', async (interaction) => {
                             .setColor(0x770000)
                             .setTitle('Ticket System')
                             .setDescription('Please select a ticket type from the dropdown menu to begin opening a support ticket.');
-                        var categoriesKeyValues = [];
+                        let categoriesKeyValues = [];
                         for (const category of categories[0]) {
                             categoriesKeyValues.push({ label: `${category.name}`, value: category.id.toString() });
                         }
                         const categorySelectComponent = new StringSelectMenuBuilder().setOptions(categoriesKeyValues).setCustomId('TicketCategorySelector').setMinValues(1).setMaxValues(1);
-                        var categorySelectRow = new ActionRowBuilder().addComponents(categorySelectComponent);
-                        var message = await interaction.options.getChannel('channel').send({ embeds: [embeddedMessage], components: [categorySelectRow] });
+                        const categorySelectRow = new ActionRowBuilder().addComponents(categorySelectComponent);
+                        let message = await interaction.options.getChannel('channel').send({ embeds: [embeddedMessage], components: [categorySelectRow] });
                         await connection.promise().query('replace into game_settings (setting_name, guild_id, setting_value) values (?, ?, ?)', ["ticket_message", interaction.guild.id, message.id]);
                         interaction.reply({ content: 'Assigned ticket channel and sent message.', ephemeral: true });
                     } else {
@@ -4570,25 +4574,25 @@ client.on('interactionCreate', async (interaction) => {
                 await connection.promise().query('replace into game_settings (guild_id, setting_name, setting_value) values (?, ?, ?)', [interaction.guild.id, "audit_channel", interaction.options.getChannel('channel').id]);
                 interaction.reply({ content: 'Audit channel created or updated.', ephemeral: true });
             } else if (interaction.commandName === 'setcategorygroup') {
-                var categories = await connection.promise().query('select * from tickets_categories where guildid = ?', [interaction.guild.id]);
-                var categoriesKeyValues = [];
+                let categories = await connection.promise().query('select * from tickets_categories where guildid = ?', [interaction.guild.id]);
+                let categoriesKeyValues = [];
                 if (categories[0].length > 0) {
                     for (const category of categories[0]) {
                         categoriesKeyValues.push({ label: `${category.name}`, value: category.id.toString() });
                     }
                     const categorySelectComponent = new StringSelectMenuBuilder().setOptions(categoriesKeyValues).setCustomId('CategorySelector').setMinValues(1).setMaxValues(1);
-                    var categorySelectRow = new ActionRowBuilder().addComponents(categorySelectComponent);
-                    var message = await interaction.reply({ content: 'Select a category to assign a role to.', components: [categorySelectRow], ephemeral: true });
+                    const categorySelectRow = new ActionRowBuilder().addComponents(categorySelectComponent);
+                    let message = await interaction.reply({ content: 'Select a category to assign a role to.', components: [categorySelectRow], ephemeral: true });
                     const collector = message.createMessageComponentCollector();
-                    var categorySelected;
-                    var rolesSelected;
+                    let categorySelected;
+                    let rolesSelected;
                     collector.on('collect', async (interaction_select) => {
                         if (interaction_select.values[0]) {
                             if (interaction_select.customId == 'CategorySelector') {
                                 interaction_select.deferUpdate();
                                 categorySelected = interaction_select.values[0];
                                 const roleSelectComponent = new RoleSelectMenuBuilder().setCustomId('RoleSelector').setMinValues(1).setMaxValues(5);
-                                var roleSelectRow = new ActionRowBuilder().addComponents(roleSelectComponent);
+                                const roleSelectRow = new ActionRowBuilder().addComponents(roleSelectComponent);
                                 await interaction.editReply({ content: 'Select the roles you want to assign.', components: [roleSelectRow] });
                             } else if (interaction_select.customId == 'RoleSelector') {
                                 rolesSelected = interaction_select.values;
@@ -4603,13 +4607,13 @@ client.on('interactionCreate', async (interaction) => {
                 }
             } else if (interaction.commandName === 'closeticket') {
                 if (interaction.channel.isThread()) {
-                    var ticket = await connection.promise().query('select * from tickets where thread_id = ?', [interaction.channel.id]);
+                    let ticket = await connection.promise().query('select * from tickets where thread_id = ?', [interaction.channel.id]);
                     if (ticket[0].length > 0) {
-                        var ticketRole = await connection.promise().query('select * from tickets_categories_roles where category_id = ?', [ticket[0][0].category_id]);
-                        var category = await connection.promise().query('select * from tickets_categories where id = ?', [ticket[0][0].category_id]);
+                        let ticketRole = await connection.promise().query('select * from tickets_categories_roles where category_id = ?', [ticket[0][0].category_id]);
+                        let category = await connection.promise().query('select * from tickets_categories where id = ?', [ticket[0][0].category_id]);
                         if (interaction.member.permissions.has(PermissionsBitField.Flags.Administrator) || interaction.member.roles.cache.has(ticketRole[0][0].role_id)) {
-                            var reason = interaction.options.getString('reason');
-                            var openuser = await interaction.guild.members.fetch(ticket[0][0].uid_open);
+                            let reason = interaction.options.getString('reason');
+                            let openuser = await interaction.guild.members.fetch(ticket[0][0].uid_open);
                             if (!openuser.permissions.has(PermissionsBitField.Flags.Administrator)) {
                                 await interaction.channel.members.remove(openuser.id);
                             }
@@ -4618,9 +4622,9 @@ client.on('interactionCreate', async (interaction) => {
                             // Archive thread
                             await connection.promise().query('update tickets set uid_close = ? where thread_id = ?', [interaction.member.id, interaction.channel.id]);
                             // Create embed
-                            var settingvalue = await connection.promise().query('select * from game_settings where guild_id = ? and setting_name = ?', [interaction.guild.id, 'audit_channel']);
-                            var audit_channel = await client.channels.cache.get(settingvalue[0][0].setting_value);
-                            var embed = new EmbedBuilder()
+                            let settingvalue = await connection.promise().query('select * from game_settings where guild_id = ? and setting_name = ?', [interaction.guild.id, 'audit_channel']);
+                            let audit_channel = await client.channels.cache.get(settingvalue[0][0].setting_value);
+                            let embed = new EmbedBuilder()
                                 .setTitle('Ticket closed!')
                                 .setDescription(ticket[0][0].title)
                                 .setAuthor({ name: interaction.member.displayName })
