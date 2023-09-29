@@ -5376,8 +5376,6 @@ client.on('interactionCreate', async (interaction) => {
             modal.addComponents(titleRow, descRow);
 
             await interaction.showModal(modal);
-
-            // Get the Modal Submit Interaction that is emitted once the User submits the Modal
             const submitted = await interaction.awaitModalSubmit({
                 // Timeout after 5 minute of not receiving any valid Modals
                 time: 300000,
@@ -5387,12 +5385,7 @@ client.on('interactionCreate', async (interaction) => {
                 // Catch any Errors that are thrown (e.g. if the awaitModalSubmit times out after 60000 ms)
                 console.error(error)
                 return null
-            })
-
-            // If we got our Modal, we can do whatever we want with it down here. Remember that the Modal
-            // can have multiple Action Rows, but each Action Row can have only one TextInputComponent. You
-            // can use the ModalSubmitInteraction.fields helper property to get the value of an input field
-            // from it's Custom ID. See https://old.discordjs.dev/#/docs/discord.js/stable/class/ModalSubmitFieldsResolver for more info.
+            });
             if (submitted) {
                 //console.log(submitted.fields);
                 let title = submitted.fields.getTextInputValue('title');
@@ -5437,10 +5430,6 @@ client.on('interactionCreate', async (interaction) => {
                     .setTimestamp();
                 audit_channel.send({ embeds: [embed] });
             }
-
-
-
-            /* Create embed for audit channel. */
         }
     }
 });
