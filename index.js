@@ -5162,6 +5162,7 @@ client.on('interactionCreate', async (interaction) => {
             let character_id = interaction.customId.split('-')[2];
             let skill_id = interaction.customId.split('-')[3];
             let skills = await connection.promise().query(`select distinct s.* from skills s left outer join skills_characters sc on s.id = sc.skill_id left outer join skills_archetypes sa on s.id = sa.skill_id left outer join characters_archetypes ca on sa.archetype_id = ca.archetype_id and (sc.character_id = ? or ca.character_id = ?) order by s.id ${sort}`, [character_id, character_id]);
+            console.log(skills);
             let msg;
             let paginate = false;
             let firstDisplayedId = false;
