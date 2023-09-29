@@ -1446,11 +1446,11 @@ client.on('interactionCreate', async (interaction) => {
                 var user = interaction.options.getUser('user');
                 var player = await connection.promise().query('select * from players where user_id = ? and guild_id = ?', [user.id, interaction.guildId]);
                 if (player[0].length > 0) {
-                    var owned_characters = await connection.promise().query('select distinct c.id from characters c join players_characters pc on c.id = pc.character_id join players p on pc.player_id = p.id where c.guild_id = ? and p.user_id = ?', [interaction.guildId, user.id]);
-                    var owned = [];
+                    let owned_characters = await connection.promise().query('select distinct c.id from characters c join players_characters pc on c.id = pc.character_id join players p on pc.player_id = p.id where c.guild_id = ? and p.user_id = ?', [interaction.guildId, user.id]);
+                    let owned = [];
                     if (owned_characters[0].length > 0) {
                         for (const thisCharacter of owned_characters[0]) {
-                            owned.push({ label: thisCharacter.name, value: thisCharacter.id.toString() });
+                            owned.push({ label: thisCharacter.character_name, value: thisCharacter.id.toString() });
                         }
                         const characterSelectComponent = new StringSelectMenuBuilder().setOptions(owned).setCustomId('CharacterUnassignmentSelector').setMinValues(1).setMaxValues(characters[0].length);
                         var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
