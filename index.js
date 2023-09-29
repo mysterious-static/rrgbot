@@ -5109,53 +5109,6 @@ client.on('interactionCreate', async (interaction) => {
                 buttonActionRow.addComponents(new ButtonBuilder().setCustomId(`reputation-${character_id}`).setLabel('Reputation').setStyle(ButtonStyle.Primary));
             }
             await interaction.update({ content: msg, components: [buttonActionRow] });
-        } else if (interaction.customId.startsWith('skills-')) {
-            let character_id = interaction.customId.split('-')[1];
-            let skills = await connection.promise().query('select distinct s.* from skills s left outer join skills_characters sc on s.id = sc.skill_id left outer join skills_archetypes sa on s.id = sa.skill_id left outer join characters_archetypes ca on sa.archetype_id = ca.archetype_id where sc.character_id = ? or ca.character_id = ? order by s.id asc', [character_id, character_id]);
-            let msg;
-            let paginate = false;
-            let next_id = false;
-            let maxSkillId;
-            if (skills[0].length > 0) {
-                // union character and archetype skills before continuing maybe? sort by id asc? 
-                msg = `__Skills__\n`;
-                for (const thisSkill of skills[0]) {
-
-                    let test_msg = msg.concat(`**${thisSkill.name}**: ${thisSkill.description} (${thisSkill.type})\n`);
-                    if (test_msg.length > 2000) {
-                        if (!next_id) {
-                            next_id = thisSkill.id;
-                        }
-                        paginate = true;
-                    } else {
-                        msg = test_msg;
-                    }
-                    maxSkillId = (maxSkillId ? Math.max(maxSkillId, thisSkill.id) : thisSkill.id);
-                }
-            } else {
-                msg = `You don't have any skills! Hmm. Maybe check with an Orchestrator if you weren't expecting this.`;
-            }
-            let paginationActionRow = false;
-            if (paginate) {
-                paginationActionRow = new ActionRowBuilder()
-                    .addComponents(
-                        new ButtonBuilder().setCustomId(`skillpage-asc-${character_id}-${next_id}`).setLabel('▶️').setStyle(ButtonStyle.Primary)
-                    );
-            }
-            const buttonActionRow = new ActionRowBuilder()
-                .addComponents(
-                    new ButtonBuilder().setCustomId(`sheet-${character_id}`).setLabel('Sheet').setStyle(ButtonStyle.Primary),
-                    new ButtonBuilder().setCustomId(`inventory-${character_id}`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
-                );
-            let reputation_enabled = await connection.promise().query('select * from game_settings where setting_name = "reputation" and guild_id = ?', [interaction.guildId]);
-            if (reputation_enabled[0].length > 0 && reputation_enabled[0][0].setting_value == true) {
-                buttonActionRow.addComponents(new ButtonBuilder().setCustomId(`reputation-${character_id}`).setLabel('Reputation').setStyle(ButtonStyle.Primary));
-            }
-            if (paginationActionRow) {
-                await interaction.update({ content: msg, components: [paginationActionRow, buttonActionRow] });
-            } else {
-                await interaction.update({ content: msg, components: [buttonActionRow] });
-            }
         } else if (interaction.customId.startsWith('skillpage-')) {
             let sort = interaction.customId.split('-')[1];
             let character_id = interaction.customId.split('-')[2];
@@ -5167,8 +5120,6 @@ client.on('interactionCreate', async (interaction) => {
             let paginate = false;
             let firstDisplayedId = false;
             let lastDisplayedId = false;
-            let prev_id;
-            let next_id;
             let maxSkillId;
             let minSkillId;
             var msgStart = `__Skills__\n`;
@@ -5187,12 +5138,6 @@ client.on('interactionCreate', async (interaction) => {
                                 test_msg = msg.concat(`**${thisSkill.name}**: ${thisSkill.description} (${thisSkill.type})\n`)
                             }
                             if (test_msg.length > 1989) {
-                                if (!next_id && sort === 'asc') {
-                                    next_id = thisSkill.id;
-                                }
-                                if (!prev_id && sort === 'desc') {
-                                    prev_id = thisSkill.id;
-                                }
                                 process_test_msg = false;
                             } else {
                                 msg = test_msg;
@@ -5203,7 +5148,7 @@ client.on('interactionCreate', async (interaction) => {
                     }
                 }
                 msg = msgStart.concat(msg);
-                if (next_id || prev_id || minSkillId < firstDisplayedId || maxSkillId > lastDisplayedId) {
+                if (minSkillId < firstDisplayedId || maxSkillId > lastDisplayedId) {
                     paginate = true;
                 }
             } else {
@@ -5212,14 +5157,10 @@ client.on('interactionCreate', async (interaction) => {
             let paginationActionRow = false;
             if (paginate) {
                 paginationActionRow = new ActionRowBuilder();
-                if (prev_id && prev_id !== minSkillId) {
-                    paginationActionRow.addComponents(new ButtonBuilder().setCustomId(`skillpage-desc-${character_id}-${prev_id}`).setLabel('◀️').setStyle(ButtonStyle.Primary));
-                } else if (minSkillId < firstDisplayedId) {
+                if (minSkillId < firstDisplayedId) {
                     paginationActionRow.addComponents(new ButtonBuilder().setCustomId(`skillpage-desc-${character_id}-${firstDisplayedId - 1}`).setLabel('◀️').setStyle(ButtonStyle.Primary));
                 }
-                if (next_id && next_id !== maxSkillId) {
-                    paginationActionRow.addComponents(new ButtonBuilder().setCustomId(`skillpage-asc-${character_id}-${next_id}`).setLabel('▶️').setStyle(ButtonStyle.Primary));
-                } else if (maxSkillId > lastDisplayedId) {
+                if (maxSkillId > lastDisplayedId) {
                     paginationActionRow.addComponents(new ButtonBuilder().setCustomId(`skillpage-asc-${character_id}-${lastDisplayedId + 1}`).setLabel('▶️').setStyle(ButtonStyle.Primary));
                 }
             }
