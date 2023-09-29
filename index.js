@@ -5161,6 +5161,7 @@ client.on('interactionCreate', async (interaction) => {
             let sort = interaction.customId.split('-')[1];
             let character_id = interaction.customId.split('-')[2];
             let skill_id = interaction.customId.split('-')[3];
+            console.log(sort + ' ' + character_id + ' ' + skill_id);
             let skills = await connection.promise().query(`select distinct s.* from skills s left outer join skills_characters sc on s.id = sc.skill_id left outer join skills_archetypes sa on s.id = sa.skill_id left outer join characters_archetypes ca on sa.archetype_id = ca.archetype_id and (sc.character_id = ? or ca.character_id = ?) order by s.id ${sort}`, [character_id, character_id]);
             console.log(skills);
             let msg;
@@ -5215,7 +5216,7 @@ client.on('interactionCreate', async (interaction) => {
                     paginationActionRow.addComponents(new ButtonBuilder().setCustomId(`skillpage-asc-${character_id}-${next_id}`).setLabel('▶️').setStyle(ButtonStyle.Primary));
                 }
                 if (maxSkillId > lastDisplayedId) {
-                    paginationActionRow.addComponents(new ButtonBuilder().setCustomId(`skillpage-desc-${character_id}-${maxSkillId}-last`).setLabel('⏭️').setStyle(ButtonStyle.Primary));
+                    paginationActionRow.addComponents(new ButtonBuilder().setCustomId(`skillpage-desc-${character_id}-${maxSkillId}`).setLabel('⏭️').setStyle(ButtonStyle.Primary));
                 }
             }
             const buttonActionRow = new ActionRowBuilder()
