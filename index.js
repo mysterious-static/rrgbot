@@ -1462,9 +1462,6 @@ client.on('interactionCreate', async (interaction) => {
                                 }
                             }
                         });
-                        collector.on('end', async (collected) => {
-                            // How do we clean the message up?
-                        });
                     } else {
                         interaction.reply({ content: 'You haven\'t created any characters yet. Try creating a character first.', ephemeral: true });
                     }
@@ -1607,10 +1604,6 @@ client.on('interactionCreate', async (interaction) => {
                                 }
                             }
                         });
-                        collector.on('end', async (collected) => {
-                            console.log(collected);
-                            // How do we clean the message up?
-                        });
                     } else {
                         interaction.reply({ content: 'You haven\'t created any stats yet. Try creating a stat first.', ephemeral: true });
                     }
@@ -1665,10 +1658,6 @@ client.on('interactionCreate', async (interaction) => {
                                     await interaction_second.deferUpdate();
                                 }
                             }
-                        });
-                        collector.on('end', async (collected) => {
-                            console.log(collected);
-                            // How do we clean the message up?
                         });
                     } else {
                         interaction.reply({ content: 'You haven\'t created any stats yet. Try creating a stat first.', ephemeral: true });
@@ -1898,9 +1887,6 @@ client.on('interactionCreate', async (interaction) => {
                                     await interaction_second.deferUpdate();
                                 }
                             }
-                        });
-                        collector.on('end', async (collected) => {
-                            // How do we clean the message up?
                         });
                     } else {
                         interaction.reply({ content: 'Couldn\'t find any characters. Or archetypes, if you wanted to assign archetypes. I can\'t be sure because Alli is lazy.', ephemeral: true });
@@ -2193,10 +2179,6 @@ client.on('interactionCreate', async (interaction) => {
                             }
                         }
                     });
-                    collector.on('end', async (collected) => {
-                        console.log(collected);
-                        // How do we clean the message up?
-                    });
                 } else {
                     interaction.reply({ content: 'There are no targetable skills in the database for this game.', ephemeral: true });
                 }
@@ -2348,10 +2330,6 @@ client.on('interactionCreate', async (interaction) => {
                                     await interaction_second.deferUpdate();
                                 }
                             }
-                        });
-                        collector.on('end', async (collected) => {
-                            console.log(collected);
-                            // How do we clean the message up?
                         });
                     } else {
                         interaction.reply({ content: 'Couldn\'t find any characters, which is a bit odd. Try creating one, or yell at Alli if you shouldn\'t be getting this.', ephemeral: true });
@@ -2576,10 +2554,6 @@ client.on('interactionCreate', async (interaction) => {
                             }
                         }
                     });
-                    collector.on('end', async (collected) => {
-                        console.log(collected);
-                        // How do we clean the message up?
-                    });
                 } else {
                     interaction.reply({ content: 'There are no targetable items in the database for this game.', ephemeral: true });
                 }
@@ -2652,9 +2626,6 @@ client.on('interactionCreate', async (interaction) => {
                             await interaction_second.deferUpdate();
                         }
                     }
-                });
-                collector.on('end', async (collected) => {
-                    // How do we clean the message up?
                 });
             } else {
                 interaction.reply({ content: 'You haven\'t created any characters yet. Try creating a character first.', ephemeral: true });
@@ -3957,10 +3928,6 @@ client.on('interactionCreate', async (interaction) => {
                                     }
                                 }
                             });
-                            collector.on('end', async (collected) => {
-                                console.log(collected);
-                                // How do we clean the message up?
-                            });
                         } else {
                             await interaction.reply({ content: 'You don\'t seem to have any skills. Sorry about that.', ephemeral: true });
                         }
@@ -4113,10 +4080,6 @@ client.on('interactionCreate', async (interaction) => {
                                 }
 
                             });
-                            collector.on('end', async (collected) => {
-                                console.log(collected);
-                                // How do we clean the message up?
-                            });
                         } else {
                             interaction.reply({ content: 'You don\'t seem to have any usable skills.', ephemeral: true });
                         }
@@ -4146,10 +4109,6 @@ client.on('interactionCreate', async (interaction) => {
                                     await collector.stop();
                                 }
 
-                            });
-                            collector.on('end', async (collected) => {
-                                console.log(collected);
-                                // How do we clean the message up?
                             });
                         } else {
                             interaction.reply({ content: 'You don\'t seem to have any items. Sorry about that.', ephemeral: true });
@@ -4395,10 +4354,6 @@ client.on('interactionCreate', async (interaction) => {
                                 }
                             }
 
-                        });
-                        collector.on('end', async (collected) => {
-                            console.log(collected);
-                            // How do we clean the message up?
                         });
                     } else {
                         interaction.reply({ content: 'You don\'t seem to have any usable items.', ephemeral: true });
