@@ -741,6 +741,13 @@ var sendas = new SlashCommandBuilder().setName('sendas')
             .setDescription('Optional image to attach to the message.')
     )
 
+var character = new SlashCommandBuilder().setName('character')
+    .setDescription('Character admin.')
+    .addSubcommand(subcommand =>
+        subcommand.setName('unassign')
+            .setDescription('Unassign a character from a player.')
+    )
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 // Characters Per Player (switching system // bot echoes) - TODO
 // For now, playercreate should create a default character automatically in a separate table with the specified player_name.
@@ -889,6 +896,7 @@ async function isPlayer(userid, guildid) {
 
 client.on('ready', async () => {
     await client.application.commands.set([
+        character.toJSON(),
         allowmovement.toJSON(),
         locationannouncements.toJSON(),
         addlocation.toJSON(),
@@ -1429,6 +1437,38 @@ client.on('interactionCreate', async (interaction) => {
                 });
             } else {
                 await interaction.reply({ content: 'The user that you selected isn\'t a valid player.', ephemeral: true });
+            }
+        } else if (interaction.commandName == 'character') {
+            if (interaction.options.getSubcommand() == 'unassign') {
+                var user = interaction.options.getUser('user');
+                var player = await connection.promise().query('select * from players where user_id = ? and guild_id = ?', [user.id, interaction.guildId]);
+                if (player[0].length > 0) {
+                    var owned_characters = await connection.promise().query('select distinct c.id from characters c join players_characters pc on c.id = pc.character_id join players p on pc.player_id = p.id where c.guild_id = ? and p.user_id = ?', [interaction.guildId, user.id]);
+                    var owned = [];
+                    if (owned_characters[0].length > 0) {
+                        for (const thisCharacter of owned_characters[0]) {
+                            owned.push({ label: thisCharacter.name, value: thisCharacter.id.toString() });
+                        }
+                        const characterSelectComponent = new StringSelectMenuBuilder().setOptions(owned).setCustomId('CharacterUnassignmentSelector').setMinValues(1).setMaxValues(characters[0].length);
+                        var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                        var message = await interaction.reply({ content: 'Select a character or characters to unassign from this player:', components: [characterSelectRow], ephemeral: true });
+                        const collector = message.createMessageComponentCollector({ time: 35000 });
+                        collector.on('collect', async (interaction_second) => {
+                            if (interaction_second.customId == 'CharacterUnassignmentSelector' && interaction_second.member.id == interaction.member.id) {
+                                for (const thisId of interaction_second.values) {
+                                    await connection.promise().query('delete from players_characters where player_id = ? and character_id = ?', [player[0][0].id, thisId]);
+                                }
+                                interaction_second.update({ content: 'Successfully updated character-player relationships.', components: [] });
+                                collector.stop();
+                            }
+                        });
+                    } else {
+                        await interaction.reply({ content: 'This player doesn\'t have any owned characters.', ephemeral: true });
+                    }
+
+                } else {
+                    await interaction.reply({ content: 'The user that you selected isn\'t a valid player.', ephemeral: true });
+                }
             }
         } else if (interaction.commandName == 'active') {
             var characters = await connection.promise().query('select c.* from characters c join players_characters pc on pc.character_id = c.id join players p on p.id = pc.player_id where p.user_id = ? and p.guild_id = ? and pc.active = 0', [interaction.user.id, interaction.guildId]);
