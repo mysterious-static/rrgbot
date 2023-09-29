@@ -5172,8 +5172,9 @@ client.on('interactionCreate', async (interaction) => {
             let next_id;
             let maxSkillId;
             let minSkillId;
+            var msgStart = `__Skills__\n`;
             if (skills[0].length > 0) {
-                msg = `__Skills__\n`;
+                msg = ''
                 let process_test_msg = true;
                 for (const thisSkill of skills[0]) {
                     maxSkillId = (maxSkillId ? Math.max(maxSkillId, thisSkill.id) : thisSkill.id);
@@ -5186,7 +5187,7 @@ client.on('interactionCreate', async (interaction) => {
                             } else {
                                 test_msg = msg.concat(`**${thisSkill.name}**: ${thisSkill.description} (${thisSkill.type})\n`)
                             }
-                            if (test_msg.length > 2000) {
+                            if (test_msg.length > 1989) {
                                 if (!next_id && sort === 'asc') {
                                     next_id = thisSkill.id;
                                 }
@@ -5202,6 +5203,7 @@ client.on('interactionCreate', async (interaction) => {
                         }
                     }
                 }
+                msg = msgStart.concat(msg);
                 if (next_id || prev_id || minSkillId < firstDisplayedId || maxSkillId > lastDisplayedId) {
                     paginate = true;
                 }
