@@ -1446,7 +1446,7 @@ client.on('interactionCreate', async (interaction) => {
                 var user = interaction.options.getUser('user');
                 var player = await connection.promise().query('select * from players where user_id = ? and guild_id = ?', [user.id, interaction.guildId]);
                 if (player[0].length > 0) {
-                    let owned_characters = await connection.promise().query('select distinct c.id from characters c join players_characters pc on c.id = pc.character_id join players p on pc.player_id = p.id where c.guild_id = ? and p.user_id = ?', [interaction.guildId, user.id]);
+                    let owned_characters = await connection.promise().query('select distinct c.* from characters c join players_characters pc on c.id = pc.character_id join players p on pc.player_id = p.id where c.guild_id = ? and p.user_id = ?', [interaction.guildId, user.id]);
                     let owned = [];
                     if (owned_characters[0].length > 0) {
                         for (const thisCharacter of owned_characters[0]) {
