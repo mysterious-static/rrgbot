@@ -5195,7 +5195,7 @@ client.on('interactionCreate', async (interaction) => {
                         }
                     }
                 }
-                if (maxSkillId > next_id || minSkillId < prev_id || minSkillId < firstDisplayedId || maxSkillId > lastDisplayedId) {
+                if (next_id || prev_id || minSkillId < firstDisplayedId || maxSkillId > lastDisplayedId) {
                     paginate = true;
                 }
             } else {
@@ -5204,16 +5204,16 @@ client.on('interactionCreate', async (interaction) => {
             let paginationActionRow = false;
             if (paginate) {
                 paginationActionRow = new ActionRowBuilder();
-                if (minSkillId < prev_id) {
+                if (minSkillId < firstDisplayedId) {
                     paginationActionRow.addComponents(new ButtonBuilder().setCustomId(`skills-${character_id}`).setLabel('⏮️').setStyle(ButtonStyle.Primary));
                 }
-                if (minSkillId < firstDisplayedId) {
+                if (prev_id && prev_id !== minSkillId) {
                     paginationActionRow.addComponents(new ButtonBuilder().setCustomId(`skillpage-desc-${character_id}-${prev_id}`).setLabel('◀️').setStyle(ButtonStyle.Primary));
                 }
-                if (maxSkillId > lastDisplayedId) {
+                if (next_id && next_id !== maxSkillId) {
                     paginationActionRow.addComponents(new ButtonBuilder().setCustomId(`skillpage-asc-${character_id}-${next_id}`).setLabel('▶️').setStyle(ButtonStyle.Primary));
                 }
-                if (maxSkillId > next_id) {
+                if (maxSkillId > lastDisplayedId) {
                     paginationActionRow.addComponents(new ButtonBuilder().setCustomId(`skillpage-desc-${character_id}-${maxSkillId}-last`).setLabel('⏭️').setStyle(ButtonStyle.Primary));
                 }
             }
