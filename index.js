@@ -3311,7 +3311,7 @@ client.on('interactionCreate', async (interaction) => {
                                 let thisSkillKeyValue = { label: skill.name, value: skill.id.toString() };
                                 skillsKeyValues.push(thisSkillKeyValue);
                             }
-                            skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('PrereqSkillSelector').setMinValues(1).setMaxValues(1);
+                            const skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('PrereqSkillSelector').setMinValues(1).setMaxValues(1);
                             const skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
                             await interaction_second.update({ content: 'Please select a skill:', components: [skillSelectRow], ephemeral: true });
                         } else if (interaction_second.customId === 'PrereqSkillSelector') {
@@ -3320,7 +3320,7 @@ client.on('interactionCreate', async (interaction) => {
                             for (const effect of effects[0]) {
                                 let label;
                                 let description;
-                                let prereqs = await connection.promise().query('select * from effects_prereqs where effect_id = ?');
+                                let prereqs = await connection.promise().query('select * from effects_prereqs where effect_id = ?', [effect_id]);
                                 if (effect.type == 'message') {
                                     label = `Send message`;
                                     description = effect.typedata.slice(0, 18) + '...';
