@@ -2211,53 +2211,46 @@ client.on('interactionCreate', async (interaction) => {
                 await connection.promise().query('insert into items (name, description, guild_id, consumable, self_targetable, other_targetable) values (?, ?, ?, ?, ?, ?)', [name, description, interaction.guildId, consumable, self_targetable, other_targetable]);
                 interaction.reply({ content: 'Item added!', ephemeral: true });
             } else if (interaction.options.getSubcommand() == 'transfer') {
-                var quantity = interaction.options.getInteger('quantity');
-                var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
+                let quantity = interaction.options.getInteger('quantity');
+                let characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
                 if (characters[0].length > 0) {
-                    var charactersKeyValues = [];
+                    let charactersKeyValues = [];
                     for (const character of characters[0]) {
-                        var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
-                        charactersKeyValues.push(thisCharacterKeyValue);
+                        charactersKeyValues.push({ label: character.name, value: character.id.toString() });
                     }
                     const unassignItemComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ItemUnassignmentCharacterSelector').setMinValues(1).setMaxValues(1);
-                    var unassignItemRow = new ActionRowBuilder().addComponents(unassignItemComponent);
-                }
-
-                if (characters[0].length > 0) {
-                    var message = await interaction.reply({ content: 'Select the character to remove item from.', components: [unassignItemRow], ephemeral: true });
-                    var collector = message.createMessageComponentCollector();
-                    var characterSelected;
-                    var archetypeSelected;
-                    var itemSelected;
+                    let unassignItemRow = new ActionRowBuilder().addComponents(unassignItemComponent);
+                    let message = await interaction.reply({ content: 'Select the character to remove item from.', components: [unassignItemRow], ephemeral: true });
+                    let collector = message.createMessageComponentCollector();
+                    let characterSelected;
+                    let itemSelected;
                     collector.on('collect', async (interaction_second) => {
-                        if (interaction_second.customId == 'ItemUnassignmentCharacterSelector') {
-                            characterSelected = interaction_second.values[0];
-                        } else {
-                            itemSelected = interaction_second.values[0];
-                        }
-                        if (!itemSelected && characterSelected) {
-                            var items = await connection.promise().query('select i.* from items i join characters_items ci on i.id = ci.item_id where ci.character_id = ?', [characterSelected]);
-                            if (items[0].length > 0) {
-                                var itemsKeyValues = [];
-                                for (const item of items[0]) {
-                                    var thisItemKeyValue = { label: item.name, value: item.id.toString() };
-                                    itemsKeyValues.push(thisItemKeyValue);
-                                }
-                                const unassignItemComponent2 = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemUnassignmentItemSelector').setMinValues(1).setMaxValues(1);
-                                var unassignItemRow2 = new ActionRowBuilder().addComponents(unassignItemComponent2);
-                                await interaction_second.update({ content: 'Now select a item to unassign:', components: [unassignItemRow2] });
+                        if (interaction.member.id === interaction_second.member.id) {
+                            if (interaction_second.customId == 'ItemUnassignmentCharacterSelector') {
+                                characterSelected = interaction_second.values[0];
                             } else {
-                                await interaction_second.update({ content: 'Couldn\'t find any items for this cahracter.' });
+                                itemSelected = interaction_second.values[0];
+                            }
+                            if (!itemSelected && characterSelected) {
+                                let items = await connection.promise().query('select i.* from items i join characters_items ci on i.id = ci.item_id where ci.character_id = ?', [characterSelected]);
+                                if (items[0].length > 0) {
+                                    let itemsKeyValues = [];
+                                    for (const item of items[0]) {
+                                        itemsKeyValues.push({ label: item.name, value: item.id.toString() });
+                                    }
+                                    const unassignItemComponent2 = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemUnassignmentItemSelector').setMinValues(1).setMaxValues(1);
+                                    let unassignItemRow2 = new ActionRowBuilder().addComponents(unassignItemComponent2);
+                                    await interaction_second.update({ content: 'Now select a item to unassign:', components: [unassignItemRow2] });
+                                } else {
+                                    await interaction_second.update({ content: 'Couldn\'t find any items for this cahracter.' });
+                                    collector.stop();
+                                }
+                            }
+                            if (itemSelected && characterSelected) {
+                                await connection.promise().query('delete from characters_items where character_id = ? and item_id = ?', [characterSelected, itemSelected]);
+                                await interaction_second.update({ content: "Item removed from character.", components: [] });
                                 collector.stop();
                             }
-
-                        }
-                        if (itemSelected && characterSelected) {
-
-                            await connection.promise().query('delete from characters_items where character_id = ? and item_id = ?', [characterSelected, itemSelected]);
-
-                            await interaction_second.update({ content: "Item removed from character.", components: [] });
-                            collector.stop();
                         }
                     });
                 } else {
@@ -2362,7 +2355,7 @@ client.on('interactionCreate', async (interaction) => {
                         interaction.reply({ content: 'Couldn\'t find any characters, which is a bit odd. Try creating one, or yell at Alli if you shouldn\'t be getting this.', ephemeral: true });
                     }
                 } else {
-                    interaction.reply({ content: 'Please create at least one ~~skill~~ item first. <3', ephemeral: true });
+                    interaction.reply({ content: 'Please create at least one item first. <3', ephemeral: true });
                 }
             } else if (interaction.options.getSubcommand() == 'addeffect') { // TODO CHANGE TO ITEM
                 let items = await connection.promise().query('select * from items where guild_id = ? and (other_targetable = 1 or self_targetable = 1)', [interaction.guildId]);
@@ -2395,184 +2388,190 @@ client.on('interactionCreate', async (interaction) => {
                     let visible;
                     let target;
                     collector.on('collect', async (interaction_second) => {
-                        if (interaction_second.customId == 'ItemEffectAlphabetSelector') {
-                            let items = await connection.promise().query('select * from items where guild_id = ? and (other_targetable = 1 or self_targetable = 1) and name like ?', [interaction.guildId, interaction_second.values[0] + '%']);
-                            let itemsKeyValues = [];
-                            for (const item of items[0]) {
-                                let thisItemKeyValue = { label: item.name, value: item.id.toString() };
-                                itemsKeyValues.push(thisItemKeyValue);
-                            }
-                            itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemSelectItemSelector').setMinValues(1).setMaxValues(1);
-                            let itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
-                            await interaction_second.update({ content: 'Please select an item to add an effect to:', components: [itemSelectRow] });
-                        } else if (interaction_second.customId == 'ItemEffectItemSelector') {
-                            selectedItem = interaction_second.values[0];
-                            var types = [
-                                { label: 'Increment World Flag', value: 'wflag_inc' },
-                                { label: 'Set World Flag', value: 'wflag_set' },
-                                { label: 'Increment Character Flag', value: 'cflag_inc' },
-                                { label: 'Set Character Flag', value: 'cflag_set' },
-                                { label: 'Increment Stat', value: 'stat_inc' },
-                                { label: 'Set Stat', value: 'stat_set' },
-                                { label: 'Increment Reputation', value: 'reputation_inc' },
-                                { label: 'Set Reputation', value: 'reputation_set' },
-                                { label: 'Add Item', value: 'item' },
-                                { label: 'Add Skill', value: 'skill' },
-                                { label: 'Add Archetype', value: 'archetype' },
-                                { label: 'Send Message', value: 'message' }
-                            ]
-                            var selectComponent = new StringSelectMenuBuilder().setOptions(types).setCustomId('TypeSelector').setMinValues(1).setMaxValues(1);
-                            var selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                            await interaction_second.update({ content: 'Please select a type of effect:', components: [selectRow] });
-                        } else if (interaction_second.customId == 'TypeSelector') {
-                            type = interaction_second.values[0];
-                            var targets = [
-                                { label: 'Item User', value: 'triggering_character' },
-                                { label: 'Item Target', value: 'target' }
-                            ];
-                            var selectComponent = new StringSelectMenuBuilder().setOptions(targets).setCustomId('TargetSelector').setMinValues(1).setMaxValues(1);
-                            var selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                            await interaction_second.update({ content: 'Please select a target for this effect:', components: [selectRow] });
-                        } else if (interaction_second.customId == 'TargetSelector') {
-                            target = interaction_second.values[0];
-                            var visibilities = [{ label: 'Yes', value: '1' }, { label: 'No', value: '0' }];
-                            var selectComponent = new StringSelectMenuBuilder().setOptions(visibilities).setCustomId('VisibilitySelector').setMinValues(1).setMaxValues(1);
-                            var selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                            await interaction_second.update({ content: 'Do you want this effect announced to the player?', components: [selectRow], ephemeral: true });
+                        if (interaction_second.member.id === interaction.member.id) {
+                            if (interaction_second.customId == 'ItemEffectAlphabetSelector') {
+                                let items = await connection.promise().query('select * from items where guild_id = ? and (other_targetable = 1 or self_targetable = 1) and name like ?', [interaction.guildId, interaction_second.values[0] + '%']);
+                                let itemsKeyValues = [];
+                                for (const item of items[0]) {
+                                    let thisItemKeyValue = { label: item.name, value: item.id.toString() };
+                                    itemsKeyValues.push(thisItemKeyValue);
+                                }
+                                itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemSelectItemSelector').setMinValues(1).setMaxValues(1);
+                                let itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
+                                await interaction_second.update({ content: 'Please select an item to add an effect to:', components: [itemSelectRow] });
+                            } else if (interaction_second.customId == 'ItemEffectItemSelector') {
+                                selectedItem = interaction_second.values[0];
+                                let types = [
+                                    { label: 'Increment World Flag', value: 'wflag_inc' },
+                                    { label: 'Set World Flag', value: 'wflag_set' },
+                                    { label: 'Increment Character Flag', value: 'cflag_inc' },
+                                    { label: 'Set Character Flag', value: 'cflag_set' },
+                                    { label: 'Increment Stat', value: 'stat_inc' },
+                                    { label: 'Set Stat', value: 'stat_set' },
+                                    { label: 'Increment Reputation', value: 'reputation_inc' },
+                                    { label: 'Set Reputation', value: 'reputation_set' },
+                                    { label: 'Add Item', value: 'item' },
+                                    { label: 'Add Skill', value: 'skill' },
+                                    { label: 'Add Archetype', value: 'archetype' },
+                                    { label: 'Send Message', value: 'message' }
+                                ]
+                                let selectComponent = new StringSelectMenuBuilder().setOptions(types).setCustomId('TypeSelector').setMinValues(1).setMaxValues(1);
+                                let selectRow = new ActionRowBuilder().addComponents(selectComponent);
+                                await interaction_second.update({ content: 'Please select a type of effect:', components: [selectRow] });
+                            } else if (interaction_second.customId == 'TypeSelector') {
+                                type = interaction_second.values[0];
+                                let targets = [
+                                    { label: 'Item User', value: 'triggering_character' },
+                                    { label: 'Item Target', value: 'target' }
+                                ];
+                                let selectComponent = new StringSelectMenuBuilder().setOptions(targets).setCustomId('TargetSelector').setMinValues(1).setMaxValues(1);
+                                let selectRow = new ActionRowBuilder().addComponents(selectComponent);
+                                await interaction_second.update({ content: 'Please select a target for this effect:', components: [selectRow] });
+                            } else if (interaction_second.customId == 'TargetSelector') {
+                                target = interaction_second.values[0];
+                                let visibilities = [{ label: 'Yes', value: '1' }, { label: 'No', value: '0' }];
+                                let selectComponent = new StringSelectMenuBuilder().setOptions(visibilities).setCustomId('VisibilitySelector').setMinValues(1).setMaxValues(1);
+                                let selectRow = new ActionRowBuilder().addComponents(selectComponent);
+                                await interaction_second.update({ content: 'Do you want this effect announced to the player?', components: [selectRow], ephemeral: true });
 
-                        } else if (interaction_second.customId == 'VisibilitySelector') {
-                            visible = interaction_second.values[0];
-                            console.log(type);
-                            var modal = new ModalBuilder()
-                                .setCustomId('RepEffectModal')
-                                .setTitle('Add Effect');
-                            let requires_typeahead = ['wflag_inc', 'wflag_set', 'cflag_inc', 'cflag_set', 'stat_inc', 'stat_set', 'reputation_inc', 'reputation_set', 'item', 'skill', 'archetype'];
-                            if (requires_typeahead.includes(type)) {
-                                var typeaheadInput = new TextInputBuilder()
-                                    .setCustomId('typeahead')
-                                    .setStyle(TextInputStyle.Short);
-                                if (type == 'wflag_inc' || type == 'wflag_set') {
-                                    typeaheadInput.setLabel('Name of the world flag (autocompletes)');
-                                } else if (type == 'cflag_inc' || type == 'cflag_set') {
-                                    typeaheadInput.setLabel('Name of the character flag (autocompletes)');
-                                } else if (type == 'stat_inc' || type == 'stat_set') {
-                                    typeaheadInput.setLabel('Name of the stat (autocompletes)');
-                                } else if (type == 'reputation_inc' || type == 'reputation_set') {
-                                    typeaheadInput.setLabel('Name of the reputation (autocompletes)');
-                                } else if (type == 'item') {
-                                    typeaheadInput.setLabel('Name of the item (autocompletes)');
-                                } else if (type == 'skill') {
-                                    typeaheadInput.setLabel('Name of the skill (autocompletes)');
-                                } else if (type == 'archetype') {
-                                    typeaheadInput.setLabel('Name of the archetype (autocompletes)');
-                                }
-                                var typeaheadActionRow = new ActionRowBuilder().addComponents(typeaheadInput);
-                                modal.addComponents(typeaheadActionRow);
-                            }
-                            let requires_quantity = ['wflag_inc', 'wflag_set', 'cflag_inc', 'cflag_set', 'stat_inc', 'stat_set', 'reputation_inc', 'reputation_set', 'item'];
-                            if (requires_quantity.includes(type)) {
-                                var quantityInput = new TextInputBuilder()
-                                    .setCustomId('type_qty')
-                                    .setStyle(TextInputStyle.Short);
-                                if (type == 'wflag_inc' || type == 'cflag_inc' || type == 'stat_inc' || type == 'reputation_inc') {
-                                    quantityInput.setLabel('Amount to increment by');
-                                } else {
-                                    quantityInput.setLabel('Value to set to');
-                                }
-                                var qtyActionRow = new ActionRowBuilder().addComponents(quantityInput);
-                                modal.addComponents(qtyActionRow);
-                            }
-                            var chargesInput = new TextInputBuilder()
-                                .setCustomId('charges')
-                                .setStyle(TextInputStyle.Short)
-                                .setLabel('Number of charges (-1 for infinite)');
-                            var chargesActionRow = new ActionRowBuilder().addComponents(chargesInput);
-                            modal.addComponents(chargesActionRow);
-                            let requires_typedata = ['message'];
-                            if (requires_typedata.includes(type)) {
-                                var typedataInput = new TextInputBuilder()
-                                    .setCustomId('typedata')
-                                    .setStyle(TextInputStyle.Paragraph);
-                                if (type == 'message') {
-                                    typedataInput.setLabel('Message to send:');
-                                }
-                                var typedataActionRow = new ActionRowBuilder().addComponents(typedataInput);
-                                modal.addComponents(typedataActionRow);
-                            }
-                            await interaction_second.showModal(modal);
-                            let submittedModal = await interaction_second.awaitModalSubmit({ time: 300000 });
-                            if (submittedModal) {
-                                var typeahead = false;
-                                var type_qty = false;
-                                var typedata = false;
-                                charges = submittedModal.fields.getTextInputValue('charges');
-                                if (submittedModal.fields.fields.find(field => field.customId === 'typeahead')) {
-                                    typeahead = submittedModal.fields.getTextInputValue('typeahead');
-                                }
-                                if (submittedModal.fields.fields.find(field => field.customId === 'type_qty')) {
-                                    type_qty = submittedModal.fields.getTextInputValue('type_qty');
-                                }
-                                if (submittedModal.fields.fields.find(field => field.customId === 'typedata')) {
-                                    typedata = submittedModal.fields.getTextInputValue('typedata');
-                                }
-                                if (typeahead) {
+                            } else if (interaction_second.customId == 'VisibilitySelector') {
+                                visible = interaction_second.values[0];
+                                console.log(type);
+                                let modal = new ModalBuilder()
+                                    .setCustomId('RepEffectModal')
+                                    .setTitle('Add Effect');
+                                let requires_typeahead = ['wflag_inc', 'wflag_set', 'cflag_inc', 'cflag_set', 'stat_inc', 'stat_set', 'reputation_inc', 'reputation_set', 'item', 'skill', 'archetype'];
+                                if (requires_typeahead.includes(type)) {
+                                    let typeaheadInput = new TextInputBuilder()
+                                        .setCustomId('typeahead')
+                                        .setStyle(TextInputStyle.Short);
                                     if (type == 'wflag_inc' || type == 'wflag_set') {
-                                        var typeahead_results = await connection.promise().query('select * from worldflags where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
+                                        typeaheadInput.setLabel('Name of the world flag (autocompletes)');
                                     } else if (type == 'cflag_inc' || type == 'cflag_set') {
-                                        var typeahead_results = await connection.promise().query('select * from characterflags where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
+                                        typeaheadInput.setLabel('Name of the character flag (autocompletes)');
                                     } else if (type == 'stat_inc' || type == 'stat_set') {
-                                        var typeahead_results = await connection.promise().query('select * from stats where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
-                                    } else if (type == 'item') {
-                                        var typeahead_results = await connection.promise().query('select * from items where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
-                                    } else if (type == 'skill') {
-                                        var typeahead_results = await connection.promise().query('select * from skills where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
-                                    } else if (type == 'archetype') {
-                                        var typeahead_results = await connection.promise().query('select * from archetypes where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
+                                        typeaheadInput.setLabel('Name of the stat (autocompletes)');
                                     } else if (type == 'reputation_inc' || type == 'reputation_set') {
-                                        var typeahead_results = await connection.promise().query('select * from reputations where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
+                                        typeaheadInput.setLabel('Name of the reputation (autocompletes)');
+                                    } else if (type == 'item') {
+                                        typeaheadInput.setLabel('Name of the item (autocompletes)');
+                                    } else if (type == 'skill') {
+                                        typeaheadInput.setLabel('Name of the skill (autocompletes)');
+                                    } else if (type == 'archetype') {
+                                        typeaheadInput.setLabel('Name of the archetype (autocompletes)');
                                     }
-
-                                    if (typeahead_results[0].length == 0) {
-                                        await submittedModal.update({ content: 'No match was found with the autocomplete text you entered. Please try again.', components: [], ephemeral: true });
-                                    } else if (typeahead_results[0].length == 1) {
-                                        var insertedEffect;
-                                        if (type_qty) {
-                                            insertedEffect = await connection.promise().query('insert into effects (type, type_id, type_qty, charges, visible, typedata, target) values (?, ?, ?, ?, ?, ?, ?)', [type, typeahead_results[0][0].id, type_qty, charges, visible, typedata, target]);
-                                        } else {
-                                            insertedEffect = await connection.promise().query('insert into effects (type, type_id, charges, visible, typedata) values (?, ?, ?, ?, ?, ?)', [type, typeahead_results[0][0].id, charges, visible, typedata, target]);
-                                        }
-                                        await connection.promise().query('insert into items_effects (item_id, effect_id) values (?, ?)', [selectedItem, insertedEffect[0].insertId]);
-                                        await submittedModal.update({ content: 'Effect added.', components: [], ephemeral: true });
+                                    let typeaheadActionRow = new ActionRowBuilder().addComponents(typeaheadInput);
+                                    modal.addComponents(typeaheadActionRow);
+                                }
+                                let requires_quantity = ['wflag_inc', 'wflag_set', 'cflag_inc', 'cflag_set', 'stat_inc', 'stat_set', 'reputation_inc', 'reputation_set', 'item'];
+                                if (requires_quantity.includes(type)) {
+                                    let quantityInput = new TextInputBuilder()
+                                        .setCustomId('type_qty')
+                                        .setStyle(TextInputStyle.Short);
+                                    if (type == 'wflag_inc' || type == 'cflag_inc' || type == 'stat_inc' || type == 'reputation_inc') {
+                                        quantityInput.setLabel('Amount to increment by');
                                     } else {
-                                        var keyValues = [];
-                                        for (const result_value of typeahead_results[0]) {
-                                            var thisKeyValue = { label: result_value.name, value: result_value.id.toString() };
-                                            keyValues.push(thisKeyValue);
-                                        }
-                                        selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('TypeaheadSelector').setMinValues(1).setMaxValues(1);
-                                        var selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                                        await submittedModal.update({ content: 'Select an item from the list:', components: [selectRow], ephemeral: true });
+                                        quantityInput.setLabel('Value to set to');
                                     }
+                                    let qtyActionRow = new ActionRowBuilder().addComponents(quantityInput);
+                                    modal.addComponents(qtyActionRow);
+                                }
+                                let chargesInput = new TextInputBuilder()
+                                    .setCustomId('charges')
+                                    .setStyle(TextInputStyle.Short)
+                                    .setLabel('Number of charges (-1 for infinite)');
+                                let chargesActionRow = new ActionRowBuilder().addComponents(chargesInput);
+                                modal.addComponents(chargesActionRow);
+                                let requires_typedata = ['message'];
+                                if (requires_typedata.includes(type)) {
+                                    let typedataInput = new TextInputBuilder()
+                                        .setCustomId('typedata')
+                                        .setStyle(TextInputStyle.Paragraph);
+                                    if (type == 'message') {
+                                        typedataInput.setLabel('Message to send:');
+                                    }
+                                    let typedataActionRow = new ActionRowBuilder().addComponents(typedataInput);
+                                    modal.addComponents(typedataActionRow);
+                                }
+                                await interaction_second.showModal(modal);
+                                let submittedModal = await interaction_second.awaitModalSubmit({ time: 300000 });
+                                if (submittedModal && submittedModal.member.id === interaction_second.member.id) {
+                                    let typeahead = false;
+                                    let type_qty = false;
+                                    let typedata = false;
+                                    charges = submittedModal.fields.getTextInputValue('charges');
+                                    if (submittedModal.fields.fields.find(field => field.customId === 'typeahead')) {
+                                        typeahead = submittedModal.fields.getTextInputValue('typeahead');
+                                    }
+                                    if (submittedModal.fields.fields.find(field => field.customId === 'type_qty')) {
+                                        type_qty = submittedModal.fields.getTextInputValue('type_qty');
+                                    }
+                                    if (submittedModal.fields.fields.find(field => field.customId === 'typedata')) {
+                                        typedata = submittedModal.fields.getTextInputValue('typedata');
+                                    }
+                                    if (typeahead) {
+                                        let typeahead_results;
+                                        if (type == 'wflag_inc' || type == 'wflag_set') {
+                                            typeahead_results = await connection.promise().query('select * from worldflags where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
+                                        } else if (type == 'cflag_inc' || type == 'cflag_set') {
+                                            typeahead_results = await connection.promise().query('select * from characterflags where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
+                                        } else if (type == 'stat_inc' || type == 'stat_set') {
+                                            typeahead_results = await connection.promise().query('select * from stats where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
+                                        } else if (type == 'item') {
+                                            typeahead_results = await connection.promise().query('select * from items where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
+                                        } else if (type == 'skill') {
+                                            typeahead_results = await connection.promise().query('select * from skills where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
+                                        } else if (type == 'archetype') {
+                                            typeahead_results = await connection.promise().query('select * from archetypes where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
+                                        } else if (type == 'reputation_inc' || type == 'reputation_set') {
+                                            typeahead_results = await connection.promise().query('select * from reputations where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
+                                        }
 
-                                } else {
-                                    if (typedata) {
-                                        console.log('insert');
-                                        var insertedEffect = await connection.promise().query('insert into effects (type, charges, visible, typedata, target) values (?, ?, ?, ?, ?)', [type, charges, visible, typedata, target]);
-                                        await connection.promise().query('insert into items_effects (item_id, effect_id) values (?, ?)', [selectedItem, insertedEffect[0].insertId]);
-                                        await interaction_second.update({ content: 'Effect added.', components: [], ephemeral: true });
+                                        if (typeahead_results[0].length == 0) {
+                                            await submittedModal.update({ content: 'No match was found with the autocomplete text you entered. Please try again.', components: [], ephemeral: true });
+                                            collector.stop();
+                                        } else if (typeahead_results[0].length == 1) {
+                                            let insertedEffect;
+                                            if (type_qty) {
+                                                insertedEffect = await connection.promise().query('insert into effects (type, type_id, type_qty, charges, visible, typedata, target) values (?, ?, ?, ?, ?, ?, ?)', [type, typeahead_results[0][0].id, type_qty, charges, visible, typedata, target]);
+                                            } else {
+                                                insertedEffect = await connection.promise().query('insert into effects (type, type_id, charges, visible, typedata) values (?, ?, ?, ?, ?, ?)', [type, typeahead_results[0][0].id, charges, visible, typedata, target]);
+                                            }
+                                            await connection.promise().query('insert into items_effects (item_id, effect_id) values (?, ?)', [selectedItem, insertedEffect[0].insertId]);
+                                            await submittedModal.update({ content: 'Effect added.', components: [], ephemeral: true });
+                                            collector.stop();
+                                        } else {
+                                            let keyValues = [];
+                                            for (const result_value of typeahead_results[0]) {
+                                                keyValues.push({ label: result_value.name, value: result_value.id.toString() });
+                                            }
+                                            selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('TypeaheadSelector').setMinValues(1).setMaxValues(1);
+                                            let selectRow = new ActionRowBuilder().addComponents(selectComponent);
+                                            await submittedModal.update({ content: 'Select an item from the list:', components: [selectRow], ephemeral: true });
+                                        }
+
+                                    } else {
+                                        if (typedata) {
+                                            console.log('insert');
+                                            let insertedEffect = await connection.promise().query('insert into effects (type, charges, visible, typedata, target) values (?, ?, ?, ?, ?)', [type, charges, visible, typedata, target]);
+                                            await connection.promise().query('insert into items_effects (item_id, effect_id) values (?, ?)', [selectedItem, insertedEffect[0].insertId]);
+                                            await interaction_second.update({ content: 'Effect added.', components: [], ephemeral: true });
+                                            collector.stop();
+                                        }
                                     }
                                 }
+                            } else if (interaction_second.customId == 'TypeaheadSelector') {
+                                let typeahead_id = interaction_second.values[0];
+                                let insertedEffect;
+                                if (type_qty) {
+                                    insertedEffect = await connection.promise().query('insert into effects (type, type_id, type_qty, charges, visible, typedata, target) values (?, ?, ?, ?, ?, ?, ?)', [type, typeahead_id, type_qty, charges, visible, typedata, target]);
+                                } else {
+                                    insertedEffect = await connection.promise().query('insert into effects (type, type_id, charges, visible, typedata) values (?, ?, ?, ?, ?, ?)', [type, typeahead_id, charges, visible, typedata, target]);
+                                }
+                                await connection.promise().query('insert into items_effects (item_id, effect_id) values (?, ?)', [selectedItem, insertedEffect[0].insertId]);
+                                await interaction_second.update({ content: 'Effect added.', components: [] });
+                                collector.stop();
                             }
-                        } else if (interaction_second.customId == 'TypeaheadSelector') {
-                            var typeahead_id = interaction_second.values[0];
-                            var insertedEffect;
-                            if (type_qty) {
-                                insertedEffect = await connection.promise().query('insert into effects (type, type_id, type_qty, charges, visible, typedata, target) values (?, ?, ?, ?, ?, ?, ?)', [type, typeahead_id, type_qty, charges, visible, typedata, target]);
-                            } else {
-                                insertedEffect = await connection.promise().query('insert into effects (type, type_id, charges, visible, typedata) values (?, ?, ?, ?, ?, ?)', [type, typeahead_id, charges, visible, typedata, target]);
-                            }
-                            await connection.promise().query('insert into items_effects (item_id, effect_id) values (?, ?)', [selectedItem, insertedEffect[0].insertId]);
-                            await interaction_second.update({ content: 'Effect added.', components: [] });
                         }
                     });
                     collector.on('end', async (collected) => {
@@ -2586,83 +2585,80 @@ client.on('interactionCreate', async (interaction) => {
                 // Ask whether the effect will hit the caster or the target
             }
         } else if (interaction.commandName == 'addworldstat') {
-            var name = interaction.options.getString('name');
-            var description = interaction.options.getString('description');
-            var globallyvisible = interaction.options.getBoolean('globally_visible');
-            var value = interaction.options.getInteger('value')
-            var exists = await connection.promise().query('select * from worldstats where guild_id = ? and name = ?', [interaction.guildId, name]);
+            let name = interaction.options.getString('name');
+            let description = interaction.options.getString('description');
+            let globallyvisible = interaction.options.getBoolean('globally_visible');
+            let value = interaction.options.getInteger('value')
+            let exists = await connection.promise().query('select * from worldstats where guild_id = ? and name = ?', [interaction.guildId, name]);
             if (exists[0].length == 0) {
                 await connection.promise().query('insert into worldstats (name, description, globally_visible, value, guild_id) values (?, ?, ?, ?, ?)', [name, description, globallyvisible, value, interaction.guildId]);
                 interaction.reply({ content: 'World stat added!', ephemeral: true });
             } else {
                 interaction.reply({ content: 'Skill with this name already exists!', ephemeral: true });
             }
-        } else if (interaction.commandName == 'setstat') {
-
         } else if (interaction.commandName == 'setarchetypestat') {
-            var value = interaction.options.getInteger('value');
+            let value = interaction.options.getInteger('value');
             // Create two dropdowns. For character and stat. See characterlocation for details.
-            var stats = await connection.promise().query('select * from archetypestats where guild_id = ?', [interaction.guildId]);
+            let stats = await connection.promise().query('select * from archetypestats where guild_id = ?', [interaction.guildId]);
             if (stats[0].length > 0) {
-                var statsKeyValues = [{ label: 'Select a stat', value: '0' }];
+                let statsKeyValues = [];
                 for (const stat of stats[0]) {
-                    var thisStatKeyValue = { label: stat.name, value: stat.id.toString() };
-                    statsKeyValues.push(thisStatKeyValue);
+                    statsKeyValues.push({ label: stat.name, value: stat.id.toString() });
                 }
                 const statSelectComponent = new StringSelectMenuBuilder().setOptions(statsKeyValues).setCustomId('ArchetypeStatAssignmentStatSelector').setMinValues(1).setMaxValues(1);
-                var statSelectRow = new ActionRowBuilder().addComponents(statSelectComponent);
+                let statSelectRow = new ActionRowBuilder().addComponents(statSelectComponent);
 
-                var message = await interaction.reply({ content: '', components: [statSelectRow], ephemeral: true });
+                let message = await interaction.reply({ content: 'Select a stat:', components: [statSelectRow], ephemeral: true });
                 const collector = message.createMessageComponentCollector({ time: 35000 });
-                var archetypeStatSelected;
-                var characterSelected;
+                let archetypeStatSelected;
+                let characterSelected;
                 collector.on('collect', async (interaction_second) => {
-                    if (interaction_second.values[0]) {
-                        if (interaction_second.customId == 'ArchetypeStatAssignmentStatSelector') {
-                            archetypeStatSelected = interaction_second.values[0];
-                            var archetype = await connection.promise().query('select archetype_id from archetypes_archetypestats where archetypestat_id = ?', [archetypeStatSelected]);
-                            var characters = await connection.promise().query('select c.* from characters c join characters_archetypes ca on c.id = ca.character_id where guild_id = ? and ca.archetype_id = ?', [interaction.guildId, archetype[0][0].archetype_id]);
-                            if (characters[0].length > 0) {
-                                var charactersKeyValues = [{ label: 'Select a character', value: '0' }];
-                                for (const character of characters[0]) {
-                                    var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
-                                    charactersKeyValues.push(thisCharacterKeyValue);
+                    if (interaction_second.member.id === interaction.member.id) {
+                        if (interaction_second.values[0]) {
+                            if (interaction_second.customId == 'ArchetypeStatAssignmentStatSelector') {
+                                archetypeStatSelected = interaction_second.values[0];
+                                let archetype = await connection.promise().query('select archetype_id from archetypes_archetypestats where archetypestat_id = ?', [archetypeStatSelected]);
+                                let characters = await connection.promise().query('select c.* from characters c join characters_archetypes ca on c.id = ca.character_id where guild_id = ? and ca.archetype_id = ?', [interaction.guildId, archetype[0][0].archetype_id]);
+                                if (characters[0].length > 0) {
+                                    let charactersKeyValues = [];
+                                    for (const character of characters[0]) {
+                                        charactersKeyValues.push({ label: character.name, value: character.id.toString() });
+                                    }
+                                    const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ArchetypeStatAssignmentCharacterSelector').setMinValues(1).setMaxValues(1);
+                                    const characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                                    await interaction_second.update({ content: 'Select a character, please.', components: [characterSelectRow] }); //interaction_second.editReply()
+                                } else {
+                                    await interaction_second.update({ content: 'Couldn\'t find any valid characters for this archetype stat.', components: [] });
+                                    await collector.stop();
                                 }
-                                const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ArchetypeStatAssignmentCharacterSelector').setMinValues(1).setMaxValues(1);
-                                var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                                await interaction_second.update({ content: 'Select a character, please.', components: [characterSelectRow] }); //interaction_second.editReply()
                             } else {
-                                await interaction_second.update({ content: 'Couldn\'t find any valid characters for this archetype stat.', components: [] });
+                                characterSelected = interaction_second.values[0];
+                            }
+                            if (archetypeStatSelected && characterSelected) {
+                                let exists = await connection.promise().query('select * from characters_archetypestats where stat_id = ? and character_id = ?', [archetypeStatSelected, characterSelected]);
+                                if (exists[0].length > 0) {
+                                    await connection.promise().query('update characters_archetypestats set override_value = ? where character_id = ? and stat_id = ?', [value, characterSelected, archetypeStatSelected]);
+                                } else {
+                                    await connection.promise().query('insert into characters_archetypestats (character_id, stat_id, override_value) values (?, ?, ?)', [characterSelected, archetypeStatSelected, value]);
+                                }
+                                await interaction_second.update({ content: 'Successfully updated character archetype stat value.', components: [] });
                                 await collector.stop();
+                            } else if (!archetypeStatSelected) {
+                                await interaction_second.deferUpdate();
                             }
                         } else {
-                            characterSelected = interaction_second.values[0];
-                        }
-                        if (archetypeStatSelected && characterSelected) {
-                            var exists = await connection.promise().query('select * from characters_archetypestats where stat_id = ? and character_id = ?', [archetypeStatSelected, characterSelected]);
-                            if (exists[0].length > 0) {
-                                await connection.promise().query('update characters_archetypestats set override_value = ? where character_id = ? and stat_id = ?', [value, characterSelected, archetypeStatSelected]);
-                            } else {
-                                await connection.promise().query('insert into characters_archetypestats (character_id, stat_id, override_value) values (?, ?, ?)', [characterSelected, archetypeStatSelected, value]);
-                            }
-                            await interaction_second.update({ content: 'Successfully updated character archetype stat value.', components: [] });
-                            await collector.stop();
-                        } else if (!archetypeStatSelected) {
                             await interaction_second.deferUpdate();
                         }
-                    } else {
-                        await interaction_second.deferUpdate();
                     }
                 });
                 collector.on('end', async (collected) => {
-                    console.log(collected);
                     // How do we clean the message up?
                 });
             } else {
                 interaction.reply({ content: 'You haven\'t created any characters yet. Try creating a character first.', ephemeral: true });
             }
         } else if (interaction.commandName == 'modsheet') {
-            var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
+            let characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
             if (characters[0].length > 0) {
                 var charactersAlphabetical;
                 var characterSelectComponent;
