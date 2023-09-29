@@ -3731,17 +3731,16 @@ client.on('interactionCreate', async (interaction) => {
         // PLAYER COMMANDS
         else if (isPlayer(interaction.user.id, interaction.guildId) || interaction.member.permissions.has("ADMINISTRATOR")) {
             if (interaction.commandName == 'move') {
-                var is_enabled = await connection.promise().query('select ml.movement_allowed, ml.id from players join players_characters pc on players.id = pc.player_id join characters c on pc.character_id = c.id join movement_locations ml on ml.id = c.location_id where players.user_id = ? and players.guild_id = ? and pc.active = 1', [interaction.user.id, interaction.guildId]);
+                let is_enabled = await connection.promise().query('select ml.movement_allowed, ml.id from players join players_characters pc on players.id = pc.player_id join characters c on pc.character_id = c.id join movement_locations ml on ml.id = c.location_id where players.user_id = ? and players.guild_id = ? and pc.active = 1', [interaction.user.id, interaction.guildId]);
                 if (is_enabled[0].length > 0 && is_enabled[0][0].movement_allowed == 1) {
-                    var locations = await connection.promise().query('select * from movement_locations where guild_id = ? and movement_allowed = 1 and id <> ?', [interaction.guildId, is_enabled[0][0].id])
+                    let locations = await connection.promise().query('select * from movement_locations where guild_id = ? and movement_allowed = 1 and id <> ?', [interaction.guildId, is_enabled[0][0].id])
                     if (locations[0].length > 0) {
-                        var locationsKeyValues = [];
+                        let locationsKeyValues = [];
                         for (const location of locations[0]) {
-                            var thisLocationKeyValue = { label: location.friendly_name, value: location.id.toString() };
-                            locationsKeyValues.push(thisLocationKeyValue);
+                            locationsKeyValues.push({ label: location.friendly_name, value: location.id.toString() });
                         }
                         const locationSelectComponent = new StringSelectMenuBuilder().setOptions(locationsKeyValues).setCustomId('LocationMovementSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
-                        var locationSelectRow = new ActionRowBuilder().addComponents(locationSelectComponent);
+                        const locationSelectRow = new ActionRowBuilder().addComponents(locationSelectComponent);
                         interaction.reply({ content: 'Select a location to move to:', components: [locationSelectRow], ephemeral: true });
                     } else {
                         interaction.reply({ content: 'Sorry, but I can\'t find any other locations for you to move to. Try again another time, or contact the Orchestrators. :purple_heart:', ephemeral: true });
@@ -3752,14 +3751,14 @@ client.on('interactionCreate', async (interaction) => {
                     interaction.reply({ content: 'Sorry, but you don\'t seem to be in a location that allows movement right now. Try again another time, or contact the Orchestrators. :purple_heart:', ephemeral: true });
                 }
             } else if (interaction.commandName == 'sheet') {
-                var current_character = await connection.promise().query('select character_id from players_characters join players p on p.id = players_characters.player_id where p.user_id = ? and players_characters.active = 1 and p.guild_id = ?', [interaction.user.id, interaction.guildId]);
+                let current_character = await connection.promise().query('select character_id from players_characters join players p on p.id = players_characters.player_id where p.user_id = ? and players_characters.active = 1 and p.guild_id = ?', [interaction.user.id, interaction.guildId]);
                 if (current_character[0].length > 0) {
-                    var character_information = await connection.promise().query('select * from characters where id = ?', [current_character[0][0].character_id]);
-                    var character_archetypes = await connection.promise().query('select * from archetypes a join characters_archetypes ca on ca.archetype_id = a.id where ca.character_id = ?', [current_character[0][0].character_id]);
-                    var character_stats = await connection.promise().query('select s.*, cs.override_value from stats s left outer join characters_stats cs on cs.stat_id = s.id and cs.character_id = ? where guild_id = ? order by s.id asc', [current_character[0][0].character_id, interaction.guildId]);
-                    var archetype_stats = await connection.promise().query('select ars.*, ca2.override_value from archetypestats ars join archetypes_archetypestats aa on ars.id = aa.archetypestat_id join characters_archetypes ca on aa.archetype_id = ca.archetype_id and ca.character_id = ? left outer join characters_archetypestats ca2 on ca2.stat_id = ars.id and ca2.character_id = ?', [current_character[0][0].character_id, current_character[0][0].character_id]);
-                    var world_stats = [[]]; //TODO
-                    var msg = `**${character_information[0][0].name}** - ${character_information[0][0].description}\n`
+                    let character_information = await connection.promise().query('select * from characters where id = ?', [current_character[0][0].character_id]);
+                    let character_archetypes = await connection.promise().query('select * from archetypes a join characters_archetypes ca on ca.archetype_id = a.id where ca.character_id = ?', [current_character[0][0].character_id]);
+                    let character_stats = await connection.promise().query('select s.*, cs.override_value from stats s left outer join characters_stats cs on cs.stat_id = s.id and cs.character_id = ? where guild_id = ? order by s.id asc', [current_character[0][0].character_id, interaction.guildId]);
+                    let archetype_stats = await connection.promise().query('select ars.*, ca2.override_value from archetypestats ars join archetypes_archetypestats aa on ars.id = aa.archetypestat_id join characters_archetypes ca on aa.archetype_id = ca.archetype_id and ca.character_id = ? left outer join characters_archetypestats ca2 on ca2.stat_id = ars.id and ca2.character_id = ?', [current_character[0][0].character_id, current_character[0][0].character_id]);
+                    let world_stats = [[]]; //TODO
+                    let msg = `**${character_information[0][0].name}** - ${character_information[0][0].description}\n`
                     if (character_archetypes[0].length > 0) {
                         msg = msg.concat(`\n__Archetypes__\n`);
                         for (const thisArchetype of character_archetypes[0]) {
@@ -3797,7 +3796,7 @@ client.on('interactionCreate', async (interaction) => {
                             new ButtonBuilder().setCustomId(`inventory-${current_character[0][0].character_id}`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
                         );
                     // If game settings - reputation enabled, then add the Reputation button too
-                    var reputation_enabled = await connection.promise().query('select * from game_settings where setting_name = "reputation" and guild_id = ?', [interaction.guildId]);
+                    let reputation_enabled = await connection.promise().query('select * from game_settings where setting_name = "reputation" and guild_id = ?', [interaction.guildId]);
                     if (reputation_enabled[0].length > 0 && reputation_enabled[0][0].setting_value == true) {
                         buttonActionRow.addComponents(new ButtonBuilder().setCustomId(`reputation-${current_character[0][0].character_id}`).setLabel('Reputation').setStyle(ButtonStyle.Primary));
                     }
@@ -3810,20 +3809,20 @@ client.on('interactionCreate', async (interaction) => {
 
             } else if (interaction.commandName === 'rps') {
                 if (interaction.options.getUser('challengee')) {
-                    var challenged = interaction.options.getUser('challengee');
-                    var queryData = [interaction.user.id, interaction.user.id, challenged.id, challenged.id];
+                    let challenged = interaction.options.getUser('challengee');
+                    let queryData = [interaction.user.id, interaction.user.id, challenged.id, challenged.id];
                     connection.query('select * from rps where (challenger = ? or challenged = ? or challenger = ? or challenged = ?) and (challenger_throw is null or challenged_throw is null);', queryData, function (err, res, fields) {
                         if (err) {
                             console.log(err);
                         } else if (res.length > 0) {
                             interaction.reply({ content: 'Sorry, it looks like either you or your target is already in a duel!', ephemeral: true });
                         } else {
-                            var queryData = [interaction.user.id, challenged.id, interaction.channel.id];
+                            queryData = [interaction.user.id, challenged.id, interaction.channel.id];
                             connection.query('insert into rps (challenger, challenged, channel) values (?, ?, ?)', queryData, async function (err2, res2, fields2) {
                                 //Create buttons, tag both users.
-                                var rpsButtonR = new ButtonBuilder().setCustomId('rpsButtonR').setLabel('Rapid').setStyle('Primary'); // TODO ButtonBuilder doesn't exist in Discord.js v14
-                                var rpsButtonP = new ButtonBuilder().setCustomId('rpsButtonP').setLabel('Precision').setStyle('Primary');
-                                var rpsButtonS = new ButtonBuilder().setCustomId('rpsButtonS').setLabel('Sweeping').setStyle('Primary');
+                                const rpsButtonR = new ButtonBuilder().setCustomId('rpsButtonR').setLabel('Rapid').setStyle('Primary'); // TODO ButtonBuilder doesn't exist in Discord.js v14
+                                const rpsButtonP = new ButtonBuilder().setCustomId('rpsButtonP').setLabel('Precision').setStyle('Primary');
+                                const rpsButtonS = new ButtonBuilder().setCustomId('rpsButtonS').setLabel('Sweeping').setStyle('Primary');
                                 const rpsRow = new ActionRowBuilder().addComponents(rpsButtonR, rpsButtonP, rpsButtonS);
                                 await interaction.reply({ content: '<@' + interaction.user.id + '> has challenged <@' + challenged.id + '> to a duel!', components: [rpsRow] });
                             });
@@ -3831,18 +3830,18 @@ client.on('interactionCreate', async (interaction) => {
                     });
                     //also make sure they're on the same Age.
                 } else {
-                    var queryData = [interaction.user.id, interaction.user.id];
+                    let queryData = [interaction.user.id, interaction.user.id];
                     connection.query('select * from rps where (challenger = ? or challenged = ?) and (challenger_throw is null or challenged_throw is null)', queryData, function (err, res, fields) {
                         if (err) {
                             console.log(err);
                         } else if (res.length > 0) {
                             interaction.reply({ content: 'Sorry, it looks like you\'re already in a duel!', ephemeral: true });
                         } else {
-                            var queryData = [interaction.user.id, client.user.id, interaction.channel.id];
+                            queryData = [interaction.user.id, client.user.id, interaction.channel.id];
                             connection.query('insert into rps (challenger, challenged, channel) values (?, ?, ?)', queryData, async function (err2, res2, fields2) {
-                                var rpsButtonR = new ButtonBuilder().setCustomId('rpsButtonR').setLabel('Rapid').setStyle('Primary');
-                                var rpsButtonP = new ButtonBuilder().setCustomId('rpsButtonP').setLabel('Precision').setStyle('Primary');
-                                var rpsButtonS = new ButtonBuilder().setCustomId('rpsButtonS').setLabel('Sweeping').setStyle('Primary');
+                                const rpsButtonR = new ButtonBuilder().setCustomId('rpsButtonR').setLabel('Rapid').setStyle('Primary');
+                                const rpsButtonP = new ButtonBuilder().setCustomId('rpsButtonP').setLabel('Precision').setStyle('Primary');
+                                const rpsButtonS = new ButtonBuilder().setCustomId('rpsButtonS').setLabel('Sweeping').setStyle('Primary');
                                 const rpsRow = new ActionRowBuilder().addComponents(rpsButtonR, rpsButtonP, rpsButtonS);
                                 await interaction.reply({ content: '<@' + interaction.user + '> has challenged me to a duel!', components: [rpsRow] });
                             });
@@ -3850,44 +3849,45 @@ client.on('interactionCreate', async (interaction) => {
                     });
                 }
             } else if (interaction.commandName == 'rpsmulti') {
-                var current_character = await connection.promise().query('select pc.character_id, c.name from players_characters pc join players p on p.id = pc.player_id join characters c on c.id = pc.character_id where p.user_id = ? and p.guild_id = ? and pc.active = 1', [interaction.user.id, interaction.guildId]);
+                let current_character = await connection.promise().query('select pc.character_id, c.name from players_characters pc join players p on p.id = pc.player_id join characters c on c.id = pc.character_id where p.user_id = ? and p.guild_id = ? and pc.active = 1', [interaction.user.id, interaction.guildId]);
                 if (current_character[0].length > 0) {
-                    var openMultiRPS = await connection.promise().query('select * from multirps where character_id = ? and open = 1', [current_character[0][0].character_id]);
+                    let openMultiRPS = await connection.promise().query('select * from multirps where character_id = ? and open = 1', [current_character[0][0].character_id]);
                     if (openMultiRPS[0].length == 0) {
-                        var multirps = await connection.promise().query('insert into multirps (character_id, open) values (?, ?)', [current_character[0][0].character_id, 1]);
-                        var embed = new EmbedBuilder()
+                        let multirps = await connection.promise().query('insert into multirps (character_id, open) values (?, ?)', [current_character[0][0].character_id, 1]);
+                        let embed = new EmbedBuilder()
                             .setTitle(`MULTIRPS`)
                             .setDescription(`${current_character[0][0].name} v. TBD`);
-                        var duelButtonR = new ButtonBuilder().setCustomId('R').setLabel('Rapid').setStyle('Primary'); // TODO ButtonBuilder doesn't exist in Discord.js v14
-                        var duelButtonP = new ButtonBuilder().setCustomId('P').setLabel('Precision').setStyle('Primary');
-                        var duelButtonS = new ButtonBuilder().setCustomId('S').setLabel('Sweeping').setStyle('Primary');
-                        var duelButtonEnd = new ButtonBuilder().setCustomId('mrpsButtonEnd').setLabel('END').setStyle('Secondary');
+                        const duelButtonR = new ButtonBuilder().setCustomId('R').setLabel('Rapid').setStyle('Primary'); // TODO ButtonBuilder doesn't exist in Discord.js v14
+                        const duelButtonP = new ButtonBuilder().setCustomId('P').setLabel('Precision').setStyle('Primary');
+                        const duelButtonS = new ButtonBuilder().setCustomId('S').setLabel('Sweeping').setStyle('Primary');
+                        const duelButtonEnd = new ButtonBuilder().setCustomId('mrpsButtonEnd').setLabel('END').setStyle('Secondary');
                         const rpsRow = new ActionRowBuilder().addComponents(duelButtonR, duelButtonP, duelButtonS, duelButtonEnd);
-                        var message = await interaction.reply({ embeds: [embed], components: [rpsRow] });
-                        var collector = message.createMessageComponentCollector();
+                        let message = await interaction.reply({ embeds: [embed], components: [rpsRow] });
+                        let collector = message.createMessageComponentCollector();
                         collector.on('collect', async (interaction_second) => {
-                            var thisCharacter = await connection.promise().query('select pc.character_id, c.name from players_characters pc join players p on p.id = pc.player_id join characters c on c.id = pc.character_id where p.user_id = ? and p.guild_id = ? and pc.active = 1', [interaction_second.user.id, interaction.guildId]);
+                            let thisCharacter = await connection.promise().query('select pc.character_id, c.name from players_characters pc join players p on p.id = pc.player_id join characters c on c.id = pc.character_id where p.user_id = ? and p.guild_id = ? and pc.active = 1', [interaction_second.user.id, interaction.guildId]);
                             if (thisCharacter[0].length > 0) {
                                 if (interaction_second.customId != 'mrpsButtonEnd') {
                                     interaction_second.deferUpdate();
                                     await connection.promise().query('replace into multirps_throws (throw, character_id, multirps_id) values (?, ?, ?)', [interaction_second.customId, thisCharacter[0][0].character_id, multirps[0].insertId]);
-                                    var allCharacters = await connection.promise().query('select mt.character_id, c.name from multirps_throws mt join characters c on c.id = mt.character_id where mt.multirps_id = ? and mt.character_id != ?', [multirps[0].insertId, current_character[0][0].character_id]);
+                                    let allCharacters = await connection.promise().query('select mt.character_id, c.name from multirps_throws mt join characters c on c.id = mt.character_id where mt.multirps_id = ? and mt.character_id != ?', [multirps[0].insertId, current_character[0][0].character_id]);
+                                    let cNames;
                                     if (allCharacters[0].length > 0) {
-                                        var cNames = [];
+                                        cNames = [];
                                         for (const character of allCharacters[0]) {
                                             cNames.push(character.name);
                                         }
                                     } else {
-                                        var cNames = ["TBD"];
+                                        cNames = ["TBD"];
                                     }
-                                    var embed = new EmbedBuilder().setTitle(`MULTIRPS`).setDescription(`${current_character[0][0].name} v. ${cNames.join(', ')}`);
+                                    const embed = new EmbedBuilder().setTitle(`MULTIRPS`).setDescription(`${current_character[0][0].name} v. ${cNames.join(', ')}`);
                                     message.edit({ embeds: [embed] });
                                 } else {
                                     if (interaction.user.id == interaction_second.user.id) {
-                                        var allCharacters = await connection.promise().query('select mt.character_id, c.name, mt.throw from multirps_throws mt join characters c on c.id = mt.character_id where mt.multirps_id = ?', [multirps[0].insertId]);
-                                        var owner_throw;
-                                        var character_throws = [];
-                                        var character_names = [];
+                                        let allCharacters = await connection.promise().query('select mt.character_id, c.name, mt.throw from multirps_throws mt join characters c on c.id = mt.character_id where mt.multirps_id = ?', [multirps[0].insertId]);
+                                        let owner_throw;
+                                        let character_throws = [];
+                                        let character_names = [];
                                         if (allCharacters[0].length > 1) {
                                             for (const character of allCharacters[0]) {
                                                 if (character.character_id == current_character[0][0].character_id) {
@@ -3898,11 +3898,11 @@ client.on('interactionCreate', async (interaction) => {
                                                 }
                                             }
                                             if (owner_throw) {
-                                                var embed = new EmbedBuilder()
+                                                let embed = new EmbedBuilder()
                                                     .setTitle('MULTIRPS')
                                                     .setDescription(`${current_character[0][0].name} v. ${character_names.join(', ')}`)
                                                     .addFields({ name: 'Boss Throw', value: `${(owner_throw == 'R' ? 'Rapid' : (owner_throw == 'S' ? 'Sweeping' : 'Precision'))}`, inline: true })
-                                                var player_throws_text = "";
+                                                let player_throws_text = "";
                                                 for (const thisThrow of character_throws) {
                                                     player_throws_text += `${thisThrow.name}: ${thisThrow.throw}`
                                                     if (owner_throw == 'R' && thisThrow.throw == 'S' || owner_throw == 'S' && thisThrow.throw == 'P' || owner_throw == 'P' && thisThrow.throw == 'R') {
