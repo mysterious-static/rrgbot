@@ -125,22 +125,19 @@ async function process_effect(character, effect, source, guildId, target = null)
                         adjusted = 'removed';
                     }
                     message += ` ${adjusted} ${item[0][0].name} x${Math.abs(effect.type_qty)} to ${character.name}`;
-                    break;
-                }
+                } break;
             case 'wflag_inc':
                 {
                     await connection.promise().query('update worldflags set value = value + ? where id = ?', [effect.type_qty, effect.type_id]);
                     var wflag = await connection.promise().query('select * from worldflags where id = ?', effect.type_id);
                     message += ` ${adjusted} the *${wflag[0][0].name}* world flag by ${Math.abs(effect.type_qty)}`;
-                    break;
-                }
+                } break;
             case 'wflag_set':
                 {
                     await connection.promise().query('update worldflags set value = ? where id = ?', [effect.type_qty, effect.type_id]);
                     var wflag = await connection.promise().query('select * from worldflags where id = ?', effect.type_id);
                     message += ` set the *${wflag[0][0].name}* world flag to ${effect.type_qty}`;
-                    break;
-                }
+                } break;
             case 'cflag_inc':
                 {
                     var cflag_exists = await connection.promise().query('select * from characters_characterflags where character_id = ? and characterflag_id = ?', [character.id, effect.type_id]);
@@ -151,29 +148,25 @@ async function process_effect(character, effect, source, guildId, target = null)
                     }
                     var cflag = await connection.promise().query('select * from characterflags where id = ?', effect.type_id);
                     message += ` ${adjusted} ${character.name}'s *${cflag[0][0].name}* character flag by ${Math.abs(effect.type_qty)}`;
-                    break;
-                }
+                } break;
             case 'cflag_set':
                 {
                     await connection.promise().query('replace into characters_characterflags (value, character_id, characterflag_id) values (?, ?, ?)', [effect.type_qty, character.id, effect.type_id]);
                     var cflag = await connection.promise().query('select * from characterflags where id = ?', effect.type_id);
                     message += ` set ${character.name}'s *${cflag[0][0].name}* character flag to ${effect.type_qty}`;
-                    break;
-                }
+                } break;
             case 'skill':
                 {
                     await connection.promise().query('insert ignore into skills_characters (character_id, skill_id) values (?, ?)', [character.id, effect.type_id]);
                     var skill = await connection.promise().query('select * from skills where id = ?', effect.type_id);
                     message += ` added *${skill[0][0].name}* to ${character.name}`;
-                    break;
-                }
+                } break;
             case 'archetype':
                 {
                     await connection.promise().query('insert ignore into characters_archetypes (character_id, archetype_id) values (?, ?)', [character.id, effect.type_id]);
                     var archetype = await connection.promise().query('select * from archetypes where id = ?', effect.type_id);
                     message += ` gave ${character.name} the *${archetype[0][0].name}* archetype`;
-                    break;
-                }
+                } break;
             case 'reputation_inc':
                 {
                     var old_value;
@@ -211,8 +204,7 @@ async function process_effect(character, effect, source, guildId, target = null)
                         await process_effect(character, thisEffect, 'reputationtier', guildId);
                     }
                 }
-                break;
-            }
+            } break;
             case 'stat_inc':
                 var stat_exists = await connection.promise().query('select * from characters_stats where character_id = ? and stat_id = ?', [character.id, effect.type_id]);
                 if (stat_exists[0].length == 1) {
@@ -3712,9 +3704,9 @@ client.on('interactionCreate', async (interaction) => {
                 } else {
                     let webhook_channel;
                     if (interaction.channel.type == ChannelType.GuildPrivateThread || interaction.channel.type == ChannelType.GuildPublicThread) {
-                        let webhook_channel = interaction.channel.parent;
+                        webhook_channel = interaction.channel.parent;
                     } else {
-                        let webhook_channel = interaction.channel;
+                        webhook_channel = interaction.channel;
                     }
                     const webhooks = await webhook_channel.fetchWebhooks();
                     let webhook = webhooks.find(wh => wh.token);
