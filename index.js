@@ -5149,11 +5149,14 @@ client.on('interactionCreate', async (interaction) => {
             }
             let components = [];
             if (minId < firstDisplayedId || maxId > lastDisplayedId) {
+                console.log('pagination');
                 let paginationActionRow = new ActionRowBuilder();
                 if (minId < firstDisplayedId) {
+                    console.log('prev');
                     paginationActionRow.addComponents(new ButtonBuilder().setCustomId(`skillpage-desc-${character_id}-${firstDisplayedId - 1}`).setLabel('◀️').setStyle(ButtonStyle.Primary));
                 }
                 if (maxId > lastDisplayedId) {
+                    console.log('next');
                     paginationActionRow.addComponents(new ButtonBuilder().setCustomId(`skillpage-asc-${character_id}-${lastDisplayedId + 1}`).setLabel('▶️').setStyle(ButtonStyle.Primary));
                 }
                 components.push(paginationActionRow);
