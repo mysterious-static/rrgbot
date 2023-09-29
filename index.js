@@ -22,13 +22,13 @@ async function process_effect(character, effect, source, guildId, target = null)
     //TODO: care about charges!
     let message;
     if (source == 'skill') {
-        var skill = await connection.promise().query('select s.name from effects e join skills_effects se on e.id = se.effect_id join skills s on s.id = se.skill_id where e.id = ?', [effect.id]);
+        let skill = await connection.promise().query('select s.name from effects e join skills_effects se on e.id = se.effect_id join skills s on s.id = se.skill_id where e.id = ?', [effect.id]);
         message = `**${character.name}'s ${skill[0][0].name}**:`
     } else if (source == 'item') {
-        var item = await connection.promise().query('select i.name from effects e join items_effects ie on e.id = ie.effect_id join items i on i.id = ie.item_id where e.id = ?', [effect.id]);
+        let item = await connection.promise().query('select i.name from effects e join items_effects ie on e.id = ie.effect_id join items i on i.id = ie.item_id where e.id = ?', [effect.id]);
         message = `**${character.name}'s ${item[0][0].name}**:`;
     } else if (source == 'reputationtier') {
-        var reputation = await connection.promise().query('select rt.threshold_name as tiername, r.name as repname from effects e join reputations_tiers_effects rte on e.id = rte.effect_id join reputations_tiers rt on rte.reputationtier_id = rt.id join reputations r on rt.reputation_id = r.id where e.id = ?', [effect.id]);
+        let reputation = await connection.promise().query('select rt.threshold_name as tiername, r.name as repname from effects e join reputations_tiers_effects rte on e.id = rte.effect_id join reputations_tiers rt on rte.reputationtier_id = rt.id join reputations r on rt.reputation_id = r.id where e.id = ?', [effect.id]);
         message = `**${reputation[0][0].repname} reaches ${reputation[0][0].tiername}:**`
     }
     if (target && effect.target == 'target') {
@@ -220,18 +220,18 @@ async function process_effect(character, effect, source, guildId, target = null)
         }
 
         if (effect.visible) {
-            var players = await connection.promise().query('select p.notification_channel from characters c join players_characters pc on c.id = pc.character_id join players p on p.id = pc.player_id where c.id = ? and p.notification_channel is not null', [character.id]);
+            let players = await connection.promise().query('select p.notification_channel from characters c join players_characters pc on c.id = pc.character_id join players p on p.id = pc.player_id where c.id = ? and p.notification_channel is not null', [character.id]);
             if (players[0].length > 0) {
                 for (const thisPlayer of players[0]) {
-                    var channel = await client.channels.cache.get(thisPlayer.notification_channel);
+                    let channel = await client.channels.cache.get(thisPlayer.notification_channel);
                     await channel.send({ content: message });
                 }
             }
         }
-        var settingvalue = await connection.promise().query('select * from game_settings where guild_id = ? and setting_name = ?', [guildId, 'audit_channel']);
+        let settingvalue = await connection.promise().query('select * from game_settings where guild_id = ? and setting_name = ?', [guildId, 'audit_channel']);
         if (settingvalue[0].length > 0) {
-            var audit_channel = await client.channels.cache.get(settingvalue[0][0].setting_value);
-            var embed = new EmbedBuilder()
+            let audit_channel = await client.channels.cache.get(settingvalue[0][0].setting_value);
+            let embed = new EmbedBuilder()
                 .setTitle('Effect processed!')
                 .setDescription(message)
                 .setAuthor({ name: character.name })
@@ -246,10 +246,10 @@ async function process_effect(character, effect, source, guildId, target = null)
             audit_channel.send({ embeds: [embed] });
         }
     } else {
-        var settingvalue = await connection.promise().query('select * from game_settings where guild_id = ? and setting_name = ?', [guildId, 'audit_channel']);
+        let settingvalue = await connection.promise().query('select * from game_settings where guild_id = ? and setting_name = ?', [guildId, 'audit_channel']);
         if (settingvalue[0].length > 0) {
-            var audit_channel = await client.channels.cache.get(settingvalue[0][0].setting_value);
-            var embed = new EmbedBuilder()
+            let audit_channel = await client.channels.cache.get(settingvalue[0][0].setting_value);
+            let embed = new EmbedBuilder()
                 .setTitle('Effect NOT processed!')
                 .setDescription(`**PREREQ NOT MET**: ${message}`)
                 .setAuthor({ name: character.name })
@@ -266,624 +266,10 @@ async function process_effect(character, effect, source, guildId, target = null)
     }
 }
 
-/* COMMAND STRUCTURE */
-
-var allowmovement = new SlashCommandBuilder().setName('allowmovement')
-    .setDescription('Lock or unlock movement to/from locations globally or from a single location.')
-    .addBooleanOption(option =>
-        option.setName('enabled')
-            .setDescription('Enabled or disabled.')
-            .setRequired(true)
-    ).addChannelOption(option =>
-        option.setName('channel')
-            .setDescription('The channel you wish to lock or unlock')
-    ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-var player = new SlashCommandBuilder().setName('player')
-    .setDescription('Player management.')
-    .addSubcommand(subcommand =>
-        subcommand.setName('create')
-            .setDescription('Create a player based on a mentioned user.')
-            .addUserOption(option =>
-                option.setName('user')
-                    .setDescription('The user to associate')
-                    .setRequired(true))
-            .addStringOption(option =>
-                option.setName('player_name')
-                    .setDescription('The player name.')
-                    .setRequired(true))
-            .addBooleanOption(option =>
-                option.setName('create_character')
-                    .setDescription('Create a character? If false, be sure to assign this player a character using /character assign.')
-                    .setRequired(true)))
-    .addSubcommand(subcommand =>
-        subcommand.setName('notifchannel')
-            .setDescription('Specify notification channel.')
-            .addChannelOption(option =>
-                option.setName('channel')
-                    .setDescription('The channel to assign')
-                    .setRequired(true))
-            .addUserOption(option =>
-                option.setName('player')
-                    .setDescription('The player to set this for')
-                    .setRequired(true)))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-var addlocation = new SlashCommandBuilder().setName('addlocation')
-    .setDescription('Allow movement to and from a location.')
-    .addChannelOption(option =>
-        option.setName('channel')
-            .setDescription('The channel you wish to designate as movement-enabled/-disabled. New locations default this to ON.')
-            .setRequired(true)
-    ).addStringOption(option =>
-        option.setName('friendly_name')
-            .setDescription('What you\'d like this location to be called in announcements (if you set an announcements channel).')
-            .setRequired(true)
-    ).addBooleanOption(option =>
-        option.setName('enabled')
-            .setDescription('Simple true/false toggle')
-            .setRequired(true)
-    ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-var locationannouncements = new SlashCommandBuilder().setName('locationannouncements')
-    .setDescription('Enable an announcements channel for a location.')
-    .addChannelOption(option =>
-        option.setName('location_channel')
-            .setDescription('The location channel.')
-            .setRequired(true)
-    ).addChannelOption(option =>
-        option.setName('announcements_channel')
-            .setDescription('The announcements channel. Leave unset to remove. Can be set to location channel.')
-    ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-var locationvisibility = new SlashCommandBuilder().setName('locationvisibility')
-    .setDescription('Enable or disable the ability for players to view a location after they leave ("global read" mode)')
-    .addChannelOption(option =>
-        option.setName('location')
-            .setDescription('Channel to designate as "visible when not present / global read". New locations default this to OFF.')
-            .setRequired(true)
-    ).addBooleanOption(option =>
-        option.setName('enabled')
-            .setDescription('Simple true/false toggle')
-            .setRequired(true)
-    ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-var locationglobalwrite = new SlashCommandBuilder().setName('locationglobalwrite')
-    .setDescription('Enable or disable the ability to send messages when not in a location ("global write" mode)')
-    .addChannelOption(option =>
-        option.setName('location')
-            .setDescription('Channel to designate as "writable when not present / global write". New locations default to OFF.')
-            .setRequired(true)
-    ).addBooleanOption(option =>
-        option.setName('enabled')
-            .setDescription('Simple true/false toggle')
-            .setRequired(true)
-    ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-var resetlocationvis = new SlashCommandBuilder().setName('resetlocationvis')
-    .setDescription('Re-run location visibility permissions for all locations for all players.')
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-var restrictmovement = new SlashCommandBuilder().setName('restrictmovement')
-    .setDescription('Sets a global movement restriction for all players.')
-    .addStringOption(option =>
-        option.setName('restriction_type')
-            .setDescription('either "disabled", "enabled", or "player_whitelists"')
-            .setRequired(true)
-    ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-var addcharacterarchetype = new SlashCommandBuilder().setName('addcharacterarchetype')
-    .setDescription('Add a character-assignable archetype (think "class"). Characters can have multiple archetypes.')
-    .addStringOption(option =>
-        option.setName('archetype')
-            .setDescription('The name of the archetype')
-            .setRequired(true))
-    .addStringOption(option =>
-        option.setName('description')
-            .setDescription('The archetype description.')
-            .setRequired(true))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-var assignarchetype = new SlashCommandBuilder().setName('assignarchetype')
-    .setDescription('Assign an archetype to a character or characters.')
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator); // Dropdowns.
-
-var stat = new SlashCommandBuilder().setName('stat')
-    .setDescription('Stat administration.')
-    .addSubcommand(subcommand =>
-        subcommand.setName('add')
-            .setDescription('Add a stat for all characters for view in character sheet.')
-            .addStringOption(option =>
-                option.setName('stat')
-                    .setDescription('The name of the stat (e.g., Strength, Intelligence, HP)')
-                    .setRequired(true))
-            .addIntegerOption(option =>
-                option.setName('defaultvalue')
-                    .setDescription('The default value of the stat')
-                    .setRequired(true)))
-    .addSubcommand(subcommand =>
-        subcommand.setName('set')
-            .setDescription('Set a stat for a character.')
-            .addIntegerOption(option =>
-                option.setName('value')
-                    .setDescription('The value to which the stat will be set.')
-                    .setRequired(true)))
-    .addSubcommand(subcommand =>
-        subcommand.setName('adjust')
-            .setDescription('Adjust a stat for a character.')
-            .addIntegerOption(option =>
-                option.setName('value')
-                    .setDescription('The value by which the stat will be adjusted.')
-                    .setRequired(true)))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-
-var addarchetypestat = new SlashCommandBuilder().setName('addarchetypestat')
-    .setDescription('Add an archetype-specific stat for view in character sheet.')
-    .addStringOption(option =>
-        option.setName('stat')
-            .setDescription('The name of the stat (e.g., Performance, Studiousness, MP)')
-            .setRequired(true))
-    .addStringOption(option =>
-        option.setName('description')
-            .setDescription('What this stat means or does.')
-            .setRequired(true))
-    .addIntegerOption(option =>
-        option.setName('defaultvalue')
-            .setDescription('The default value of the stat.')
-            .setRequired(true))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator); // Will give you a dropdown to select the archetype or archetypes to assign to.
-
-var skilladmin = new SlashCommandBuilder().setName('skilladmin')
-    .setDescription('Add a character/archetype-assignable skill for view in character sheet.')
-    .addSubcommand(subcommand =>
-        subcommand.setName('add')
-            .setDescription('Add a character/archetype-assignable skill for view in character sheet.')
-            .addStringOption(option =>
-                option.setName('name')
-                    .setDescription('The name of the skill (e.g. Vorpal Slash, 1000 Needles, Gigaton Hammer)')
-                    .setRequired(true))
-            .addStringOption(option =>
-                option.setName('description')
-                    .setDescription('The description or flavor text of the skill.')
-                    .setRequired(true))
-            .addStringOption(option =>
-                option.setName('type')
-                    .setDescription('The type of skill')
-                    .setRequired(true)
-                    .addChoices(
-                        { name: 'combat', value: 'combat' },
-                        { name: 'noncombat', value: 'noncombat' },
-                        { name: 'innate', value: 'innate' },
-                        { name: 'profession', value: 'profession' }))
-            .addBooleanOption(option =>
-                option.setName('other_targetable')
-                    .setDescription('Whether skill can be used to target other characters (has effects)')
-                    .setRequired(true))
-            .addBooleanOption(option =>
-                option.setName('self_targetable')
-                    .setDescription('Whether skill can be used on the casting character.')
-                    .setRequired(true)))
-    .addSubcommand(subcommand =>
-        subcommand.setName('assign')
-            .setDescription('Assign a skill to a character or archetype')
-            .addBooleanOption(option =>
-                option.setName('to_character')
-                    .setDescription('Set to true if you\'re assigning to a character, false if assigning to an archetype.')
-                    .setRequired(true)))
-    .addSubcommand(subcommand =>
-        subcommand.setName('unassign')
-            .setDescription('Unassign a skill from a character or archetype')
-            .addBooleanOption(option =>
-                option.setName('to_character')
-                    .setDescription('Set to true if you\'re unassigning from a character, false if from an archetype.')
-                    .setRequired(true)))
-    .addSubcommand(subcommand =>
-        subcommand.setName('addeffect')
-            .setDescription('Add effect to targetable skill.'))
-    .addSubcommand(subcommand =>
-        subcommand.setName('edit')
-            .setDescription('Edit a text field on a skill.')
-            .addStringOption(option =>
-                option.setName('name')
-                    .setDescription('The name of the skill (partial okay)')
-                    .setRequired(true)))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-
-var itemadmin = new SlashCommandBuilder().setName('itemadmin')
-    .setDescription('Item administration tools.')
-    .addSubcommand(subcommand =>
-        subcommand.setName('add')
-            .setDescription('Add an item for display on character sheet.')
-            .addStringOption(option =>
-                option.setName('itemname')
-                    .setDescription('The name of the item')
-                    .setRequired(true))
-            .addStringOption(option =>
-                option.setName('description')
-                    .setDescription('What this item is.')
-                    .setRequired(true))
-            .addBooleanOption(option =>
-                option.setName('other_targetable')
-                    .setDescription('Whether item can be used to target other characters (has effects)')
-                    .setRequired(true))
-            .addBooleanOption(option =>
-                option.setName('self_targetable')
-                    .setDescription('Whether item can be used on the casting character.')
-                    .setRequired(true))
-            .addBooleanOption(option =>
-                option.setName('consumable')
-                    .setDescription('Whether item is consumed on use.')
-                    .setRequired(true)))
-    .addSubcommand(subcommand =>
-        subcommand.setName('assign')
-            .setDescription('Assign an item to a character')
-            .addIntegerOption(option =>
-                option.setName('quantity')
-                    .setDescription('The quantity of item you want to assign')
-                    .setRequired(true)))
-    .addSubcommand(subcommand =>
-        subcommand.setName('transfer')
-            .setDescription('Transfer a item from a character to another character')
-            .addIntegerOption(option =>
-                option.setName('quantity')
-                    .setDescription('The quantity of the item to transfer')
-                    .setRequired(true)))
-    .addSubcommand(subcommand =>
-        subcommand.setName('addeffect')
-            .setDescription('Add effect to targetable item.'))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-var addworldstat = new SlashCommandBuilder().setName('addworldstat')
-    .setDescription('Add a world stat for view in character sheet. World stats visibility can be assigned.')
-    .addStringOption(option =>
-        option.setName('name')
-            .setDescription('The name of the stat')
-            .setRequired(true))
-    .addIntegerOption(option =>
-        option.setName('value')
-            .setDescription('The value of the stat')
-            .setRequired(true))
-    .addStringOption(option =>
-        option.setName('description')
-            .setDescription('What this stat means or does.')
-            .setRequired(true))
-    .addBooleanOption(option =>
-        option.setName('globallyvisible')
-            .setDescription('Whether this is globally visible or needs to be targeted.')
-            .setRequired(true))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-var setarchetypestat = new SlashCommandBuilder().setName('setarchetypestat')
-    .setDescription('Set an archetype stat for a character.')
-    .addIntegerOption(option =>
-        option.setName('value')
-            .setDescription('The value to which the archetype stat will be set.')
-            .setRequired(true))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-var modsheet = new SlashCommandBuilder().setName('modsheet')
-    .setDescription('Show a character sheet.')
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-var assignspecialstat = new SlashCommandBuilder().setName('assignspecialstat')
-    .setDescription('Assign a stat to a special function.')
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-// movement, health, etc.
-
-var addquest = new SlashCommandBuilder().setName('addquest')
-    .setDescription('NYI: Add a quest for display on character sheet.')
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-var whispercategory = new SlashCommandBuilder().setName('whispercategory')
-    .setDescription('Set a category for whisper creation.')
-    .addChannelOption(option =>
-        option.setName('category')
-            .setDescription('The whisper category: players shouldn\'t be able to view by default')
-            .setRequired(true))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-var addwhisper = new SlashCommandBuilder().setName('addwhisper')
-    .setDescription('Add a whisper.')
-    .addIntegerOption(option =>
-        option.setName('duration')
-            .setDescription('How long, in hours, the whisper should last.')
-            .setRequired(true))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-var populatewhisper = new SlashCommandBuilder().setName('populatewhisper')
-    .setDescription('Add a character to a whisper.')
-    .addChannelOption(option =>
-        option.setName('whisperchannel')
-            .setDescription('The channel where the whisper is assigned.')
-            .setRequired(true))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-var characterflag = new SlashCommandBuilder().setName('characterflag')
-    .setDescription('Character flag management.')
-    .addSubcommand(subcommand =>
-        subcommand.setName('add')
-            .setDescription('Add a character flag.')
-            .addStringOption(option =>
-                option.setName('name')
-                    .setDescription('A searchable name for this flag.')
-                    .setRequired(true)))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-var worldflag = new SlashCommandBuilder().setName('worldflag')
-    .setDescription('World flag management.')
-    .addSubcommand(subcommand =>
-        subcommand.setName('add')
-            .setDescription('Add a world flag with starting value 0.')
-            .addStringOption(option =>
-                option.setName('name')
-                    .setDescription('A searchable name for this flag.')
-                    .setRequired(true)))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-var reputation = new SlashCommandBuilder().setName('reputation')
-    .setDescription('Reputation management tools')
-    .addSubcommand(subcommand =>
-        subcommand.setName('enable')
-            .setDescription('Enable the reputation system (default OFF)')
-            .addBooleanOption(option =>
-                option.setName('enabled')
-                    .setDescription('True to enable the reputation system.')
-                    .setRequired(true)))
-    .addSubcommand(subcommand =>
-        subcommand.setName('add')
-            .setDescription('Add a reputation')
-            .addStringOption(option =>
-                option.setName('name')
-                    .setDescription('The name of the reputation')
-                    .setRequired(true))
-            .addStringOption(option =>
-                option.setName('description')
-                    .setDescription('A short description of the reputation')
-                    .setRequired(true))
-            .addStringOption(option =>
-                option.setName('visibility')
-                    .setDescription('If this reputation should be visible to players before encountering') // Or should this be set by archetype and character?
-                    .setRequired(true)
-                    .addChoices(
-                        { name: 'Always On', value: 'always' },
-                        { name: 'Character Flag', value: 'cflag' },
-                        { name: 'World Flag', value: 'wflag' },
-                        { name: 'Never', value: 'never' }
-                    ))
-            .addIntegerOption(option =>
-                option.setName('maximum')
-                    .setDescription('Maximum reputation value for this reputation.')
-                    .setRequired(true))
-            .addStringOption(option =>
-                option.setName('icon')
-                    .setDescription('(optional) A faction icon\'s emoji ID')))
-    .addSubcommand(subcommand =>
-        subcommand.setName('tieradd')
-            .setDescription('Add a tier to a reputation.')
-            .addStringOption(option =>
-                option.setName('name')
-                    .setDescription('The name of the reputation tier (Neutral, Exalted, etc.)')
-                    .setRequired(true))
-            .addIntegerOption(option =>
-                option.setName('value')
-                    .setDescription('The threshold minimum for this reputation tier.')
-                    .setRequired(true)))
-    .addSubcommand(subcommand =>
-        subcommand.setName('tiereffect')
-            .setDescription('Add an effect to a tier.'))
-    .addSubcommand(subcommand =>
-        subcommand.setName('vieweffects')
-            .setDescription('List effects on a given reputation tier.'))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-var effect = new SlashCommandBuilder().setName('effect')
-    .setDescription('Commands to manage effects.')
-    .addSubcommand(subcommand =>
-        subcommand.setName('addprereq')
-            .setDescription('Add a prerequisite to an effect')) // Prompt for what type of reward it is - quest, reputation tier, dialog, skill, etc
-    .addSubcommand(subcommand =>
-        subcommand.setName('listprereqs')
-            .setDescription('List prerequisites for an effect'))
-    .addSubcommand(subcommand =>
-        subcommand.setName('remove')
-            .setDescription('Remove an effect.'))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-//Prompt for archetype/character, reputation, tier, item/skill/reputation/archetype/pflag/qflag/message, prompt for whatever's chosen - should have quantity of reward available (-1 for unlimited) if archetype
-var sendas = new SlashCommandBuilder().setName('sendas')
-    .setDescription('Send message as a character.')
-    .addStringOption(option =>
-        option.setName('message')
-            .setDescription('The message you wish to send.')
-            .setRequired(true))
-    .addStringOption(option =>
-        option.setName('character')
-            .setDescription('The character you wish to send as (optional, autocompletes)'))
-    .addAttachmentOption(option =>
-        option.setName('attachment')
-            .setDescription('Optional image to attach to the message.')
-    )
-
-var character = new SlashCommandBuilder().setName('character')
-    .setDescription('Character admin.')
-    .addSubcommand(subcommand =>
-        subcommand.setName('unassign')
-            .setDescription('Unassign a character from a player.')
-            .addUserOption(option =>
-                option.setName('user')
-                    .setDescription('The user with an active player entry.')
-                    .setRequired(true)))
-    .addSubcommand(subcommand =>
-        subcommand.setName('assign')
-            .setDescription('Assign a character or characters to a player.')
-            .addUserOption(option =>
-                option.setName('user')
-                    .setDescription('The user with an active player entry.')
-                    .setRequired(true)))
-    .addSubcommand(subcommand =>
-        subcommand.setName('charactercreate')
-            .setDescription('Create a new character.')
-            .addStringOption(option =>
-                option.setName('name')
-                    .setDescription('The character name.')
-                    .setRequired(true))
-            .addStringOption(option =>
-                option.setName('description')
-                    .setDescription('The character description.')
-                    .setRequired(true))
-            .addStringOption(option =>
-                option.setName('avatar_url')
-                    .setDescription('The URL to the character avatar, must be accessible by the bot')))
-    .addSubcommand(subcommand =>
-        subcommand.setName('avatar')
-            .setDescription('Set a character avatar URL.')
-            .addStringOption(option =>
-                option.setName('avatar_url')
-                    .setDescription('The URL to the character avatar, must be accessible by the bot')
-                    .setRequired(true)))
-    .addSubcommand(subcommand =>
-        subcommand.setName('move')
-            .setDescription('Move a character to a specific location.'))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-// Characters Per Player (switching system // bot echoes) - TODO
-// For now, playercreate should create a default character automatically in a separate table with the specified player_name.
-
-
-var rps = new SlashCommandBuilder().setName('rps')
-    .setDescription('Enter battle, either against another player or versus the robot.')
-    .addUserOption(option =>
-        option.setName('challengee')
-            .setDescription('The player you wish to challenge (optional)')
-    );
-
-var rpsmulti = new SlashCommandBuilder().setName('rpsmulti')
-    .setDescription('Enter a multiplayer RPS battle, with you as the opponent.');
-
-var move = new SlashCommandBuilder().setName('move')
-    .setDescription('Move to a new location.');
-
-var sheet = new SlashCommandBuilder().setName('sheet')
-    .setDescription('Show your character sheet.');
-
-var skill = new SlashCommandBuilder().setName('skill')
-    .setDescription('Activities to perform with skills.')
-    .addSubcommand(subcommand =>
-        subcommand.setName('display')
-            .setDescription('Posts a skill in the current chat channel.'))
-    .addSubcommand(subcommand =>
-        subcommand.setName('use')
-            .setDescription('Use a targetable skill.'));
-
-var item = new SlashCommandBuilder().setName('item')
-    .setDescription('Item commands for players.')
-    .addSubcommand(subcommand =>
-        subcommand.setName('display')
-            .setDescription('Posts an item in the current chat channel.'))
-    .addSubcommand(subcommand =>
-        subcommand.setName('give')
-            .setDescription('Gives an item to another character.')
-            .addIntegerOption(option =>
-                option.setName('quantity')
-                    .setDescription('The quantity of item you are giving.')
-                    .setRequired(true)));
-
-var duel = new SlashCommandBuilder().setName('duel')
-    .setDescription('Duels another player.')
-    .addUserOption(option =>
-        option.setName('target')
-            .setDescription('The player you wish to challenge.')
-            .setRequired(true));
-var active = new SlashCommandBuilder().setName('active')
-    .setDescription('Changes your active character.');
-
-var deck = new SlashCommandBuilder().setName('deck')
-    .setDescription('Displays your Tiles deck.');
-
-var roll = new SlashCommandBuilder().setName('roll')
-    .setDescription('Roll a set of dice.')
-    .addIntegerOption(option =>
-        option.setName('dice')
-            .setDescription('The number of dice to roll.')
-            .setRequired(true))
-    .addIntegerOption(option =>
-        option.setName('sides')
-            .setDescription('The number of sides per die.')
-            .setRequired(true))
-    .addBooleanOption(option =>
-        option.setName('public')
-            .setDescription('Whether or not the roll shoudl be shown publicly.')
-            .setRequired(true))
-    .addIntegerOption(option =>
-        option.setName('fixed_add')
-            .setDescription('Additional +/- modifier to your roll (optional).'));
-
-
-
-var addticketcategory = new SlashCommandBuilder().setName('addticketcategory')
-    .setDescription('Add a ticket category to the dropdown menu.')
-    .addStringOption(option =>
-        option.setName('name')
-            .setDescription('Name of category.')
-            .setRequired(true))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-var ticketchannel = new SlashCommandBuilder().setName('ticketchannel')
-    .setDescription('Where the dropdown for selecting a ticket category / opening tickets will be.')
-    .addChannelOption(option =>
-        option.setName('channel')
-            .setDescription('Channel where you want the message')
-            .setRequired(true))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-var auditchannel = new SlashCommandBuilder().setName('auditchannel')
-    .setDescription('Where the audit messages / notifications for opening and closing tickets will be.')
-    .addChannelOption(option =>
-        option.setName('channel')
-            .setDescription('Channel where you want audit messages')
-            .setRequired(true))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-var setcategorygroup = new SlashCommandBuilder().setName('setcategorygroup')
-    .setDescription('What role or roles should be notified when a  ticket category')
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-// Dropdowns / multisleect
-
-var closeticket = new SlashCommandBuilder().setName('closeticket')
-    .setDescription('Closes the current ticket thread.')
-    .addStringOption(option =>
-        option.setName('reason')
-            .setDescription('Quick summary of ticket closure notes')
-            .setRequired(true));
-
-var removeticketcategory = new SlashCommandBuilder().setName('removeticketcategory')
-    .setDescription('Removes a ticket category (nyi)')
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-
-var locationawareness = new SlashCommandBuilder().setName('locationawareness')
-    .setDescription('Location awareness for individual systems. Defaults to ENABLED.')
-    .addSubcommand(subcommand =>
-        subcommand.setName('trading')
-            .setDescription('Sets the location requirement for item transfers between characters.')
-            .addBooleanOption(option =>
-                option.setName('enabled')
-                    .setDescription('True/false')
-                    .setRequired(true)))
-    .addSubcommand(subcommand =>
-        subcommand.setName('skilltarget')
-            .setDescription('Sets the location requirement for skill targeting.')
-            .addBooleanOption(option =>
-                option.setName('enabled')
-                    .setDescription('true/false')
-                    .setRequired(true)))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
 //PRE-PROCESSING FUNCTIONS
 
 async function isPlayer(userid, guildid) {
-    var player_exists = await connection.promise().query('select * from players where user_id = ?', [userid, guildid]);
+    let player_exists = await connection.promise().query('select * from players where user_id = ?', [userid, guildid]);
     if (player_exists[0].length > 0) {
         return true;
     }
@@ -893,6 +279,624 @@ async function isPlayer(userid, guildid) {
 
 
 client.on('ready', async () => {
+
+    /* COMMAND STRUCTURE */
+
+    let allowmovement = new SlashCommandBuilder().setName('allowmovement')
+        .setDescription('Lock or unlock movement to/from locations globally or from a single location.')
+        .addBooleanOption(option =>
+            option.setName('enabled')
+                .setDescription('Enabled or disabled.')
+                .setRequired(true)
+        ).addChannelOption(option =>
+            option.setName('channel')
+                .setDescription('The channel you wish to lock or unlock')
+        ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+    let player = new SlashCommandBuilder().setName('player')
+        .setDescription('Player management.')
+        .addSubcommand(subcommand =>
+            subcommand.setName('create')
+                .setDescription('Create a player based on a mentioned user.')
+                .addUserOption(option =>
+                    option.setName('user')
+                        .setDescription('The user to associate')
+                        .setRequired(true))
+                .addStringOption(option =>
+                    option.setName('player_name')
+                        .setDescription('The player name.')
+                        .setRequired(true))
+                .addBooleanOption(option =>
+                    option.setName('create_character')
+                        .setDescription('Create a character? If false, be sure to assign this player a character using /character assign.')
+                        .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand.setName('notifchannel')
+                .setDescription('Specify notification channel.')
+                .addChannelOption(option =>
+                    option.setName('channel')
+                        .setDescription('The channel to assign')
+                        .setRequired(true))
+                .addUserOption(option =>
+                    option.setName('player')
+                        .setDescription('The player to set this for')
+                        .setRequired(true)))
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+    let addlocation = new SlashCommandBuilder().setName('addlocation')
+        .setDescription('Allow movement to and from a location.')
+        .addChannelOption(option =>
+            option.setName('channel')
+                .setDescription('The channel you wish to designate as movement-enabled/-disabled. New locations default this to ON.')
+                .setRequired(true)
+        ).addStringOption(option =>
+            option.setName('friendly_name')
+                .setDescription('What you\'d like this location to be called in announcements (if you set an announcements channel).')
+                .setRequired(true)
+        ).addBooleanOption(option =>
+            option.setName('enabled')
+                .setDescription('Simple true/false toggle')
+                .setRequired(true)
+        ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+    let locationannouncements = new SlashCommandBuilder().setName('locationannouncements')
+        .setDescription('Enable an announcements channel for a location.')
+        .addChannelOption(option =>
+            option.setName('location_channel')
+                .setDescription('The location channel.')
+                .setRequired(true)
+        ).addChannelOption(option =>
+            option.setName('announcements_channel')
+                .setDescription('The announcements channel. Leave unset to remove. Can be set to location channel.')
+        ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+    let locationvisibility = new SlashCommandBuilder().setName('locationvisibility')
+        .setDescription('Enable or disable the ability for players to view a location after they leave ("global read" mode)')
+        .addChannelOption(option =>
+            option.setName('location')
+                .setDescription('Channel to designate as "visible when not present / global read". New locations default this to OFF.')
+                .setRequired(true)
+        ).addBooleanOption(option =>
+            option.setName('enabled')
+                .setDescription('Simple true/false toggle')
+                .setRequired(true)
+        ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+    let locationglobalwrite = new SlashCommandBuilder().setName('locationglobalwrite')
+        .setDescription('Enable or disable the ability to send messages when not in a location ("global write" mode)')
+        .addChannelOption(option =>
+            option.setName('location')
+                .setDescription('Channel to designate as "writable when not present / global write". New locations default to OFF.')
+                .setRequired(true)
+        ).addBooleanOption(option =>
+            option.setName('enabled')
+                .setDescription('Simple true/false toggle')
+                .setRequired(true)
+        ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+    let resetlocationvis = new SlashCommandBuilder().setName('resetlocationvis')
+        .setDescription('Re-run location visibility permissions for all locations for all players.')
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+    let restrictmovement = new SlashCommandBuilder().setName('restrictmovement')
+        .setDescription('Sets a global movement restriction for all players.')
+        .addStringOption(option =>
+            option.setName('restriction_type')
+                .setDescription('either "disabled", "enabled", or "player_whitelists"')
+                .setRequired(true)
+        ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+    let addcharacterarchetype = new SlashCommandBuilder().setName('addcharacterarchetype')
+        .setDescription('Add a character-assignable archetype (think "class"). Characters can have multiple archetypes.')
+        .addStringOption(option =>
+            option.setName('archetype')
+                .setDescription('The name of the archetype')
+                .setRequired(true))
+        .addStringOption(option =>
+            option.setName('description')
+                .setDescription('The archetype description.')
+                .setRequired(true))
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+    let assignarchetype = new SlashCommandBuilder().setName('assignarchetype')
+        .setDescription('Assign an archetype to a character or characters.')
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator); // Dropdowns.
+
+    let stat = new SlashCommandBuilder().setName('stat')
+        .setDescription('Stat administration.')
+        .addSubcommand(subcommand =>
+            subcommand.setName('add')
+                .setDescription('Add a stat for all characters for view in character sheet.')
+                .addStringOption(option =>
+                    option.setName('stat')
+                        .setDescription('The name of the stat (e.g., Strength, Intelligence, HP)')
+                        .setRequired(true))
+                .addIntegerOption(option =>
+                    option.setName('defaultvalue')
+                        .setDescription('The default value of the stat')
+                        .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand.setName('set')
+                .setDescription('Set a stat for a character.')
+                .addIntegerOption(option =>
+                    option.setName('value')
+                        .setDescription('The value to which the stat will be set.')
+                        .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand.setName('adjust')
+                .setDescription('Adjust a stat for a character.')
+                .addIntegerOption(option =>
+                    option.setName('value')
+                        .setDescription('The value by which the stat will be adjusted.')
+                        .setRequired(true)))
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+
+    let addarchetypestat = new SlashCommandBuilder().setName('addarchetypestat')
+        .setDescription('Add an archetype-specific stat for view in character sheet.')
+        .addStringOption(option =>
+            option.setName('stat')
+                .setDescription('The name of the stat (e.g., Performance, Studiousness, MP)')
+                .setRequired(true))
+        .addStringOption(option =>
+            option.setName('description')
+                .setDescription('What this stat means or does.')
+                .setRequired(true))
+        .addIntegerOption(option =>
+            option.setName('defaultvalue')
+                .setDescription('The default value of the stat.')
+                .setRequired(true))
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator); // Will give you a dropdown to select the archetype or archetypes to assign to.
+
+    let skilladmin = new SlashCommandBuilder().setName('skilladmin')
+        .setDescription('Add a character/archetype-assignable skill for view in character sheet.')
+        .addSubcommand(subcommand =>
+            subcommand.setName('add')
+                .setDescription('Add a character/archetype-assignable skill for view in character sheet.')
+                .addStringOption(option =>
+                    option.setName('name')
+                        .setDescription('The name of the skill (e.g. Vorpal Slash, 1000 Needles, Gigaton Hammer)')
+                        .setRequired(true))
+                .addStringOption(option =>
+                    option.setName('description')
+                        .setDescription('The description or flavor text of the skill.')
+                        .setRequired(true))
+                .addStringOption(option =>
+                    option.setName('type')
+                        .setDescription('The type of skill')
+                        .setRequired(true)
+                        .addChoices(
+                            { name: 'combat', value: 'combat' },
+                            { name: 'noncombat', value: 'noncombat' },
+                            { name: 'innate', value: 'innate' },
+                            { name: 'profession', value: 'profession' }))
+                .addBooleanOption(option =>
+                    option.setName('other_targetable')
+                        .setDescription('Whether skill can be used to target other characters (has effects)')
+                        .setRequired(true))
+                .addBooleanOption(option =>
+                    option.setName('self_targetable')
+                        .setDescription('Whether skill can be used on the casting character.')
+                        .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand.setName('assign')
+                .setDescription('Assign a skill to a character or archetype')
+                .addBooleanOption(option =>
+                    option.setName('to_character')
+                        .setDescription('Set to true if you\'re assigning to a character, false if assigning to an archetype.')
+                        .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand.setName('unassign')
+                .setDescription('Unassign a skill from a character or archetype')
+                .addBooleanOption(option =>
+                    option.setName('to_character')
+                        .setDescription('Set to true if you\'re unassigning from a character, false if from an archetype.')
+                        .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand.setName('addeffect')
+                .setDescription('Add effect to targetable skill.'))
+        .addSubcommand(subcommand =>
+            subcommand.setName('edit')
+                .setDescription('Edit a text field on a skill.')
+                .addStringOption(option =>
+                    option.setName('name')
+                        .setDescription('The name of the skill (partial okay)')
+                        .setRequired(true)))
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+
+    let itemadmin = new SlashCommandBuilder().setName('itemadmin')
+        .setDescription('Item administration tools.')
+        .addSubcommand(subcommand =>
+            subcommand.setName('add')
+                .setDescription('Add an item for display on character sheet.')
+                .addStringOption(option =>
+                    option.setName('itemname')
+                        .setDescription('The name of the item')
+                        .setRequired(true))
+                .addStringOption(option =>
+                    option.setName('description')
+                        .setDescription('What this item is.')
+                        .setRequired(true))
+                .addBooleanOption(option =>
+                    option.setName('other_targetable')
+                        .setDescription('Whether item can be used to target other characters (has effects)')
+                        .setRequired(true))
+                .addBooleanOption(option =>
+                    option.setName('self_targetable')
+                        .setDescription('Whether item can be used on the casting character.')
+                        .setRequired(true))
+                .addBooleanOption(option =>
+                    option.setName('consumable')
+                        .setDescription('Whether item is consumed on use.')
+                        .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand.setName('assign')
+                .setDescription('Assign an item to a character')
+                .addIntegerOption(option =>
+                    option.setName('quantity')
+                        .setDescription('The quantity of item you want to assign')
+                        .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand.setName('transfer')
+                .setDescription('Transfer a item from a character to another character')
+                .addIntegerOption(option =>
+                    option.setName('quantity')
+                        .setDescription('The quantity of the item to transfer')
+                        .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand.setName('addeffect')
+                .setDescription('Add effect to targetable item.'))
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+    let addworldstat = new SlashCommandBuilder().setName('addworldstat')
+        .setDescription('Add a world stat for view in character sheet. World stats visibility can be assigned.')
+        .addStringOption(option =>
+            option.setName('name')
+                .setDescription('The name of the stat')
+                .setRequired(true))
+        .addIntegerOption(option =>
+            option.setName('value')
+                .setDescription('The value of the stat')
+                .setRequired(true))
+        .addStringOption(option =>
+            option.setName('description')
+                .setDescription('What this stat means or does.')
+                .setRequired(true))
+        .addBooleanOption(option =>
+            option.setName('globallyvisible')
+                .setDescription('Whether this is globally visible or needs to be targeted.')
+                .setRequired(true))
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+    let setarchetypestat = new SlashCommandBuilder().setName('setarchetypestat')
+        .setDescription('Set an archetype stat for a character.')
+        .addIntegerOption(option =>
+            option.setName('value')
+                .setDescription('The value to which the archetype stat will be set.')
+                .setRequired(true))
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+    let modsheet = new SlashCommandBuilder().setName('modsheet')
+        .setDescription('Show a character sheet.')
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+    let assignspecialstat = new SlashCommandBuilder().setName('assignspecialstat')
+        .setDescription('Assign a stat to a special function.')
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+    // movement, health, etc.
+
+    let quest = new SlashCommandBuilder().setName('quest')
+        .setDescription('Quest management.')
+        .addSubcommand(subcommand =>
+            subcommand.setName('add')
+                .setDescription('NYI: Add a quest for display on character sheet.'))
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+    let whispercategory = new SlashCommandBuilder().setName('whispercategory')
+        .setDescription('Set a category for whisper creation.')
+        .addChannelOption(option =>
+            option.setName('category')
+                .setDescription('The whisper category: players shouldn\'t be able to view by default')
+                .setRequired(true))
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+    let addwhisper = new SlashCommandBuilder().setName('addwhisper')
+        .setDescription('Add a whisper.')
+        .addIntegerOption(option =>
+            option.setName('duration')
+                .setDescription('How long, in hours, the whisper should last.')
+                .setRequired(true))
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+    let populatewhisper = new SlashCommandBuilder().setName('populatewhisper')
+        .setDescription('Add a character to a whisper.')
+        .addChannelOption(option =>
+            option.setName('whisperchannel')
+                .setDescription('The channel where the whisper is assigned.')
+                .setRequired(true))
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+    let characterflag = new SlashCommandBuilder().setName('characterflag')
+        .setDescription('Character flag management.')
+        .addSubcommand(subcommand =>
+            subcommand.setName('add')
+                .setDescription('Add a character flag.')
+                .addStringOption(option =>
+                    option.setName('name')
+                        .setDescription('A searchable name for this flag.')
+                        .setRequired(true)))
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+    let worldflag = new SlashCommandBuilder().setName('worldflag')
+        .setDescription('World flag management.')
+        .addSubcommand(subcommand =>
+            subcommand.setName('add')
+                .setDescription('Add a world flag with starting value 0.')
+                .addStringOption(option =>
+                    option.setName('name')
+                        .setDescription('A searchable name for this flag.')
+                        .setRequired(true)))
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+    let reputation = new SlashCommandBuilder().setName('reputation')
+        .setDescription('Reputation management tools')
+        .addSubcommand(subcommand =>
+            subcommand.setName('enable')
+                .setDescription('Enable the reputation system (default OFF)')
+                .addBooleanOption(option =>
+                    option.setName('enabled')
+                        .setDescription('True to enable the reputation system.')
+                        .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand.setName('add')
+                .setDescription('Add a reputation')
+                .addStringOption(option =>
+                    option.setName('name')
+                        .setDescription('The name of the reputation')
+                        .setRequired(true))
+                .addStringOption(option =>
+                    option.setName('description')
+                        .setDescription('A short description of the reputation')
+                        .setRequired(true))
+                .addStringOption(option =>
+                    option.setName('visibility')
+                        .setDescription('If this reputation should be visible to players before encountering') // Or should this be set by archetype and character?
+                        .setRequired(true)
+                        .addChoices(
+                            { name: 'Always On', value: 'always' },
+                            { name: 'Character Flag', value: 'cflag' },
+                            { name: 'World Flag', value: 'wflag' },
+                            { name: 'Never', value: 'never' }
+                        ))
+                .addIntegerOption(option =>
+                    option.setName('maximum')
+                        .setDescription('Maximum reputation value for this reputation.')
+                        .setRequired(true))
+                .addStringOption(option =>
+                    option.setName('icon')
+                        .setDescription('(optional) A faction icon\'s emoji ID')))
+        .addSubcommand(subcommand =>
+            subcommand.setName('tieradd')
+                .setDescription('Add a tier to a reputation.')
+                .addStringOption(option =>
+                    option.setName('name')
+                        .setDescription('The name of the reputation tier (Neutral, Exalted, etc.)')
+                        .setRequired(true))
+                .addIntegerOption(option =>
+                    option.setName('value')
+                        .setDescription('The threshold minimum for this reputation tier.')
+                        .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand.setName('tiereffect')
+                .setDescription('Add an effect to a tier.'))
+        .addSubcommand(subcommand =>
+            subcommand.setName('vieweffects')
+                .setDescription('List effects on a given reputation tier.'))
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+    let effect = new SlashCommandBuilder().setName('effect')
+        .setDescription('Commands to manage effects.')
+        .addSubcommand(subcommand =>
+            subcommand.setName('addprereq')
+                .setDescription('Add a prerequisite to an effect')) // Prompt for what type of reward it is - quest, reputation tier, dialog, skill, etc
+        .addSubcommand(subcommand =>
+            subcommand.setName('listprereqs')
+                .setDescription('List prerequisites for an effect'))
+        .addSubcommand(subcommand =>
+            subcommand.setName('remove')
+                .setDescription('Remove an effect.'))
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+    //Prompt for archetype/character, reputation, tier, item/skill/reputation/archetype/pflag/qflag/message, prompt for whatever's chosen - should have quantity of reward available (-1 for unlimited) if archetype
+    let sendas = new SlashCommandBuilder().setName('sendas')
+        .setDescription('Send message as a character.')
+        .addStringOption(option =>
+            option.setName('message')
+                .setDescription('The message you wish to send.')
+                .setRequired(true))
+        .addStringOption(option =>
+            option.setName('character')
+                .setDescription('The character you wish to send as (optional, autocompletes)'))
+        .addAttachmentOption(option =>
+            option.setName('attachment')
+                .setDescription('Optional image to attach to the message.')
+        )
+
+    let character = new SlashCommandBuilder().setName('character')
+        .setDescription('Character admin.')
+        .addSubcommand(subcommand =>
+            subcommand.setName('unassign')
+                .setDescription('Unassign a character from a player.')
+                .addUserOption(option =>
+                    option.setName('user')
+                        .setDescription('The user with an active player entry.')
+                        .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand.setName('assign')
+                .setDescription('Assign a character or characters to a player.')
+                .addUserOption(option =>
+                    option.setName('user')
+                        .setDescription('The user with an active player entry.')
+                        .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand.setName('charactercreate')
+                .setDescription('Create a new character.')
+                .addStringOption(option =>
+                    option.setName('name')
+                        .setDescription('The character name.')
+                        .setRequired(true))
+                .addStringOption(option =>
+                    option.setName('description')
+                        .setDescription('The character description.')
+                        .setRequired(true))
+                .addStringOption(option =>
+                    option.setName('avatar_url')
+                        .setDescription('The URL to the character avatar, must be accessible by the bot')))
+        .addSubcommand(subcommand =>
+            subcommand.setName('avatar')
+                .setDescription('Set a character avatar URL.')
+                .addStringOption(option =>
+                    option.setName('avatar_url')
+                        .setDescription('The URL to the character avatar, must be accessible by the bot')
+                        .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand.setName('move')
+                .setDescription('Move a character to a specific location.'))
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+    // Characters Per Player (switching system // bot echoes) - TODO
+    // For now, playercreate should create a default character automatically in a separate table with the specified player_name.
+
+
+    let rps = new SlashCommandBuilder().setName('rps')
+        .setDescription('Enter battle, either against another player or versus the robot.')
+        .addUserOption(option =>
+            option.setName('challengee')
+                .setDescription('The player you wish to challenge (optional)')
+        );
+
+    let rpsmulti = new SlashCommandBuilder().setName('rpsmulti')
+        .setDescription('Enter a multiplayer RPS battle, with you as the opponent.');
+
+    let move = new SlashCommandBuilder().setName('move')
+        .setDescription('Move to a new location.');
+
+    let sheet = new SlashCommandBuilder().setName('sheet')
+        .setDescription('Show your character sheet.');
+
+    let skill = new SlashCommandBuilder().setName('skill')
+        .setDescription('Activities to perform with skills.')
+        .addSubcommand(subcommand =>
+            subcommand.setName('display')
+                .setDescription('Posts a skill in the current chat channel.'))
+        .addSubcommand(subcommand =>
+            subcommand.setName('use')
+                .setDescription('Use a targetable skill.'));
+
+    let item = new SlashCommandBuilder().setName('item')
+        .setDescription('Item commands for players.')
+        .addSubcommand(subcommand =>
+            subcommand.setName('display')
+                .setDescription('Posts an item in the current chat channel.'))
+        .addSubcommand(subcommand =>
+            subcommand.setName('give')
+                .setDescription('Gives an item to another character.')
+                .addIntegerOption(option =>
+                    option.setName('quantity')
+                        .setDescription('The quantity of item you are giving.')
+                        .setRequired(true)));
+
+    let duel = new SlashCommandBuilder().setName('duel')
+        .setDescription('Duels another player.')
+        .addUserOption(option =>
+            option.setName('target')
+                .setDescription('The player you wish to challenge.')
+                .setRequired(true));
+    let active = new SlashCommandBuilder().setName('active')
+        .setDescription('Changes your active character.');
+
+    let deck = new SlashCommandBuilder().setName('deck')
+        .setDescription('Displays your Tiles deck.');
+
+    let roll = new SlashCommandBuilder().setName('roll')
+        .setDescription('Roll a set of dice.')
+        .addIntegerOption(option =>
+            option.setName('dice')
+                .setDescription('The number of dice to roll.')
+                .setRequired(true))
+        .addIntegerOption(option =>
+            option.setName('sides')
+                .setDescription('The number of sides per die.')
+                .setRequired(true))
+        .addBooleanOption(option =>
+            option.setName('public')
+                .setDescription('Whether or not the roll shoudl be shown publicly.')
+                .setRequired(true))
+        .addIntegerOption(option =>
+            option.setName('fixed_add')
+                .setDescription('Additional +/- modifier to your roll (optional).'));
+
+
+
+    let addticketcategory = new SlashCommandBuilder().setName('addticketcategory')
+        .setDescription('Add a ticket category to the dropdown menu.')
+        .addStringOption(option =>
+            option.setName('name')
+                .setDescription('Name of category.')
+                .setRequired(true))
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+    let ticketchannel = new SlashCommandBuilder().setName('ticketchannel')
+        .setDescription('Where the dropdown for selecting a ticket category / opening tickets will be.')
+        .addChannelOption(option =>
+            option.setName('channel')
+                .setDescription('Channel where you want the message')
+                .setRequired(true))
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+    let auditchannel = new SlashCommandBuilder().setName('auditchannel')
+        .setDescription('Where the audit messages / notifications for opening and closing tickets will be.')
+        .addChannelOption(option =>
+            option.setName('channel')
+                .setDescription('Channel where you want audit messages')
+                .setRequired(true))
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+    let setcategorygroup = new SlashCommandBuilder().setName('setcategorygroup')
+        .setDescription('What role or roles should be notified when a  ticket category')
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+    // Dropdowns / multisleect
+
+    let closeticket = new SlashCommandBuilder().setName('closeticket')
+        .setDescription('Closes the current ticket thread.')
+        .addStringOption(option =>
+            option.setName('reason')
+                .setDescription('Quick summary of ticket closure notes')
+                .setRequired(true));
+
+    let removeticketcategory = new SlashCommandBuilder().setName('removeticketcategory')
+        .setDescription('Removes a ticket category (nyi)')
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+
+    let locationawareness = new SlashCommandBuilder().setName('locationawareness')
+        .setDescription('Location awareness for individual systems. Defaults to ENABLED.')
+        .addSubcommand(subcommand =>
+            subcommand.setName('trading')
+                .setDescription('Sets the location requirement for item transfers between characters.')
+                .addBooleanOption(option =>
+                    option.setName('enabled')
+                        .setDescription('True/false')
+                        .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand.setName('skilltarget')
+                .setDescription('Sets the location requirement for skill targeting.')
+                .addBooleanOption(option =>
+                    option.setName('enabled')
+                        .setDescription('true/false')
+                        .setRequired(true)))
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
     await client.application.commands.set([
         character.toJSON(),
         allowmovement.toJSON(),
@@ -1193,9 +1197,9 @@ client.on('interactionCreate', async (interaction) => {
             }
         } else if (interaction.commandName == 'player') {
             if (interaction.options.getSubcommand() == 'notifchannel') {
-                var channel = interaction.options.getChannel('channel');
-                var user = interaction.options.getUser('player');
-                var player = await connection.promise().query('select * from players where guild_id = ? and user_id = ?', [interaction.guildId, user.id]);
+                let channel = interaction.options.getChannel('channel');
+                let user = interaction.options.getUser('player');
+                let player = await connection.promise().query('select * from players where guild_id = ? and user_id = ?', [interaction.guildId, user.id]);
                 if (player[0].length == 1) {
                     await connection.promise().query('update players set notification_channel = ? where guild_id = ? and user_id = ?', [channel.id, interaction.guildId, user.id]);
                     interaction.reply({ content: 'Notification channel set.', ephemeral: true })
@@ -1203,15 +1207,15 @@ client.on('interactionCreate', async (interaction) => {
                     interaction.reply({ content: 'Please make sure you\'re tagging a player in this game. If you need to, set them up with `/player create` first.', ephemeral: true });
                 }
             } else if (interaction.options.getSubcommand() == 'create') {
-                var user = interaction.options.getUser('user');
-                var playerName = interaction.options.getString('player_name');
-                var playerexists = await connection.promise().query('select * from players where user_id = ? and guild_id = ?', [user.id, interaction.guildId]); // Not using member id because it's a pain to get, and this way we could eventually let users look at all their characters in a web view maybe
+                let user = interaction.options.getUser('user');
+                let playerName = interaction.options.getString('player_name');
+                let playerexists = await connection.promise().query('select * from players where user_id = ? and guild_id = ?', [user.id, interaction.guildId]); // Not using member id because it's a pain to get, and this way we could eventually let users look at all their characters in a web view maybe
                 if (playerexists[0].length > 0) {
                     interaction.reply({ content: 'A player entry for this user/server combo already exists! Sorry about that. :purple_heart:', ephemeral: true })
                 } else {
-                    var inserted_player = await connection.promise().query('insert into players (user_id, guild_id, name) values (?, ?, ?)', [user.id, interaction.guildId, playerName]);
+                    let inserted_player = await connection.promise().query('insert into players (user_id, guild_id, name) values (?, ?, ?)', [user.id, interaction.guildId, playerName]);
                     if (interaction.options.getBoolean('create_character')) {
-                        var inserted_character = await connection.promise().query('insert into characters (name, guild_id, description) values (?, ?, ?)', [playerName, interaction.guildId, '']); // This table also has "location", because all characters are in a location.
+                        let inserted_character = await connection.promise().query('insert into characters (name, guild_id, description) values (?, ?, ?)', [playerName, interaction.guildId, '']); // This table also has "location", because all characters are in a location.
                         await connection.promise().query('insert into players_characters (player_id, character_id, active) values (?, ?, ?)', [inserted_player[0].insertId, inserted_character[0].insertId, 1]); // Futureproofing for "multiple players can own a character".
                         interaction.reply({ content: 'Added the player and character!', ephemeral: true });
                     } else {
@@ -1223,8 +1227,8 @@ client.on('interactionCreate', async (interaction) => {
             }
         } else if (interaction.commandName == 'character') {
             if (interaction.options.getSubcommand() === 'unassign') {
-                var user = interaction.options.getUser('user');
-                var player = await connection.promise().query('select * from players where user_id = ? and guild_id = ?', [user.id, interaction.guildId]);
+                let user = interaction.options.getUser('user');
+                let player = await connection.promise().query('select * from players where user_id = ? and guild_id = ?', [user.id, interaction.guildId]);
                 if (player[0].length > 0) {
                     let owned_characters = await connection.promise().query('select distinct c.* from characters c join players_characters pc on c.id = pc.character_id join players p on pc.player_id = p.id where c.guild_id = ? and p.user_id = ?', [interaction.guildId, user.id]);
                     let owned = [];
@@ -1235,11 +1239,11 @@ client.on('interactionCreate', async (interaction) => {
                         }
                         console.log(owned);
                         const characterSelectComponent = new StringSelectMenuBuilder().setOptions(owned).setCustomId('CharacterUnassignmentSelector').setMinValues(1).setMaxValues(owned_characters[0].length);
-                        var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                        var message = await interaction.reply({ content: 'Select a character or characters to unassign from this player:', components: [characterSelectRow], ephemeral: true });
+                        let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                        let message = await interaction.reply({ content: 'Select a character or characters to unassign from this player:', components: [characterSelectRow], ephemeral: true });
                         const collector = message.createMessageComponentCollector({ time: 35000 });
                         collector.on('collect', async (interaction_second) => {
-                            if (interaction_second.customId == 'CharacterUnassignmentSelector' && interaction_second.member.id == interaction.member.id) {
+                            if (interaction_second.customId == 'CharacterUnassignmentSelector' && interaction_second.member.id === interaction.member.id) {
                                 for (const thisId of interaction_second.values) {
                                     await connection.promise().query('delete from players_characters where player_id = ? and character_id = ?', [player[0][0].id, thisId]);
                                 }
@@ -1561,8 +1565,7 @@ client.on('interactionCreate', async (interaction) => {
                     if (characters[0].length > 0) {
                         let charactersKeyValues = [{ label: 'Select a character', value: '0' }];
                         for (const character of characters[0]) {
-                            var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
-                            charactersKeyValues.push(thisCharacterKeyValue);
+                            charactersKeyValues.push({ label: character.name, value: character.id.toString() });
                         }
                         const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('StatAssignmentCharacterSelector').setMinValues(1).setMaxValues(1);
                         let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
@@ -1607,52 +1610,52 @@ client.on('interactionCreate', async (interaction) => {
                     interaction.reply({ content: 'You haven\'t created any characters yet. Try creating a character first.', ephemeral: true });
                 }
             } else if (interaction.options.getSubcommand() == 'adjust') {
-                var value = interaction.options.getInteger('value');
+                let value = interaction.options.getInteger('value');
                 // Create two dropdowns. For character and stat. See characterlocation for details.
-                var stats = await connection.promise().query('select * from stats where guild_id = ?', [interaction.guildId]);
+                let stats = await connection.promise().query('select * from stats where guild_id = ?', [interaction.guildId]);
                 if (stats[0].length > 0) {
-                    var statsKeyValues = [{ label: 'Select a stat', value: '0' }];
+                    let statsKeyValues = [{ label: 'Select a stat', value: '0' }];
                     for (const stat of stats[0]) {
-                        var thisStatKeyValue = { label: stat.name, value: stat.id.toString() };
-                        statsKeyValues.push(thisStatKeyValue);
+                        statsKeyValues.push({ label: stat.name, value: stat.id.toString() });
                     }
                     const statSelectComponent = new StringSelectMenuBuilder().setOptions(statsKeyValues).setCustomId('StatAssignmentStatSelector').setMinValues(1).setMaxValues(1);
-                    var statSelectRow = new ActionRowBuilder().addComponents(statSelectComponent);
-                    var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
+                    let statSelectRow = new ActionRowBuilder().addComponents(statSelectComponent);
+                    let characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
                     if (characters[0].length > 0) {
-                        var charactersKeyValues = [{ label: 'Select a character', value: '0' }];
+                        let charactersKeyValues = [{ label: 'Select a character', value: '0' }];
                         for (const character of characters[0]) {
-                            var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
-                            charactersKeyValues.push(thisCharacterKeyValue);
+                            charactersKeyValues.push({ label: character.name, value: character.id.toString() });
                         }
                         const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('StatAssignmentCharacterSelector').setMinValues(1).setMaxValues(1);
-                        var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                        var message = await interaction.reply({ content: '', components: [statSelectRow, characterSelectRow], ephemeral: true });
+                        let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                        let message = await interaction.reply({ content: '', components: [statSelectRow, characterSelectRow], ephemeral: true });
                         const collector = message.createMessageComponentCollector({ time: 35000 });
-                        var statSelected;
-                        var characterSelected;
+                        let statSelected;
+                        let characterSelected;
                         collector.on('collect', async (interaction_second) => {
-                            if (interaction_second.values[0]) {
-                                if (interaction_second.customId == 'StatAssignmentStatSelector') {
-                                    statSelected = interaction_second.values[0];
-                                } else {
-                                    characterSelected = interaction_second.values[0];
-                                }
-                                if (statSelected && characterSelected) {
-                                    var exists = await connection.promise().query('select * from characters_stats where stat_id = ? and character_id = ?', [statSelected, characterSelected]);
-                                    if (exists[0] && exists[0].length > 0) {
-                                        await connection.promise().query('update characters_stats set override_value = ? where character_id = ? and stat_id = ?', [exists[0][0].override_value + value, characterSelected, statSelected]);
+                            if (interaction.member.id === interaction_second.member.id) {
+                                if (interaction_second.values[0]) {
+                                    if (interaction_second.customId == 'StatAssignmentStatSelector') {
+                                        statSelected = interaction_second.values[0];
                                     } else {
-                                        var stat = await connection.promise().query('select * from stats where id = ?', [statSelected]);
-                                        await connection.promise().query('insert into characters_stats (character_id, stat_id, override_value) values (?, ?, ?)', [characterSelected, statSelected, stat[0][0].default_value + value]);
+                                        characterSelected = interaction_second.values[0];
                                     }
-                                    await interaction.editReply({ content: 'Successfully updated character stat value.', components: [] });
-                                    await collector.stop();
+                                    if (statSelected && characterSelected) {
+                                        let exists = await connection.promise().query('select * from characters_stats where stat_id = ? and character_id = ?', [statSelected, characterSelected]);
+                                        if (exists[0] && exists[0].length > 0) {
+                                            await connection.promise().query('update characters_stats set override_value = ? where character_id = ? and stat_id = ?', [exists[0][0].override_value + value, characterSelected, statSelected]);
+                                        } else {
+                                            let stat = await connection.promise().query('select * from stats where id = ?', [statSelected]);
+                                            await connection.promise().query('insert into characters_stats (character_id, stat_id, override_value) values (?, ?, ?)', [characterSelected, statSelected, stat[0][0].default_value + value]);
+                                        }
+                                        await interaction.editReply({ content: 'Successfully updated character stat value.', components: [] });
+                                        await collector.stop();
+                                    } else {
+                                        await interaction_second.deferUpdate();
+                                    }
                                 } else {
                                     await interaction_second.deferUpdate();
                                 }
-                            } else {
-                                await interaction_second.deferUpdate();
                             }
                         });
                         collector.on('end', async (collected) => {
@@ -1668,24 +1671,24 @@ client.on('interactionCreate', async (interaction) => {
             }
         } else if (interaction.commandName == 'addarchetypestat') {
             // stat, description, defaultvalue
-            var name = interaction.options.getString('stat');
-            var description = interaction.options.getString('description');
-            var defaultValue = interaction.options.getInteger('defaultvalue');
-            var exists = await connection.promise().query('select * from archetypestats where guild_id = ? and name = ?', [interaction.guildId, name]);
+            let name = interaction.options.getString('stat');
+            let description = interaction.options.getString('description');
+            let defaultValue = interaction.options.getInteger('defaultvalue');
+            let exists = await connection.promise().query('select * from archetypestats where guild_id = ? and name = ?', [interaction.guildId, name]);
             if (exists[0].length == 0) {
-                var archetypes = await connection.promise().query('select * from archetypes where guild_id = ?', [interaction.guildId]);
+                let archetypes = await connection.promise().query('select * from archetypes where guild_id = ?', [interaction.guildId]);
                 if (archetypes[0].length > 0) {
-                    var addedStat = await connection.promise().query('insert into archetypestats (name, description, default_value, guild_id) values (?, ?, ?, ?)', [name, description, defaultValue, interaction.guildId]);
-                    var archetypesKeyValues = [];
+                    let addedStat = await connection.promise().query('insert into archetypestats (name, description, default_value, guild_id) values (?, ?, ?, ?)', [name, description, defaultValue, interaction.guildId]);
+                    let archetypesKeyValues = [];
                     for (const archetype of archetypes[0]) {
                         archetypesKeyValues.push({ label: archetype.name, value: archetype.id.toString() });
                     }
-                    const archetypeSelectComponent = new StringSelectMenuBuilder().setOptions(archetypesKeyValues).setCustomId('ArchetypeStatAssignmentSelector' + interaction.member.id).setMinValues(1).setMaxValues(archetypes[0].length);
-                    var archetypeSelectRow = new ActionRowBuilder().addComponents(archetypeSelectComponent);
-                    var message = await interaction.reply({ content: 'Archetype stat added! Select archetype(s):', components: [archetypeSelectRow], ephemeral: true });
-                    var collector = message.createMessageComponentCollector({ time: 35000 });
+                    const archetypeSelectComponent = new StringSelectMenuBuilder().setOptions(archetypesKeyValues).setCustomId('ArchetypeStatAssignmentSelector').setMinValues(1).setMaxValues(archetypes[0].length);
+                    let archetypeSelectRow = new ActionRowBuilder().addComponents(archetypeSelectComponent);
+                    let message = await interaction.reply({ content: 'Archetype stat added! Select archetype(s):', components: [archetypeSelectRow], ephemeral: true });
+                    let collector = message.createMessageComponentCollector({ time: 35000 });
                     collector.on('collect', async (interaction_second) => {
-                        if (interaction_second.customId == 'ArchetypeStatAssignmentSelector' + interaction_second.member.id) {
+                        if (interaction_second.customId == 'ArchetypeStatAssignmentSelector' && interaction.member.id === interaction_second.member.id) {
                             for (const thisArchetype of interaction_second.values) {
                                 await connection.promise().query('insert into archetypes_archetypestats (archetype_id, archetypestat_id) values (?, ?)', [thisArchetype, addedStat[0].insertId]);
                             }
@@ -1780,12 +1783,12 @@ client.on('interactionCreate', async (interaction) => {
 
             }
             if (interaction.options.getSubcommand() == 'add') {
-                var name = interaction.options.getString('name');
-                var type = interaction.options.getString('type');
-                var other_targetable = interaction.options.getBoolean('other_targetable');
-                var self_targetable = interaction.options.getBoolean('self_targetable');
-                var description = interaction.options.getString('description');
-                var exists = await connection.promise().query('select * from skills where guild_id = ? and name = ?', [interaction.guildId, name]);
+                let name = interaction.options.getString('name');
+                let type = interaction.options.getString('type');
+                let other_targetable = interaction.options.getBoolean('other_targetable');
+                let self_targetable = interaction.options.getBoolean('self_targetable');
+                let description = interaction.options.getString('description');
+                let exists = await connection.promise().query('select * from skills where guild_id = ? and name = ?', [interaction.guildId, name]);
                 if (exists[0].length == 0) {
                     await connection.promise().query('insert into skills (name, description, type, guild_id, other_targetable, self_targetable) values (?, ?, ?, ?, ?, ?)', [name, description, type, interaction.guildId, other_targetable, self_targetable]);
                     interaction.reply({ content: 'Skill added!', ephemeral: true });
@@ -1793,110 +1796,101 @@ client.on('interactionCreate', async (interaction) => {
                     interaction.reply({ content: 'Skill with this name already exists!', ephemeral: true });
                 }
             } else if (interaction.options.getSubcommand() == 'assign') {
-                var to_character = interaction.options.getBoolean('to_character');
-                var skills = await connection.promise().query('select * from skills where guild_id = ?', [interaction.guildId]);
-                var skillsAlphabetical;
-                var skillSelectComponent;
+                let to_character = interaction.options.getBoolean('to_character');
+                let skills = await connection.promise().query('select * from skills where guild_id = ?', [interaction.guildId]);
+                let skillsAlphabetical;
+                let skillSelectComponent;
                 if (skills[0].length > 0) {
                     if (skills[0].length <= 25) {
                         skillsAlphabetical = false;
-                        var skillsKeyValues = [{ label: 'Select a skill', value: '0' }];
+                        let skillsKeyValues = [{ label: 'Select a skill', value: '0' }];
                         for (const skill of skills[0]) {
-                            var thisSkillKeyValue = { label: skill.name, value: skill.id.toString() };
-                            skillsKeyValues.push(thisSkillKeyValue);
+                            skillsKeyValues.push({ label: skill.name, value: skill.id.toString() });
                         }
                         skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillAssignmentSkillSelector').setMinValues(1).setMaxValues(1);
                     } else {
                         skillsAlphabetical = true;
-                        var skills = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
-                        var skillsKeyValues = [];
+                        let skills = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
+                        let skillsKeyValues = [];
                         for (const skill of skills) {
-                            var thisSkillKeyValue = { label: skill, value: skill }
-                            skillsKeyValues.push(thisSkillKeyValue);
+                            skillsKeyValues.push({ label: skill, value: skill });
                         }
                         skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillAssignmentAlphabetSelector').setMinValues(1).setMaxValues(1);
                     }
-                    var skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
+                    let skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
+                    let secondSelectRow;
                     if (to_character) {
-                        var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
+                        let characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
                         if (characters[0].length > 0) {
-                            var charactersKeyValues = [{ label: 'Select a character', value: '0' }];
+                            let charactersKeyValues = [{ label: 'Select a character', value: '0' }];
                             for (const character of characters[0]) {
-                                var thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
-                                charactersKeyValues.push(thisCharacterKeyValue);
+                                charactersKeyValues.push({ label: character.name, value: character.id.toString() });
                             }
                             const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('SkillAssignmentCharacterSelector').setMinValues(1).setMaxValues(charactersKeyValues.length);
-                            var characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                            secondSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
                         }
                     } else {
-                        var archetypes = await connection.promise().query('select * from archetypes where guild_id = ?', [interaction.guildId]);
+                        let archetypes = await connection.promise().query('select * from archetypes where guild_id = ?', [interaction.guildId]);
                         if (archetypes[0].length > 0) {
-                            var archetypesKeyValues = [{ label: 'Select a archetype', value: '0' }];
+                            let archetypesKeyValues = [{ label: 'Select a archetype', value: '0' }];
                             for (const archetype of archetypes[0]) {
-                                var thisArchetypeKeyValue = { label: archetype.name, value: archetype.id.toString() };
-                                archetypesKeyValues.push(thisArchetypeKeyValue);
+                                archetypesKeyValues.push({ label: archetype.name, value: archetype.id.toString() });
                             }
                             const archetypeSelectComponent = new StringSelectMenuBuilder().setOptions(archetypesKeyValues).setCustomId('SkillAssignmentArchetypeSelector').setMinValues(1).setMaxValues(archetypesKeyValues.length);
-                            var archetypeSelectRow = new ActionRowBuilder().addComponents(archetypeSelectComponent);
+                            secondSelectRow = new ActionRowBuilder().addComponents(archetypeSelectComponent);
                         }
                     }
                     if ((to_character && characters[0].length > 0) || (!to_character && archetypes[0].length > 0)) {
-                        if (to_character) {
-                            var message = await interaction.reply({ content: 'Please select the following options:', components: [skillSelectRow, characterSelectRow], ephemeral: true });
-                        } else {
-                            var message = await interaction.reply({ content: 'Please select the following options:', components: [skillSelectRow, archetypeSelectRow], ephemeral: true });
-                        }
-                        var collector = message.createMessageComponentCollector();
-                        var charactersSelected;
-                        var archetypesSelected;
-                        var skillSelected;
+                        let message = await interaction.reply({ content: 'Please select the following options:', components: [skillSelectRow, secondSelectRow], ephemeral: true });
+                        let collector = message.createMessageComponentCollector();
+                        let charactersSelected;
+                        let archetypesSelected;
+                        let skillSelected;
                         collector.on('collect', async (interaction_second) => {
-                            if (interaction_second.values[0]) {
-                                if (interaction_second.customId == 'SkillAssignmentSkillSelector') {
-                                    skillSelected = interaction_second.values[0];
-                                } else if (interaction_second.customId == 'SkillAssignmentAlphabetSelector') {
-                                    alphabetSelected = interaction_second.values[0];
-                                } else if (interaction_second.customId == 'SkillAssignmentCharacterSelector') {
-                                    charactersSelected = interaction_second.values;
-                                } else {
-                                    archetypesSelected = interaction_second.values;
-                                }
-                                if (alphabetSelected && !skillSelected) {
-                                    if (alphabetSelected.length == 1) {
-                                        var skills = await connection.promise().query('select * from skills where guild_id = ? and name like ?', [interaction_second.guildId, alphabetSelected + '%']);
+                            if (interaction.member.id === interaction_second.member.id) {
+                                if (interaction_second.values[0]) {
+                                    if (interaction_second.customId == 'SkillAssignmentSkillSelector') {
+                                        skillSelected = interaction_second.values[0];
+                                    } else if (interaction_second.customId == 'SkillAssignmentAlphabetSelector') {
+                                        alphabetSelected = interaction_second.values[0];
+                                    } else if (interaction_second.customId == 'SkillAssignmentCharacterSelector') {
+                                        charactersSelected = interaction_second.values;
                                     } else {
-                                        // hmm something is wrong, bail out
+                                        archetypesSelected = interaction_second.values;
                                     }
-                                    var skillsKeyValues = [{ label: 'Select a skill', value: '0' }];
-                                    for (const skill of skills[0]) {
-                                        var thisSkillKeyValue = { label: skill.name, value: skill.id.toString() };
-                                        skillsKeyValues.push(thisSkillKeyValue);
-                                    }
-                                    var skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillAssignmentSkillSelector').setMinValues(1).setMaxValues(1);
-                                    var skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
-                                    if (to_character) {
-                                        await interaction_second.update({ content: 'Please select the following options:', components: [skillSelectRow, characterSelectRow] });
-                                    } else {
-                                        await interaction_second.update({ content: 'Please select the following options:', components: [skillSelectRow, archetypeSelectRow] });
-                                    }
-                                } else if (skillSelected && (charactersSelected || archetypesSelected)) {
-                                    if (charactersSelected) {
-                                        console.log(charactersSelected);
-                                        for (const character_id of charactersSelected) {
-                                            await connection.promise().query('insert ignore into skills_characters (character_id, skill_id) values (?, ?)', [character_id, skillSelected]);
+                                    if (alphabetSelected && !skillSelected) {
+                                        let skills;
+                                        if (alphabetSelected.length == 1) {
+                                            skills = await connection.promise().query('select * from skills where guild_id = ? and name like ?', [interaction_second.guildId, alphabetSelected + '%']);
+                                        } else {
+                                            // hmm something is wrong, bail out
                                         }
-                                    } else {
-                                        for (const archetype_id of archetypesSelected) {
-                                            await connection.promise().query('insert ignore into skills_archetypes (archetype_id, skill_id) values (?, ?)', [archetype_id, skillSelected]);
+                                        let skillsKeyValues = [{ label: 'Select a skill', value: '0' }];
+                                        for (const skill of skills[0]) {
+                                            skillsKeyValues.push({ label: skill.name, value: skill.id.toString() });
                                         }
+                                        let skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillAssignmentSkillSelector').setMinValues(1).setMaxValues(1);
+                                        let skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
+                                        await interaction_second.update({ content: 'Please select the following options:', components: [skillSelectRow, secondSelectRow] });
+                                    } else if (skillSelected && (charactersSelected || archetypesSelected)) {
+                                        if (charactersSelected) {
+                                            console.log(charactersSelected);
+                                            for (const character_id of charactersSelected) {
+                                                await connection.promise().query('insert ignore into skills_characters (character_id, skill_id) values (?, ?)', [character_id, skillSelected]);
+                                            }
+                                        } else {
+                                            for (const archetype_id of archetypesSelected) {
+                                                await connection.promise().query('insert ignore into skills_archetypes (archetype_id, skill_id) values (?, ?)', [archetype_id, skillSelected]);
+                                            }
+                                        }
+                                        await interaction_second.update({ content: 'Successfully assigned skill to characters or archetypes. I\'d tell you which but Alli is lazy.', components: [] });
+                                        await collector.stop();
+                                    } else {
+                                        await interaction_second.deferUpdate();
                                     }
-                                    await interaction_second.update({ content: 'Successfully assigned skill to characters or archetypes. I\'d tell you which but Alli is lazy.', components: [] });
-                                    await collector.stop();
                                 } else {
                                     await interaction_second.deferUpdate();
                                 }
-                            } else {
-                                await interaction_second.deferUpdate();
                             }
                         });
                         collector.on('end', async (collected) => {
@@ -1910,7 +1904,7 @@ client.on('interactionCreate', async (interaction) => {
                     interaction.reply({ content: 'Please create at least one skill first. <3', ephemeral: true });
                 }
             } else if (interaction.options.getSubcommand() == 'unassign') {
-                var to_character = interaction.options.getBoolean('to_character');
+                let to_character = interaction.options.getBoolean('to_character');
                 if (to_character) {
                     var characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
                     if (characters[0].length > 0) {
