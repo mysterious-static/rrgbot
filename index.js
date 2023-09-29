@@ -2712,7 +2712,7 @@ client.on('interactionCreate', async (interaction) => {
                             const buttonActionRow = new ActionRowBuilder()
                                 .addComponents(
                                     new ButtonBuilder().setCustomId(`skillpage-asc-${characterSelected}-1`).setLabel('Skills').setStyle(ButtonStyle.Primary),
-                                    new ButtonBuilder().setCustomId(`inventory-${characterSelected}`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
+                                    new ButtonBuilder().setCustomId(`inventory-asc-${characterSelected}-1`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
                                 );
 
                             let reputation_enabled = await connection.promise().query('select * from game_settings where setting_name = "reputation" and guild_id = ?', [interaction.guildId]);
@@ -3765,7 +3765,7 @@ client.on('interactionCreate', async (interaction) => {
                     const buttonActionRow = new ActionRowBuilder()
                         .addComponents(
                             new ButtonBuilder().setCustomId(`skillpage-asc-${current_character[0][0].character_id}-1`).setLabel('Skills').setStyle(ButtonStyle.Primary),
-                            new ButtonBuilder().setCustomId(`inventory-${current_character[0][0].character_id}`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
+                            new ButtonBuilder().setCustomId(`inventory-asc-${current_character[0][0].character_id}-1`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
                         );
                     // If game settings - reputation enabled, then add the Reputation button too
                     let reputation_enabled = await connection.promise().query('select * from game_settings where setting_name = "reputation" and guild_id = ?', [interaction.guildId]);
@@ -5101,7 +5101,7 @@ client.on('interactionCreate', async (interaction) => {
             const buttonActionRow = new ActionRowBuilder()
                 .addComponents(
                     new ButtonBuilder().setCustomId(`skillpage-asc-${character_id}-1`).setLabel('Skills').setStyle(ButtonStyle.Primary),
-                    new ButtonBuilder().setCustomId(`inventory-${character_id}`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
+                    new ButtonBuilder().setCustomId(`inventory-asc-${character_id}-1`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
                 );
 
             let reputation_enabled = await connection.promise().query('select * from game_settings where setting_name = "reputation" and guild_id = ?', [interaction.guildId]);
@@ -5113,22 +5113,19 @@ client.on('interactionCreate', async (interaction) => {
             let sort = interaction.customId.split('-')[1];
             let character_id = interaction.customId.split('-')[2];
             let skill_id = interaction.customId.split('-')[3];
-            console.log(sort + ' ' + character_id + ' ' + skill_id);
             let skills = await connection.promise().query(`select distinct s.* from skills s left outer join skills_characters sc on s.id = sc.skill_id left outer join skills_archetypes sa on s.id = sa.skill_id left outer join characters_archetypes ca on sa.archetype_id = ca.archetype_id where sc.character_id = ? or ca.character_id = ? order by s.id ${sort}`, [character_id, character_id]);
-            console.log(skills.sql);
             let msg;
-            let paginate = false;
             let firstDisplayedId = false;
             let lastDisplayedId = false;
-            let maxSkillId;
-            let minSkillId;
+            let maxId = false;
+            let minId = false;
             var msgStart = `__Skills__\n`;
             if (skills[0].length > 0) {
                 msg = ''
                 let process_test_msg = true;
                 for (const thisSkill of skills[0]) {
-                    maxSkillId = (maxSkillId ? Math.max(maxSkillId, thisSkill.id) : thisSkill.id);
-                    minSkillId = (minSkillId ? Math.min(minSkillId, thisSkill.id) : thisSkill.id);
+                    maxId = (maxId ? Math.max(maxId, thisSkill.id) : thisSkill.id);
+                    minId = (minId ? Math.min(minId, thisSkill.id) : thisSkill.id);
                     if (sort == 'asc' && thisSkill.id >= skill_id || sort == 'desc' && thisSkill.id <= skill_id) {
                         if (process_test_msg) {
                             let test_msg;
@@ -5137,7 +5134,7 @@ client.on('interactionCreate', async (interaction) => {
                             } else {
                                 test_msg = msg.concat(`**${thisSkill.name}**: ${thisSkill.description} (${thisSkill.type})\n`)
                             }
-                            if (test_msg.length > 1989) {
+                            if (test_msg.length > 1989) { // 2000 characters minus "__Skills__\n"
                                 process_test_msg = false;
                             } else {
                                 msg = test_msg;
@@ -5148,54 +5145,82 @@ client.on('interactionCreate', async (interaction) => {
                     }
                 }
                 msg = msgStart.concat(msg);
-                if (minSkillId < firstDisplayedId || maxSkillId > lastDisplayedId) {
-                    paginate = true;
-                }
             } else {
                 msg = `You don't have any skills! Hmm. Maybe check with an Orchestrator if you weren't expecting this.`;
             }
-            let paginationActionRow = false;
-            if (paginate) {
-                paginationActionRow = new ActionRowBuilder();
-                if (minSkillId < firstDisplayedId) {
+            let components = [];
+            if (minId < firstDisplayedId || maxId > lastDisplayedId) {
+                let paginationActionRow = new ActionRowBuilder();
+                if (minId < firstDisplayedId) {
                     paginationActionRow.addComponents(new ButtonBuilder().setCustomId(`skillpage-desc-${character_id}-${firstDisplayedId - 1}`).setLabel('◀️').setStyle(ButtonStyle.Primary));
                 }
-                if (maxSkillId > lastDisplayedId) {
+                if (maxId > lastDisplayedId) {
                     paginationActionRow.addComponents(new ButtonBuilder().setCustomId(`skillpage-asc-${character_id}-${lastDisplayedId + 1}`).setLabel('▶️').setStyle(ButtonStyle.Primary));
                 }
+                components.push(paginationActionRow);
             }
             const buttonActionRow = new ActionRowBuilder()
                 .addComponents(
                     new ButtonBuilder().setCustomId(`sheet-${character_id}`).setLabel('Sheet').setStyle(ButtonStyle.Primary),
-                    new ButtonBuilder().setCustomId(`inventory-${character_id}`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
+                    new ButtonBuilder().setCustomId(`inventory-asc-${character_id}-1`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
                 );
+            components.push(buttonActionRow);
             let reputation_enabled = await connection.promise().query('select * from game_settings where setting_name = "reputation" and guild_id = ?', [interaction.guildId]);
             if (reputation_enabled[0].length > 0 && reputation_enabled[0][0].setting_value == true) {
                 buttonActionRow.addComponents(new ButtonBuilder().setCustomId(`reputation-${character_id}`).setLabel('Reputation').setStyle(ButtonStyle.Primary));
             }
             if (paginationActionRow) {
-                await interaction.update({ content: msg, components: [paginationActionRow, buttonActionRow] });
-            } else {
-                await interaction.update({ content: msg, components: [buttonActionRow] });
+                await interaction.update({ content: msg, components: [components] });
             }
         } else if (interaction.customId.startsWith('inventory-')) {
-            let character_id = interaction.customId.split('-')[1];
-            let character_items = await connection.promise().query('select i.*, ci.quantity from items i join characters_items ci on i.id = ci.item_id where ci.character_id = ?', [character_id]);
-            let msg;
-            if (character_items[0].length > 0) {
-                msg = '__Items__\n';
-                for (const thisItem of character_items[0]) {
-                    let test_msg = msg.concat(`**${thisItem.name}**: ${thisItem.description} *(x${thisItem.quantity})*\n`);
-                    if (test_msg.length > 2000) {
-                        //paginate
-                    } else {
-                        msg = test_msg;
+            let sort = interaction.customId.split('-')[1];
+            let character_id = interaction.customId.split('-')[2];
+            let item_id = interaction.customId.split('-')[3];
+            let items = await connection.promise().query(`select i.*, ci.quantity from items i join characters_items ci on i.id = ci.item_id where ci.character_id = ? order by i.id ${sort}`, [character_id]);
+            let msg = '';
+            let firstDisplayedId = false;
+            let lastDisplayedId = false;
+            let maxId = false;
+            let minId = false;
+            var msgStart = `__Items__\n`;
+            if (items[0].length > 0) {
+                let process_test_msg = true; //`**${thisItem.name}**: ${thisItem.description} *(x${thisItem.quantity})*\n`
+                for (const thisItem of items[0]) {
+                    maxId = (maxId ? Math.max(maxId, thisItem.id) : thisItem.id);
+                    minId = (minId ? Math.min(minId, thisItem.id) : thisItem.id);
+                    if (sort == 'asc' && thisItem.id >= item_id || sort == 'desc' && thisItem.id <= item_id) {
+                        if (process_test_msg) {
+                            let test_msg;
+                            if (sort == 'desc') {
+                                test_msg = (`**${thisItem.name}**: ${thisItem.description} *(x${thisItem.quantity})*\n`).concat(msg);
+                            } else {
+                                test_msg = msg.concat(`**${thisItem.name}**: ${thisItem.description} *(x${thisItem.quantity})*\n`)
+                            }
+                            if (test_msg.length > 1990) { // 2000 characters minus "__Items__\n"
+                                process_test_msg = false;
+                            } else {
+                                msg = test_msg;
+                                firstDisplayedId = (firstDisplayedId ? Math.min(firstDisplayedId, thisItem.id) : thisItem.id);
+                                lastDisplayedId = (lastDisplayedId ? Math.max(lastDisplayedId, thisItem.id) : thisItem.id);
+                            }
+                        }
                     }
                 }
+                msg = msgStart.concat(msg);
             } else {
                 msg = `Your inventory is empty. If you believe you have received this message in error, please contact an Orchestrator.`;
             }
-
+            let components = [];
+            if (minId < firstDisplayedId || maxId > lastDisplayedId) {
+                let paginationActionRow = new ActionRowBuilder();
+                if (minId < firstDisplayedId) {
+                    paginationActionRow.addComponents(new ButtonBuilder().setCustomId(`inventory-desc-${character_id}-${firstDisplayedId - 1}`).setLabel('◀️').setStyle(ButtonStyle.Primary));
+                }
+                if (maxId > lastDisplayedId) {
+                    paginationActionRow.addComponents(new ButtonBuilder().setCustomId(`inventory-asc-${character_id}-${lastDisplayedId + 1}`).setLabel('▶️').setStyle(ButtonStyle.Primary));
+                }
+                components.push(paginationActionRow);
+            }
             const buttonActionRow = new ActionRowBuilder()
                 .addComponents(
                     new ButtonBuilder().setCustomId(`sheet-${character_id}`).setLabel('Sheet').setStyle(ButtonStyle.Primary),
@@ -5205,7 +5230,7 @@ client.on('interactionCreate', async (interaction) => {
             if (reputation_enabled[0].length > 0 && reputation_enabled[0][0].setting_value == true) {
                 buttonActionRow.addComponents(new ButtonBuilder().setCustomId(`reputation-${character_id}`).setLabel('Reputation').setStyle(ButtonStyle.Primary));
             }
-            await interaction.update({ content: msg, components: [buttonActionRow] });
+            await interaction.update({ content: msg, components: [components] });
         } else if (interaction.customId.startsWith('reputation-')) {
             let character_id = interaction.customId.split('-')[1];
             let character_reputations = await connection.promise().query('select r.*, cr.value as characterStanding from reputations r join characters_reputations cr on r.id = cr.reputation_id left outer join characters_characterflags cc on (r.visibility = "cflag" and r.cwflag_id = cc.characterflag_id) left outer join worldflags w on (r.visibility = "wflag" and r.cwflag_id = w.id) where cr.character_id = ? and (r.visibility = "always" or (r.visibility = "cflag" and cc.value is not null and cc.value >= r.cwflag_value) or (r.visibility = "wflag" and w.value is not null and w.value >= r.cwflag_value))', [character_id]); // Filter this by cflag visibility
@@ -5230,7 +5255,7 @@ client.on('interactionCreate', async (interaction) => {
                 .addComponents(
                     new ButtonBuilder().setCustomId(`sheet-${character_id}`).setLabel('Sheet').setStyle(ButtonStyle.Primary),
                     new ButtonBuilder().setCustomId(`skillpage-asc-${character_id}-1`).setLabel('Skills').setStyle(ButtonStyle.Primary),
-                    new ButtonBuilder().setCustomId(`inventory-${character_id}`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
+                    new ButtonBuilder().setCustomId(`inventory-asc-${character_id}-1`).setLabel('Inventory').setStyle(ButtonStyle.Primary)
                 );
             await interaction.update({ content: msg, components: [buttonActionRow] });
         }
