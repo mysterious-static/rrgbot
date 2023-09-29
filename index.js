@@ -5114,14 +5114,13 @@ client.on('interactionCreate', async (interaction) => {
             let character_id = interaction.customId.split('-')[2];
             let skill_id = interaction.customId.split('-')[3];
             let skills = await connection.promise().query(`select distinct s.* from skills s left outer join skills_characters sc on s.id = sc.skill_id left outer join skills_archetypes sa on s.id = sa.skill_id left outer join characters_archetypes ca on sa.archetype_id = ca.archetype_id where sc.character_id = ? or ca.character_id = ? order by s.id ${sort}`, [character_id, character_id]);
-            let msg;
+            let msg = '';
             let firstDisplayedId = false;
             let lastDisplayedId = false;
             let maxId = false;
             let minId = false;
-            var msgStart = `__Skills__\n`;
+            let msgStart = `__Skills__\n`;
             if (skills[0].length > 0) {
-                msg = ''
                 let process_test_msg = true;
                 for (const thisSkill of skills[0]) {
                     maxId = (maxId ? Math.max(maxId, thisSkill.id) : thisSkill.id);
@@ -5180,7 +5179,7 @@ client.on('interactionCreate', async (interaction) => {
             let lastDisplayedId = false;
             let maxId = false;
             let minId = false;
-            var msgStart = `__Items__\n`;
+            let msgStart = `__Items__\n`;
             if (items[0].length > 0) {
                 let process_test_msg = true; //`**${thisItem.name}**: ${thisItem.description} *(x${thisItem.quantity})*\n`
                 for (const thisItem of items[0]) {
@@ -5240,9 +5239,8 @@ client.on('interactionCreate', async (interaction) => {
             let lastDisplayedId = false;
             let maxId = false;
             let minId = false;
-            var msgStart = `__Reputations__\n`;
+            let msgStart = `__Reputations__\n`;
             if (character_reputations[0].length > 0) {
-                msg = `__Reputations__\n`
                 for (const thisReputation of character_reputations[0]) {
                     maxId = (maxId ? Math.max(maxId, thisReputation.id) : thisReputation.id);
                     minId = (minId ? Math.min(minId, thisReputation.id) : thisReputation.id);
