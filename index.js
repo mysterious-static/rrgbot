@@ -3228,7 +3228,7 @@ client.on('interactionCreate', async (interaction) => {
                             }
                             const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('EffectViewTierSelector').setMinValues(1).setMaxValues(1);
                             const selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                            message = await interaction.reply({ content: 'Please select a reputation tier:', components: [selectRow] });
+                            message = await interaction.reply({ content: 'Please select a reputation tier:', components: [selectRow], ephemeral:true });
                         } else {
                             await interaction.reply({ content: 'There is no reputation tier with an effect in this reputation. Sorry.', ephemeral: true });
                         }
@@ -3239,7 +3239,7 @@ client.on('interactionCreate', async (interaction) => {
                         }
                         const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('EffectViewRepSelector').setMinValues(1).setMaxValues(1);
                         const selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                        message = await interaction.reply({ content: 'Please select a reputation tier:', components: [selectRow] });
+                        message = await interaction.reply({ content: 'Please select a reputation:', components: [selectRow], ephemeral: true});
 
                     }
                     if (message) {
@@ -3255,7 +3255,7 @@ client.on('interactionCreate', async (interaction) => {
                                         }
                                         const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('EffectViewTierSelector').setMinValues(1).setMaxValues(1);
                                         const selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                                        message = await interaction.reply({ content: 'Please select a reputation tier:', components: [selectRow] });
+                                        message = await interaction_second.update({ content: 'Please select a reputation tier:', components: [selectRow], ephemeral: true });
                                     } else {
                                         await interaction_second.update({ content: 'There is no reputation tier with an effect in this reputation. Sorry.', ephemeral: true });
                                         collector.stop();
