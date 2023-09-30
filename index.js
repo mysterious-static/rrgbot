@@ -1221,7 +1221,7 @@ client.on('interactionCreate', async (interaction) => {
                                     let names = '';
                                     for (const player of players[0]) {
                                         let user = await client.users.fetch(player.user_id);
-                                        names += '@' + user + ' ';
+                                        names += user;
                                         if (whisper.locked == 1) {
                                             channel.permissionOverwrites.create(user, { ViewChannel: true });
                                         } else {
