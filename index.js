@@ -2268,7 +2268,7 @@ client.on('interactionCreate', async (interaction) => {
                             if (interaction_second.member.id === interaction.member.id) {
                                 if (interaction_second.customId === 'EffectViewSkillSelector') {
                                     let skill = await connection.promise().query('select * from skills where id = ?', interaction_second.values[0]);
-                                    selectedSkillName = skill[0][0].threshold_name;
+                                    selectedSkillName = skill[0][0].name;
                                     let effects = await connection.promise().query('select ifnull(count(ep.id), 0) as prereq_count, e.* from effects e join skills_effects se on e.id = se.effect_id left outer join effects_prereqs ep on e.id = ep.effect_id where se.skill_id = ? group by e.id', [interaction_second.values[0]]);
                                     let embed = new EmbedBuilder()
                                         .setTitle(`Effects for ${selectedSkillName}`);
