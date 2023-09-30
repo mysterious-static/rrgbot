@@ -565,6 +565,13 @@ client.on('ready', async () => {
         .addSubcommand(subcommand =>
             subcommand.setName('addeffect')
                 .setDescription('Add effect to targetable item.'))
+        .addSubcommand(subcommand =>
+            subcommand.setName('vieweffects')
+                .setDescription('View effects on an item.')
+                .addStringOption(option =>
+                    option.setName('name')
+                        .setDescription('The name of the item.')
+                        .setRequired(true)))
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
     let addworldstat = new SlashCommandBuilder().setName('addworldstat')
@@ -2698,6 +2705,129 @@ client.on('interactionCreate', async (interaction) => {
                 }
                 // Then select action ,visiblity, modal as with reputation tier.
                 // Ask whether the effect will hit the caster or the target
+            } else if (interaction.options.getSubcommand() === 'vieweffects') {
+                let selectedItemName;
+                let item_partial = interaction.options.getString('name');
+                let item = await connection.promise().query('select * from items where guild_id = ? and name like ?', [interaction.guildId, '%' + item_partial + '%']);
+                if (item[0].length > 0) {
+                    let message = false;
+                    if (item[0].length == 1) {
+                        selectedItemName = item[0][0].name;
+                        let effects = await connection.promise().query('select ifnull(count(ep.id), 0) as prereq_count, e.* from effects e join items_effects ie on e.id = ie.effect_id left outer join effects_prereqs ep on e.id = ep.effect_id where ie.item_id = ? group by e.id', [item[0][0].id]);
+                        let embed = new EmbedBuilder()
+                            .setTitle(`Effects for ${selectedItemName}`);
+                        let effectsString = '';
+                        for (const effect of effects[0]) {
+                            if (effect.type == 'item') {
+                                let item = await connection.promise().query('select * from items where id = ?', [effect.type_id]);
+                                effectsString += `Modify item count for ${item[0][0].name} by ${effect.type_qty}\n`;
+                            } else if (effect.type == 'wflag_inc') {
+                                let wflag = await connection.promise().query('select * from worldflags where id = ?', [effect.type_id]);
+                                effectsString += `Increment value for worldflag ${wflag[0][0].name} by ${effect.type_qty}`;
+                            } else if (effect.type == 'cflag_inc') {
+                                let cflag = await connection.promise().query('select * from characterflags where id = ?', [effect.type_id]);
+                                effectsString += `Increment value for characterflag ${cflag[0][0].name} by ${effect.type_qty}`;
+                            } else if (effect.type == 'wflag_set') {
+                                let wflag = await connection.promise().query('select * from worldflags where id = ?', [effect.type_id]);
+                                effectsString += `Set value for worldflag ${wflag[0][0].name} to ${effect.type_qty}`;
+                            } else if (effect.type == 'cflag_set') {
+                                let cflag = await connection.promise().query('select * from characterflags where id = ?', [effect.type_id]);
+                                effectsString += `Set value for characterflag ${cflag[0][0].name} to ${effect.type_qty}`;
+                            } else if (effect.type == 'skill') {
+                                let skill = await connection.promise().query('select * from skills where id = ?', [effect.type_id]);
+                                effectsString += `Grant skill ${skill[0][0].name}`;
+                            } else if (effect.type == 'archetype') {
+                                let archetype = await connection.promise().query('select * from archetypes where id = ?', [effect.type_id]);
+                                effectsString += `Grant archetype ${archetype[0][0].name}`;
+                            } else if (effect.type == 'reputation_inc') {
+                                let reputation = await connection.promise().query('select * from reputations where id = ?', [effect.type_id]);
+                                effectsString += `Increment value for reputation ${reputation[0][0].name} by ${effect.type_qty}`;
+                            } else if (effect.type == 'stat_inc') {
+                                let stat = await connection.promise().query('select * from stats where id = ?', [effect.type_id]);
+                                effectsString += `Increment value for stat ${stat[0][0].name} by ${effect.type_qty}`;
+                            } else if (effect.type == 'reputation_set') {
+                                let reputation = await connection.promise().query('select * from reputations where id = ?', [effect.type_id]);
+                                effectsString += `Increment value for reputation ${reputation[0][0].name} by ${effect.type_qty}`;
+                            } else if (effect.type == 'stat_set') {
+                                let stat = await connection.promise().query('select * from stats where id = ?', [effect.type_id]);
+                                effectsString += `Increment value for stat ${stat[0][0].name} by ${effect.type_qty}`;
+                            } else if (effect.type == 'message') {
+                                effectsString += `Send message \`${effect.typedata}\``;
+                            }
+                            effectsString += ` to ${effect.target} (${effect.prereq_count} prereqs)\n`;
+                        }
+                        embed.setDescription(effectsString);
+                        await interaction.reply({ content: '', embeds: [embed], ephemeral: true });
+                    } else {
+                        let keyValues = [];
+                        for (const thisItem of item[0]) {
+                            keyValues.push({ label: thisItem.name, value: thisItem.id.toString() });
+                        }
+                        const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('EffectViewItemSelector').setMinValues(1).setMaxValues(1);
+                        const selectRow = new ActionRowBuilder().addComponents(selectComponent);
+                        message = await interaction.reply({ content: 'Please select an item:', components: [selectRow], ephemeral: true });
+
+                    }
+                    if (message) {
+                        let collector = message.createMessageComponentCollector();
+                        collector.on('collect', async (interaction_second) => {
+                            if (interaction_second.member.id === interaction.member.id) {
+                                if (interaction_second.customId === 'EffectViewItemSelector') {
+                                    let item = await connection.promise().query('select * from items where id = ?', interaction_second.values[0]);
+                                    selectedItemName = item[0][0].name;
+                                    let effects = await connection.promise().query('select ifnull(count(ep.id), 0) as prereq_count, e.* from effects e join items_effects ie on e.id = ie.effect_id left outer join effects_prereqs ep on e.id = ep.effect_id where ie.skill_id = ? group by e.id', [interaction_second.values[0]]);
+                                    let embed = new EmbedBuilder()
+                                        .setTitle(`Effects for ${selectedItemName}`);
+                                    let effectsString = '';
+                                    for (const effect of effects[0]) {
+                                        if (effect.type == 'item') {
+                                            let item = await connection.promise().query('select * from items where id = ?', [effect.type_id]);
+                                            effectsString += `Modify item count for ${item[0][0].name} by ${effect.type_qty}\n`;
+                                        } else if (effect.type == 'wflag_inc') {
+                                            let wflag = await connection.promise().query('select * from worldflags where id = ?', [effect.type_id]);
+                                            effectsString += `Increment value for worldflag ${wflag[0][0].name} by ${effect.type_qty}`;
+                                        } else if (effect.type == 'cflag_inc') {
+                                            let cflag = await connection.promise().query('select * from characterflags where id = ?', [effect.type_id]);
+                                            effectsString += `Increment value for characterflag ${cflag[0][0].name} by ${effect.type_qty}`;
+                                        } else if (effect.type == 'wflag_set') {
+                                            let wflag = await connection.promise().query('select * from worldflags where id = ?', [effect.type_id]);
+                                            effectsString += `Set value for worldflag ${wflag[0][0].name} to ${effect.type_qty}`;
+                                        } else if (effect.type == 'cflag_set') {
+                                            let cflag = await connection.promise().query('select * from characterflags where id = ?', [effect.type_id]);
+                                            effectsString += `Set value for characterflag ${cflag[0][0].name} to ${effect.type_qty}`;
+                                        } else if (effect.type == 'skill') {
+                                            let skill = await connection.promise().query('select * from skills where id = ?', [effect.type_id]);
+                                            effectsString += `Grant skill ${skill[0][0].name}`;
+                                        } else if (effect.type == 'archetype') {
+                                            let archetype = await connection.promise().query('select * from archetypes where id = ?', [effect.type_id]);
+                                            effectsString += `Grant archetype ${archetype[0][0].name}`;
+                                        } else if (effect.type == 'reputation_inc') {
+                                            let reputation = await connection.promise().query('select * from reputations where id = ?', [effect.type_id]);
+                                            effectsString += `Increment value for reputation ${reputation[0][0].name} by ${effect.type_qty}`;
+                                        } else if (effect.type == 'stat_inc') {
+                                            let stat = await connection.promise().query('select * from stats where id = ?', [effect.type_id]);
+                                            effectsString += `Increment value for stat ${stat[0][0].name} by ${effect.type_qty}`;
+                                        } else if (effect.type == 'reputation_set') {
+                                            let reputation = await connection.promise().query('select * from reputations where id = ?', [effect.type_id]);
+                                            effectsString += `Increment value for reputation ${reputation[0][0].name} by ${effect.type_qty}`;
+                                        } else if (effect.type == 'stat_set') {
+                                            let stat = await connection.promise().query('select * from stats where id = ?', [effect.type_id]);
+                                            effectsString += `Increment value for stat ${stat[0][0].name} by ${effect.type_qty}`;
+                                        } else if (effect.type == 'message') {
+                                            effectsString += `Send message \`${effect.typedata}\``;
+                                        }
+                                        effectsString += ` to ${effect.target} (${effect.prereq_count} prereqs)\n`;
+                                    }
+                                    embed.setDescription(effectsString);
+                                    await interaction_second.update({ content: '', components: [], embeds: [embed] });
+                                    await collector.stop();
+                                }
+                            }
+                        });
+                    }
+                } else {
+                    await interaction.reply({ content: 'No item in this game matched the name you gave. Please try again.', ephemeral: true });
+                }
             }
         } else if (interaction.commandName === 'addworldstat') {
             let name = interaction.options.getString('name');
