@@ -626,9 +626,6 @@ client.on('ready', async () => {
                 .setRequired(true))
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
-    let populatewhisper = new SlashCommandBuilder()
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
     let whisper = new SlashCommandBuilder().setName('whisper')
         .setDescription('Whisper management.')
         .addSubcommand(subcommand =>
