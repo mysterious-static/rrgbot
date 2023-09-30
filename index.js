@@ -3228,7 +3228,7 @@ client.on('interactionCreate', async (interaction) => {
                             }
                             const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('EffectViewTierSelector').setMinValues(1).setMaxValues(1);
                             const selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                            message = await interaction.reply({ content: 'Please select a reputation tier:', components: [selectRow], ephemeral:true });
+                            message = await interaction.reply({ content: 'Please select a reputation tier:', components: [selectRow], ephemeral: true });
                         } else {
                             await interaction.reply({ content: 'There is no reputation tier with an effect in this reputation. Sorry.', ephemeral: true });
                         }
@@ -3239,7 +3239,7 @@ client.on('interactionCreate', async (interaction) => {
                         }
                         const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('EffectViewRepSelector').setMinValues(1).setMaxValues(1);
                         const selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                        message = await interaction.reply({ content: 'Please select a reputation:', components: [selectRow], ephemeral: true});
+                        message = await interaction.reply({ content: 'Please select a reputation:', components: [selectRow], ephemeral: true });
 
                     }
                     if (message) {
@@ -3262,6 +3262,7 @@ client.on('interactionCreate', async (interaction) => {
                                     }
                                 } else if (interaction_second.customId === 'EffectViewTierSelector') {
                                     let effects = await connection.promise().query('select e.* from effects e join reputations_tiers_effects rte on e.id = rte.effect_id where rte.reputationtier_id = ?', [interaction_second.values[0]]);
+                                    console.log(effects);
                                     let embed = new EmbedBuilder()
                                         .setTitle('Effects for selected reputation tier');
                                     let effectsString = '';
