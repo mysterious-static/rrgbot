@@ -2775,7 +2775,7 @@ client.on('interactionCreate', async (interaction) => {
                                 if (interaction_second.customId === 'EffectViewItemSelector') {
                                     let item = await connection.promise().query('select * from items where id = ?', interaction_second.values[0]);
                                     selectedItemName = item[0][0].name;
-                                    let effects = await connection.promise().query('select ifnull(count(ep.id), 0) as prereq_count, e.* from effects e join items_effects ie on e.id = ie.effect_id left outer join effects_prereqs ep on e.id = ep.effect_id where ie.skill_id = ? group by e.id', [interaction_second.values[0]]);
+                                    let effects = await connection.promise().query('select ifnull(count(ep.id), 0) as prereq_count, e.* from effects e join items_effects ie on e.id = ie.effect_id left outer join effects_prereqs ep on e.id = ep.effect_id where ie.item_id = ? group by e.id', [interaction_second.values[0]]);
                                     let embed = new EmbedBuilder()
                                         .setTitle(`Effects for ${selectedItemName}`);
                                     let effectsString = '';
