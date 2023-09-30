@@ -4762,7 +4762,8 @@ client.on('interactionCreate', async (interaction) => {
                                             characters = await connection.promise().query('select * from characters where guild_id = ? and location_id = ? and id != ?', [interaction.guildId, characterDetails[0][0].location_id, characterDetails[0][0].id]);
                                         }
                                     }
-                                    if (!(selectedItem.self_targetable && !selectedItem.other_targetable)) {
+                                    if (selectedItem.self_targetable == 0 && selectedItem.other_targetable == 1) {
+                                        console.log(selectedItem);
                                         if (characters[0].length > 0) {
                                             let charactersAlphabetical;
                                             let characterSelectComponent;
