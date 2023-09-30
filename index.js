@@ -4699,7 +4699,7 @@ client.on('interactionCreate', async (interaction) => {
                     let characterDetails = await connection.promise().query('select * from characters where id = ?', [current_character[0][0].character_id]);
                     if (items[0].length > 0) {
                         let itemsKeyValues = [];
-                        for (const item of items) {
+                        for (const item of items[0]) {
                             itemsKeyValues.push({ label: item.name, value: item.id.toString() });
                         }
                         const itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemUseSelector').setMinValues(1).setMaxValues(1);
