@@ -1898,8 +1898,10 @@ client.on('interactionCreate', async (interaction) => {
             } else if (interaction.options.getSubcommand() === 'unassign') {
                 let to_character = interaction.options.getBoolean('to_character');
                 let unassignSkillRow;
+                let characters = false;
+                let archetypes = false;
                 if (to_character) {
-                    let characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
+                    characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
                     if (characters[0].length > 0) {
                         let charactersKeyValues = [];
                         for (const character of characters[0]) {
@@ -1919,7 +1921,7 @@ client.on('interactionCreate', async (interaction) => {
                         unassignSkillRow = new ActionRowBuilder().addComponents(unassignSkillComponent);
                     }
                 }
-                if ((to_character && characters[0].length > 0) || archetypes.length > 0) {
+                if ((to_character && characters && characters[0].length > 0) || (archetypes && archetypes.length > 0)) {
                     let message = await interaction.reply({ content: 'Select the archetype/character to remove skill from.', components: [unassignSkillRow], ephemeral: true });
                     let collector = message.createMessageComponentCollector();
                     let characterSelected;
@@ -3914,7 +3916,7 @@ client.on('interactionCreate', async (interaction) => {
                 let current_character = await connection.promise().query('select players_characters.character_id, c.name from players_characters join players p on p.id = players_characters.player_id join characters c on c.id = players_characters.character_id where p.user_id = ? and p.guild_id = ? and players_characters.active = 1', [interaction.user.id, interaction.guildId]);
                 if (current_character[0].length > 0) {
                     if (interaction.options.getSubcommand() === 'display') {
-                        let skills = await connection.promise().query('select distinct s.* from skills s left outer join skills_characters sc on sc.skill_id = s.id left outer join skills_archetypes sa on sa.skill_id = s.id left outer join characters_archetypes ca on sa.archetype_id = ca.archetype_id where where sc.character_id = ? or ca.character_id = ? order by s.id asc', [current_character[0][0].character_id, current_character[0][0].character_id]);
+                        let skills = await connection.promise().query('select distinct s.* from skills s left outer join skills_characters sc on sc.skill_id = s.id left outer join skills_archetypes sa on sa.skill_id = s.id left outer join characters_archetypes ca on sa.archetype_id = ca.archetype_id where sc.character_id = ? or ca.character_id = ? order by s.id asc', [current_character[0][0].character_id, current_character[0][0].character_id]);
                         if (skills[0].length > 0) {
                             let skillsKeyValues = [];
                             for (const skill of skills[0]) {
