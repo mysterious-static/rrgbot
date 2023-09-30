@@ -3215,11 +3215,14 @@ client.on('interactionCreate', async (interaction) => {
                 });
 
             } else if (interaction.options.getSubcommand() === 'vieweffects') {
+                let selectedReputationName;
+                let selectedTierName;
                 let rep_partial = interaction.options.getString('reputation');
                 let reputation = await connection.promise().query('select * from reputations where guild_id = ? and name like ?', [interaction.guildId, '%' + rep_partial + '%']);
                 if (reputation[0].length > 0) {
                     let message = false;
                     if (reputation[0].length == 1) {
+                        selectedReputationName = reputation[0][0].name;
                         let tiers = await connection.promise().query('select distinct rt.* from reputations_tiers rt join reputations_tiers_effects rte on rt.id = rte.reputationtier_id where rte.effect_id is not null and rt.reputation_id = ?', reputation[0][0].id);
                         let keyValues = [];
                         if (tiers[0].length > 0) {
@@ -3261,6 +3264,7 @@ client.on('interactionCreate', async (interaction) => {
                                         collector.stop();
                                     }
                                 } else if (interaction_second.customId === 'EffectViewTierSelector') {
+                                    console.log(interaction_second);
                                     let effects = await connection.promise().query('select ifnull(count(ep.id), 0) as prereq_count, e.* from effects e join reputations_tiers_effects rte on e.id = rte.effect_id left outer join effects_prereqs ep on e.id = ep.effect_id where rte.reputationtier_id = ? group by e.id', [interaction_second.values[0]]);
                                     let embed = new EmbedBuilder()
                                         .setTitle('Effects for selected reputation tier');
