@@ -3644,7 +3644,7 @@ client.on('interactionCreate', async (interaction) => {
                                     await interaction_second.update({ content: 'Please select a skill:', components: [skillSelectRow], ephemeral: true });
                                 }
                             } else if (type == 'item') {
-                                let items = await connection.promise().query('select distinct i.* from items i inner join items_effects ie on i.id = ie.skill_id where guild_id = ?', [interaction.guildId]);
+                                let items = await connection.promise().query('select distinct i.* from items i inner join items_effects ie on i.id = ie.item_id where guild_id = ?', [interaction.guildId]);
                                 let itemSelectComponent;
                                 if (items[0].length > 0) {
                                     if (items[0].length <= 25) {
