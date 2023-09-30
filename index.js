@@ -4569,7 +4569,7 @@ client.on('interactionCreate', async (interaction) => {
                 if (interaction.options.getSubcommand() === 'display') {
                     let current_character = await connection.promise().query('select pc.character_id, c.name from players_characters pc join players p on p.id = pc.player_id join characters c on c.id = pc.character_id where p.user_id = ? and p.guild_id = ? and pc.active = 1', [interaction.user.id, interaction.guildId]);
                     if (current_character[0].length > 0) {
-                        let items = await connection.promise().query('select i.* from items i join characters_items ci on ci.item_id = i.id where ci.character_id = ?', [current_character[0][0].character_id]);
+                        let items = await connection.promise().query('select i.* from items i join characters_items ci on ci.item_id = i.id where ci.character_id = ? and ci.quantity > 0', [current_character[0][0].character_id]);
                         if (items[0].length > 0) {
                             let itemsKeyValues = [];
                             for (const item of items[0]) {
@@ -4601,7 +4601,7 @@ client.on('interactionCreate', async (interaction) => {
                     if (quantity > 0) {
                         let current_character = await connection.promise().query('select c.location_id, pc.character_id, c.name, c.id from players_characters pc join characters c on c.id = pc.character_id join players p on p.id = pc.player_id where p.user_id = ? and p.guild_id = ? and pc.active = 1', [interaction.user.id, interaction.guildId]);
                         if (current_character[0].length > 0) {
-                            let items = await connection.promise().query('select i.* from items i join characters_items ci on ci.item_id = i.id where ci.character_id = ?', [current_character[0][0].id]);
+                            let items = await connection.promise().query('select i.* from items i join characters_items ci on ci.item_id = i.id where ci.character_id = ? and ci.quantity > 0', [current_character[0][0].id]);
                             if (items[0].length > 0) {
                                 let itemsKeyValues = [];
                                 for (const item of items[0]) {
@@ -4693,7 +4693,7 @@ client.on('interactionCreate', async (interaction) => {
                     }
                 } else if (interaction.options.getSubcommand() === 'use') {
                     let current_character = await connection.promise().query('select pc.character_id, c.name from players_characters pc join players p on p.id = pc.player_id join characters c on c.id = pc.character_id where p.user_id = ? and p.guild_id = ? and pc.active = 1', [interaction.user.id, interaction.guildId]);
-                    let items = await connection.promise().query('select i.* from characters_items ci join items i on ci.item_id = i.id where ci.character_id = ? and (i.other_targetable = 1 or i.self_targetable = 1)', [current_character[0][0].character_id]);
+                    let items = await connection.promise().query('select i.* from characters_items ci join items i on ci.item_id = i.id where ci.character_id = ? and (i.other_targetable = 1 or i.self_targetable = 1) and ci.quantity > 0', [current_character[0][0].character_id]);
                     let selectedItem;
                     let location_aware;
                     let characterDetails = await connection.promise().query('select * from characters where id = ?', [current_character[0][0].character_id]);
@@ -5658,7 +5658,7 @@ client.on('interactionCreate', async (interaction) => {
             let sort = interaction.customId.split('-')[1];
             let character_id = interaction.customId.split('-')[2];
             let item_id = interaction.customId.split('-')[3];
-            let items = await connection.promise().query(`select i.*, ci.quantity from items i join characters_items ci on i.id = ci.item_id where ci.character_id = ? order by i.id ${sort}`, [character_id]);
+            let items = await connection.promise().query(`select i.*, ci.quantity from items i join characters_items ci on i.id = ci.item_id where ci.character_id = ? and ci.quantity > 0 order by i.id ${sort}`, [character_id]);
             let msg = '';
             let firstDisplayedId = false;
             let lastDisplayedId = false;
