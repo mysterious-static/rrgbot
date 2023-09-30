@@ -970,7 +970,6 @@ client.on('ready', async () => {
         active.toJSON(),
         whispercategory.toJSON(),
         whisper.toJSON(),
-        populatewhisper.toJSON(),
         addticketcategory.toJSON(),
         ticketchannel.toJSON(),
         auditchannel.toJSON(),
