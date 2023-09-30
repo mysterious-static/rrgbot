@@ -3644,7 +3644,7 @@ client.on('interactionCreate', async (interaction) => {
                                     await interaction_second.update({ content: 'Please select a skill:', components: [skillSelectRow], ephemeral: true });
                                 }
                             } else if (type == 'item') {
-                                let items = await connection.promise().query('select distinct i.* from items i inner join items_effects ie on s.id = ie.skill_id where guild_id = ?', [interaction.guildId]);
+                                let items = await connection.promise().query('select distinct i.* from items i inner join items_effects ie on i.id = ie.skill_id where guild_id = ?', [interaction.guildId]);
                                 let itemSelectComponent;
                                 if (items[0].length > 0) {
                                     if (items[0].length <= 25) {
@@ -3794,10 +3794,9 @@ client.on('interactionCreate', async (interaction) => {
                             const effectSelectRow = new ActionRowBuilder().addComponents(effectSelectComponent);
                             await interaction_second.update({ content: 'Please select an effect:', components: [effectSelectRow], ephemeral: true });
                         } else if (interaction_second.customId === 'PrereqItemAlphaSelector') {
-                            let items = await connection.promise().query('select distinct i.* from items i inner join items_effects ie on s.id = ie.skill_id where guild_id = ? and name like ?', [interaction.guildId, interaction_second.values[0] + '%']);
+                            let items = await connection.promise().query('select distinct i.* from items i inner join items_effects ie on i.id = ie.skill_id where guild_id = ? and name like ?', [interaction.guildId, interaction_second.values[0] + '%']);
                             let itemSelectComponent;
                             if (items[0].length > 0) {
-
                                 let itemsKeyValues = [];
                                 for (const item of items[0]) {
                                     itemsKeyValues.push({ label: item.name, value: item.id.toString() });
