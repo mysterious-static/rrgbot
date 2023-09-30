@@ -5093,7 +5093,7 @@ client.on('interactionCreate', async (interaction) => {
                     await connection.promise().query('update rps set ?? = ? where id = ?', queryData);
                     rps = await connection.promise().query(' select * from rps where id = ?', [rps[0][0].id]);
 
-                    if (rps[0][0].challenged_throw && res2[0][0].challenger_throw) {
+                    if (rps[0][0].challenged_throw && rps[0][0].challenger_throw) {
                         if (interaction.replied) {
                             await interaction.followUp({ content: 'You threw ' + throwfull + '.', ephemeral: true });
                         } else {
