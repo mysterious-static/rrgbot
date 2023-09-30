@@ -626,14 +626,6 @@ client.on('ready', async () => {
                 .setRequired(true))
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
-    let addwhisper = new SlashCommandBuilder().setName('addwhisper')
-        .setDescription('Add a whisper.')
-        .addIntegerOption(option =>
-            option.setName('duration')
-                .setDescription('How long, in hours, the whisper should last.')
-                .setRequired(true))
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
     let populatewhisper = new SlashCommandBuilder().setName('populatewhisper')
         .setDescription('Add a character to a whisper.')
         .addChannelOption(option =>
@@ -641,6 +633,21 @@ client.on('ready', async () => {
                 .setDescription('The channel where the whisper is assigned.')
                 .setRequired(true))
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+    let whisper = new SlashCommandBuilder().setName('whisper')
+        .setDescription('Whisper management.')
+        .addSubcommand(subcommand =>
+            subcommand.setName('add')
+                .setDescription('Add a whisper.')
+                .addIntegerOption(option =>
+                    option.setName('duration')
+                        .setDescription('How long, in hours, the whisper should last.')
+                        .setRequired(true))
+                .addStringOption(option =>
+                    option.setName('name')
+                        .setDescription('What the whisper should be named.')))
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
 
     let characterflag = new SlashCommandBuilder().setName('characterflag')
         .setDescription('Character flag management.')
@@ -956,7 +963,7 @@ client.on('ready', async () => {
         rpsmulti.toJSON(),
         active.toJSON(),
         whispercategory.toJSON(),
-        addwhisper.toJSON(),
+        whisper.toJSON(),
         populatewhisper.toJSON(),
         addticketcategory.toJSON(),
         ticketchannel.toJSON(),
@@ -1134,20 +1141,26 @@ client.on('interactionCreate', async (interaction) => {
                 interaction.reply({ content: 'please make sure you selected a category and not a channel', ephemeral: true });
             }
 
-        } else if (interaction.commandName === 'addwhisper') {
-            let whisper_category = await connection.promise().query('select setting_value from game_settings where guild_id = ? and setting_name = ?', [interaction.guildId, 'whisper_category']);
-            if (whisper_category[0].length > 0) {
-                let timest = Math.floor(Date.now() / 1000);
-                let whisper_channel = await interaction.guild.channels.create({
-                    name: `whisper-${timest}`,
-                    type: ChannelType.GuildText,
-                    parent: whisper_category[0][0].setting_value
-                });
-                whisper_channel.send('Whisper created! Expires <t:' + (interaction.options.getInteger('duration') * 3600 + timest) + ':R>');
-                await connection.promise().query('insert into whispers (guild_id, channel_id, expiration) values (?, ?, ?)', [interaction.guildId, whisper_channel.id, timest + (interaction.options.getInteger('duration') * 3600)]);
-                interaction.reply({ content: `Whisper created: ${whisper_channel}. Add characters using \`/populatewhisper\`.`, ephemeral: true });
-            } else {
-                interaction.reply({ content: "Create a whisper category first using `/whispercategory`.", ephemeral: true });
+        } else if (interaction.commandName === 'whisper') {
+            if (interaction.options.getSubcommand() === 'add') {
+                let whisper_category = await connection.promise().query('select setting_value from game_settings where guild_id = ? and setting_name = ?', [interaction.guildId, 'whisper_category']);
+                if (whisper_category[0].length > 0) {
+                    let name = timest;
+                    if (interaction.options.getString('name')) {
+                        name = interaction.options.getString('name');
+                    }
+                    let timest = Math.floor(Date.now() / 1000);
+                    let whisper_channel = await interaction.guild.channels.create({
+                        name: `whisper-${name}`,
+                        type: ChannelType.GuildText,
+                        parent: whisper_category[0][0].setting_value
+                    });
+                    whisper_channel.send('Whisper created! Expires <t:' + (interaction.options.getInteger('duration') * 3600 + timest) + ':R>');
+                    await connection.promise().query('insert into whispers (guild_id, channel_id, expiration) values (?, ?, ?)', [interaction.guildId, whisper_channel.id, timest + (interaction.options.getInteger('duration') * 3600)]);
+                    interaction.reply({ content: `Whisper created: ${whisper_channel}. Add characters using \`/populatewhisper\`.`, ephemeral: true });
+                } else {
+                    interaction.reply({ content: "Create a whisper category first using `/whispercategory`.", ephemeral: true });
+                }
             }
         } else if (interaction.commandName === 'populatewhisper') {
             let channel = interaction.options.getChannel('whisperchannel');
