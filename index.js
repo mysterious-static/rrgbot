@@ -3269,41 +3269,41 @@ client.on('interactionCreate', async (interaction) => {
                                     for (const effect of effects[0]) {
                                         if (effect.type == 'item') {
                                             let item = await connection.promise().query('select * from items where id = ?', [effect.type_id]);
-                                            effectsString == `Modify item count for ${item[0][0].name} by ${effect.type_qty}\n`;
+                                            effectsString += `Modify item count for ${item[0][0].name} by ${effect.type_qty}\n`;
                                         } else if (effect.type == 'wflag_inc') {
                                             let wflag = await connection.promise().query('select * from worldflags where id = ?', [effect.type_id]);
-                                            effectsString == `Increment value for worldflag ${wflag[0][0].name} by ${effect.type_qty}`;
+                                            effectsString += `Increment value for worldflag ${wflag[0][0].name} by ${effect.type_qty}`;
                                         } else if (effect.type == 'cflag_inc') {
                                             let cflag = await connection.promise().query('select * from characterflags where id = ?', [effect.type_id]);
-                                            effectsString = `Increment value for characterflag ${cflag[0][0].name} by ${effect.type_qty}`;
+                                            effectsString += `Increment value for characterflag ${cflag[0][0].name} by ${effect.type_qty}`;
                                         } else if (effect.type == 'wflag_set') {
                                             let wflag = await connection.promise().query('select * from worldflags where id = ?', [effect.type_id]);
-                                            effectsString == `Set value for worldflag ${wflag[0][0].name} to ${effect.type_qty}`;
+                                            effectsString += `Set value for worldflag ${wflag[0][0].name} to ${effect.type_qty}`;
                                         } else if (effect.type == 'cflag_set') {
                                             let cflag = await connection.promise().query('select * from characterflags where id = ?', [effect.type_id]);
-                                            effectsString = `Set value for characterflag ${cflag[0][0].name} to ${effect.type_qty}`;
+                                            effectsString += `Set value for characterflag ${cflag[0][0].name} to ${effect.type_qty}`;
                                         } else if (effect.type == 'skill') {
                                             let skill = await connection.promise().query('select * from skills where id = ?', [effect.type_id]);
-                                            effectsString == `Grant skill ${skill[0][0].name}`;
+                                            effectsString += `Grant skill ${skill[0][0].name}`;
                                         } else if (effect.type == 'archetype') {
                                             let archetype = await connection.promise().query('select * from archetypes where id = ?', [effect.type_id]);
-                                            effectsString = `Grant archetype ${archetype[0][0].name}`;
+                                            effectsString += `Grant archetype ${archetype[0][0].name}`;
                                         } else if (effect.type == 'reputation_inc') {
                                             let reputation = await connection.promise().query('select * from reputations where id = ?', [effect.type_id]);
-                                            effectsString == `Increment value for reputation ${reputation[0][0].name} by ${effect.type_qty}`;
+                                            effectsString += `Increment value for reputation ${reputation[0][0].name} by ${effect.type_qty}`;
                                         } else if (effect.type == 'stat_inc') {
                                             let stat = await connection.promise().query('select * from stats where id = ?', [effect.type_id]);
-                                            effectsString = `Increment value for stat ${stat[0][0].name} by ${effect.type_qty}`;
+                                            effectsString += `Increment value for stat ${stat[0][0].name} by ${effect.type_qty}`;
                                         } else if (effect.type == 'reputation_set') {
                                             let reputation = await connection.promise().query('select * from reputations where id = ?', [effect.type_id]);
-                                            effectsString == `Increment value for reputation ${reputation[0][0].name} by ${effect.type_qty}`;
+                                            effectsString += `Increment value for reputation ${reputation[0][0].name} by ${effect.type_qty}`;
                                         } else if (effect.type == 'stat_set') {
                                             let stat = await connection.promise().query('select * from stats where id = ?', [effect.type_id]);
-                                            effectsString = `Increment value for stat ${stat[0][0].name} by ${effect.type_qty}`;
+                                            effectsString += `Increment value for stat ${stat[0][0].name} by ${effect.type_qty}`;
                                         } else if (effect.type == 'message') {
-                                            effectsString = `Send message ${effect.typedata}`;
+                                            effectsString += `Send message ${effect.typedata}`;
                                         }
-                                        effectsString += ` to ${effect.target}`;
+                                        effectsString += ` to ${effect.target}\n`;
                                     }
                                     embed.setDescription(effectsString);
                                     await interaction_second.update({ content: '', components: [], embeds: [embed] });
