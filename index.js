@@ -4715,6 +4715,7 @@ client.on('interactionCreate', async (interaction) => {
                                     location_aware = await connection.promise().query('select setting_value from game_settings where guild_id = ? and setting_name = ?', [interaction.guildId, 'locationawareskills']);
                                     if (location_aware[0].length > 0 && location_aware[0][0].setting_value == 0) {
                                         if (selectedItem.self_targetable == 1) {
+                                            console.log(selectedItem);
                                             if (selectedItem.other_targetable == 1) {
                                                 characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
                                             } else {
@@ -4738,6 +4739,7 @@ client.on('interactionCreate', async (interaction) => {
                                         }
                                     } else {
                                         if (selectedItem.self_targetable == 1) {
+                                            console.log(selectedItem);
                                             if (selectedItem.other_targetable == 1) {
                                                 characters = await connection.promise().query('select * from characters where guild_id = ? and location_id = ?', [interaction.guildId, characterDetails[0][0].location_id]);
                                             } else {
