@@ -3753,7 +3753,7 @@ client.on('interactionCreate', async (interaction) => {
                             await interaction_second.update({ content: 'Please select an effect:', components: [effectSelectRow], ephemeral: true });
                             // Displays PrereqEffectSelector.
                         } else if (interaction_second.customId === 'PrereqItemSelector') {
-                            let effects = await connection.promise().query('select e.* from effects e join items_effects ie on e.id = ie.effect_id where ie.skill_id = ?', [interaction_second.values[0]]);
+                            let effects = await connection.promise().query('select e.* from effects e join items_effects ie on e.id = ie.effect_id where ie.item_id = ?', [interaction_second.values[0]]);
                             let effectsKeyValues = [];
                             for (const effect of effects[0]) {
                                 let label;
@@ -3794,7 +3794,7 @@ client.on('interactionCreate', async (interaction) => {
                             const effectSelectRow = new ActionRowBuilder().addComponents(effectSelectComponent);
                             await interaction_second.update({ content: 'Please select an effect:', components: [effectSelectRow], ephemeral: true });
                         } else if (interaction_second.customId === 'PrereqItemAlphaSelector') {
-                            let items = await connection.promise().query('select distinct i.* from items i inner join items_effects ie on i.id = ie.skill_id where guild_id = ? and name like ?', [interaction.guildId, interaction_second.values[0] + '%']);
+                            let items = await connection.promise().query('select distinct i.* from items i inner join items_effects ie on i.id = ie.item_id where guild_id = ? and name like ?', [interaction.guildId, interaction_second.values[0] + '%']);
                             let itemSelectComponent;
                             if (items[0].length > 0) {
                                 let itemsKeyValues = [];
