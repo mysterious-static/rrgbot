@@ -3216,7 +3216,7 @@ client.on('interactionCreate', async (interaction) => {
 
             } else if (interaction.options.getSubcommand() === 'vieweffects') {
                 let rep_partial = interaction.options.getString('reputation');
-                let reputation = await connection.promise().query('select * from reputations where guild_id = ? and name like ?', ['%' + rep_partial + '%']);
+                let reputation = await connection.promise().query('select * from reputations where guild_id = ? and name like ?', [interaction.guildId, '%' + rep_partial + '%']);
                 if (reputation[0].length > 0) {
                     let message = false;
                     if (reputation[0].length == 1) {
