@@ -3301,7 +3301,7 @@ client.on('interactionCreate', async (interaction) => {
                                             let stat = await connection.promise().query('select * from stats where id = ?', [effect.type_id]);
                                             effectsString += `Increment value for stat ${stat[0][0].name} by ${effect.type_qty}`;
                                         } else if (effect.type == 'message') {
-                                            effectsString += `Send message ${effect.typedata}`;
+                                            effectsString += `Send message \`${effect.typedata}\``;
                                         }
                                         effectsString += ` to ${effect.target}\n`;
                                     }
