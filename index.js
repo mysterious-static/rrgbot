@@ -3261,7 +3261,7 @@ client.on('interactionCreate', async (interaction) => {
                                         collector.stop();
                                     }
                                 } else if (interaction_second.customId === 'EffectViewTierSelector') {
-                                    let effects = await connection.promise().query('select count(*) as prereq_count, e.* from effects e join reputations_tiers_effects rte join effects_prereqs ep on e.id = ep.effect_id on e.id = rte.effect_id where rte.reputationtier_id = ? group by ep.id', [interaction_second.values[0]]);
+                                    let effects = await connection.promise().query('select count(*) as prereq_count, e.* from effects e join reputations_tiers_effects rte on e.id = rte.effect_id join effects_prereqs ep on e.id = ep.effect_id where rte.reputationtier_id = ? group by ep.id', [interaction_second.values[0]]);
                                     let embed = new EmbedBuilder()
                                         .setTitle('Effects for selected reputation tier');
                                     let effectsString = '';
