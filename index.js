@@ -3224,7 +3224,7 @@ client.on('interactionCreate', async (interaction) => {
                         let keyValues = [];
                         if (tiers[0].length > 0) {
                             for (const thisRep of tiers[0]) {
-                                keyValues.push({ label: thisRep.name, value: thisRep.id.toString() });
+                                keyValues.push({ label: thisRep.threshold_name, value: thisRep.id.toString() });
                             }
                             const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('EffectViewTierSelector').setMinValues(1).setMaxValues(1);
                             const selectRow = new ActionRowBuilder().addComponents(selectComponent);
@@ -3251,7 +3251,7 @@ client.on('interactionCreate', async (interaction) => {
                                     let keyValues = [];
                                     if (tiers[0].length > 0) {
                                         for (const thisRep of tiers[0]) {
-                                            keyValues.push({ label: thisRep.name, value: thisRep.id.toString() });
+                                            keyValues.push({ label: thisRep.threshold_name, value: thisRep.id.toString() });
                                         }
                                         const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('EffectViewTierSelector').setMinValues(1).setMaxValues(1);
                                         const selectRow = new ActionRowBuilder().addComponents(selectComponent);
