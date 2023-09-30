@@ -3642,6 +3642,9 @@ client.on('interactionCreate', async (interaction) => {
                                     }
                                     const skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
                                     await interaction_second.update({ content: 'Please select a skill:', components: [skillSelectRow], ephemeral: true });
+                                } else {
+                                    await interaction_second.update({ content: 'No skills with effects were found. Please add an effect to a skill first.', components: [] });
+                                    collector.stop();
                                 }
                             } else if (type == 'item') {
                                 let items = await connection.promise().query('select distinct i.* from items i inner join items_effects ie on i.id = ie.item_id where guild_id = ?', [interaction.guildId]);
@@ -3663,6 +3666,9 @@ client.on('interactionCreate', async (interaction) => {
                                     }
                                     const itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
                                     await interaction_second.update({ content: 'Please select an item:', components: [itemSelectRow], ephemeral: true });
+                                } else {
+                                    await interaction_second.update({ content: 'No items with effects were found. Please add an effect to an item first.', components: [] });
+                                    collector.stop();
                                 }
                             }
                             //extensible for quests and npcs and whatever else
