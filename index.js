@@ -703,7 +703,11 @@ client.on('ready', async () => {
                 .setDescription('Add an effect to a tier.'))
         .addSubcommand(subcommand =>
             subcommand.setName('vieweffects')
-                .setDescription('List effects on a given reputation tier.'))
+                .setDescription('List effects on a given reputation tier.')
+                .addStringOption(option =>
+                    option.setName('reputation')
+                        .setDescription('The reputation which contains the tier. (autocompletes)')
+                        .setRequired(true)))
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
     let effect = new SlashCommandBuilder().setName('effect')
@@ -3211,7 +3215,105 @@ client.on('interactionCreate', async (interaction) => {
                 });
 
             } else if (interaction.options.getSubcommand() === 'vieweffects') {
+                let rep_partial = interaction.options.getString('reputation');
+                let reputation = await connection.promise().query('select * from reputations where guild_id = ? and name like ?', ['%' + rep_partial + '%']);
+                if (reputation[0].length > 0) {
+                    let message = false;
+                    if (reputation[0].length == 1) {
+                        let tiers = await connection.promise().query('select distinct rt.* from reputations_tiers rt join reputations_tiers_effects rte on rt.id = rte.reputationtier_id where rte.effect_id is not null and rt.reputation_id = ?', reputation[0][0].id);
+                        let keyValues = [];
+                        if (tiers[0].length > 0) {
+                            for (const thisRep of tiers[0]) {
+                                keyValues.push({ label: thisRep.name, value: thisRep.id.toString() });
+                            }
+                            const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('EffectViewTierSelector').setMinValues(1).setMaxValues(1);
+                            const selectRow = new ActionRowBuilder().addComponents(selectComponent);
+                            message = await interaction.reply({ content: 'Please select a reputation tier:', components: [selectRow] });
+                        } else {
+                            await interaction.reply({ content: 'There is no reputation tier with an effect in this reputation. Sorry.', ephemeral: true });
+                        }
+                    } else {
+                        let keyValues = [];
+                        for (const thisRep of reputation[0]) {
+                            keyValues.push({ label: thisRep.name, value: thisRep.id.toString() });
+                        }
+                        const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('EffectViewRepSelector').setMinValues(1).setMaxValues(1);
+                        const selectRow = new ActionRowBuilder().addComponents(selectComponent);
+                        message = await interaction.reply({ content: 'Please select a reputation tier:', components: [selectRow] });
 
+                    }
+                    if (message) {
+                        let collector = message.createMessageComponentCollector();
+                        collector.on('collect', async (interaction_second) => {
+                            if (interaction_second.member.id === interaction.member.id) {
+                                if (interaction_second.customId === 'EffectViewRepSelector') {
+                                    let tiers = await connection.promise().query('select distinct rt.* from reputations_tiers rt join reputations_tiers_effects rte on rt.id = rte.reputationtier_id where rte.effect_id is not null and rt.reputation_id = ?', [interaction_second.values[0]]);
+                                    let keyValues = [];
+                                    if (tiers[0].length > 0) {
+                                        for (const thisRep of tiers[0]) {
+                                            keyValues.push({ label: thisRep.name, value: thisRep.id.toString() });
+                                        }
+                                        const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('EffectViewTierSelector').setMinValues(1).setMaxValues(1);
+                                        const selectRow = new ActionRowBuilder().addComponents(selectComponent);
+                                        message = await interaction.reply({ content: 'Please select a reputation tier:', components: [selectRow] });
+                                    } else {
+                                        await interaction_second.update({ content: 'There is no reputation tier with an effect in this reputation. Sorry.', ephemeral: true });
+                                        collector.stop();
+                                    }
+                                } else if (interaction_second.customId === 'EffectViewTierSelector') {
+                                    let effects = await connection.promise().query('select e.* from effects e join reputations_tiers_effects rte on e.id = rte.effect_id where rte.reputationtier_id = ?', [interaction_second.values[0]]);
+                                    let embed = new EmbedBuilder()
+                                        .setTitle('Effects for selected reputation tier');
+                                    let effectsString = '';
+                                    for (const effect of effects[0]) {
+                                        if (effect.type == 'item') {
+                                            let item = await connection.promise().query('select * from items where id = ?', [effect.type_id]);
+                                            effectsString == `Modify item count for ${item[0][0].name} by ${effect.type_qty}\n`;
+                                        } else if (effect.type == 'wflag_inc') {
+                                            let wflag = await connection.promise().query('select * from worldflags where id = ?', [effect.type_id]);
+                                            effectsString == `Increment value for worldflag ${wflag[0][0].name} by ${effect.type_qty}`;
+                                        } else if (effect.type == 'cflag_inc') {
+                                            let cflag = await connection.promise().query('select * from characterflags where id = ?', [effect.type_id]);
+                                            effectsString = `Increment value for characterflag ${cflag[0][0].name} by ${effect.type_qty}`;
+                                        } else if (effect.type == 'wflag_set') {
+                                            let wflag = await connection.promise().query('select * from worldflags where id = ?', [effect.type_id]);
+                                            effectsString == `Set value for worldflag ${wflag[0][0].name} to ${effect.type_qty}`;
+                                        } else if (effect.type == 'cflag_set') {
+                                            let cflag = await connection.promise().query('select * from characterflags where id = ?', [effect.type_id]);
+                                            effectsString = `Set value for characterflag ${cflag[0][0].name} to ${effect.type_qty}`;
+                                        } else if (effect.type == 'skill') {
+                                            let skill = await connection.promise().query('select * from skills where id = ?', [effect.type_id]);
+                                            effectsString == `Grant skill ${skill[0][0].name}`;
+                                        } else if (effect.type == 'archetype') {
+                                            let archetype = await connection.promise().query('select * from archetypes where id = ?', [effect.type_id]);
+                                            effectsString = `Grant archetype ${archetype[0][0].name}`;
+                                        } else if (effect.type == 'reputation_inc') {
+                                            let reputation = await connection.promise().query('select * from reputations where id = ?', [effect.type_id]);
+                                            effectsString == `Increment value for reputation ${reputation[0][0].name} by ${effect.type_qty}`;
+                                        } else if (effect.type == 'stat_inc') {
+                                            let stat = await connection.promise().query('select * from stat where id = ?', [effect.type_id]);
+                                            effectsString = `Increment value for stat ${stat[0][0].name} by ${effect.type_qty}`;
+                                        } else if (effect.type == 'reputation_set') {
+                                            let reputation = await connection.promise().query('select * from reputations where id = ?', [effect.type_id]);
+                                            effectsString == `Increment value for reputation ${reputation[0][0].name} by ${effect.type_qty}`;
+                                        } else if (effect.type == 'stat_set') {
+                                            let stat = await connection.promise().query('select * from stat where id = ?', [effect.type_id]);
+                                            effectsString = `Increment value for stat ${stat[0][0].name} by ${effect.type_qty}`;
+                                        } else if (effect.type == 'message') {
+                                            effectsString = `Send message ${effect.typedata}`;
+                                        }
+                                        effectsString += ` to ${effect.target}`;
+                                    }
+                                    embed.setDescription(effectsString);
+                                    await interaction_second.update({ content: '', components: [], embeds: [embed] });
+                                    await collector.stop();
+                                }
+                            }
+                        });
+                    }
+                } else {
+                    await interaction.reply({ content: 'No reputation in this game matched the name you gave. Please try again.', ephemeral: true });
+                }
             }
         } else if (interaction.commandName === 'effect') {
             if (interaction.options.getSubcommand() === 'addprereq') {
