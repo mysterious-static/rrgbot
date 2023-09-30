@@ -1750,8 +1750,9 @@ client.on('interactionCreate', async (interaction) => {
                                 await interaction_second.update({ content: 'Please select a property from the dropdown to edit.', components: [selectRow] });
                             } else if (interaction_second.customId === 'SkillEditColumnSelector' + interaction_second.member.id) {
                                 column_name = interaction_second.values[0];
+                                let now = Date.now();
                                 let modal = new ModalBuilder()
-                                    .setCustomId('SkillEditModal');
+                                    .setCustomId('SkillEditModal' + now);
                                 modal.setTitle(`Skill Update - ${column_name}`);
                                 let currentValue = await connection.promise().query(`select ?? as current_value from skills where id = ?`, [column_name, skill_id]);
                                 let newValueInput = new TextInputBuilder()
@@ -1764,7 +1765,7 @@ client.on('interactionCreate', async (interaction) => {
                                 await interaction_second.showModal(modal);
                                 let submittedModal = await interaction_second.awaitModalSubmit({ time: 60000 });
                                 if (submittedModal) {
-                                    if (submittedModal.customId === 'SkillEditModal' && submittedModal.member.id == interaction.member.id) {
+                                    if (submittedModal.customId === ('SkillEditModal' + now) && submittedModal.member.id == interaction.member.id) {
                                         const newValue = submittedModal.fields.getTextInputValue('newValue');
                                         await connection.promise().query('update skills set ?? = ? where id = ?', [column_name, newValue, skill_id]);
                                         submittedModal.update({ content: 'Successfully updated this skill entry.', components: [] });
@@ -2042,8 +2043,9 @@ client.on('interactionCreate', async (interaction) => {
                             } else if (interaction_second.customId === 'VisibilitySelector') {
                                 visible = interaction_second.values[0];
                                 console.log(type);
+                                let now = Date.now();
                                 let modal = new ModalBuilder()
-                                    .setCustomId('RepEffectModal')
+                                    .setCustomId('RepEffectModal' + now)
                                     .setTitle('Add Effect');
                                 let requires_typeahead = ['wflag_inc', 'wflag_set', 'cflag_inc', 'cflag_set', 'stat_inc', 'stat_set', 'reputation_inc', 'reputation_set', 'item', 'skill', 'archetype'];
                                 if (requires_typeahead.includes(type)) {
@@ -2100,7 +2102,7 @@ client.on('interactionCreate', async (interaction) => {
                                 }
                                 await interaction_second.showModal(modal);
                                 let submittedModal = await interaction_second.awaitModalSubmit({ time: 300000 });
-                                if (submittedModal && submittedModal.member.id === interaction_second.member.id) {
+                                if (submittedModal && submittedModal.customId === 'RepEffectModal' + now && submittedModal.member.id === interaction_second.member.id) {
                                     let typeahead = false;
                                     let type_qty = false;
                                     let typedata = false;
@@ -2417,8 +2419,9 @@ client.on('interactionCreate', async (interaction) => {
                             } else if (interaction_second.customId === 'VisibilitySelector') {
                                 visible = interaction_second.values[0];
                                 console.log(type);
+                                let now = Date.now();
                                 let modal = new ModalBuilder()
-                                    .setCustomId('RepEffectModal')
+                                    .setCustomId('RepEffectModal' + now)
                                     .setTitle('Add Effect');
                                 let requires_typeahead = ['wflag_inc', 'wflag_set', 'cflag_inc', 'cflag_set', 'stat_inc', 'stat_set', 'reputation_inc', 'reputation_set', 'item', 'skill', 'archetype'];
                                 if (requires_typeahead.includes(type)) {
@@ -2475,7 +2478,7 @@ client.on('interactionCreate', async (interaction) => {
                                 }
                                 await interaction_second.showModal(modal);
                                 let submittedModal = await interaction_second.awaitModalSubmit({ time: 300000 });
-                                if (submittedModal && submittedModal.member.id === interaction_second.member.id) {
+                                if (submittedModal && submittedModal.customId === 'RepEffectModal' + now && submittedModal.member.id === interaction_second.member.id) {
                                     let typeahead = false;
                                     let type_qty = false;
                                     let typedata = false;
@@ -2815,8 +2818,9 @@ client.on('interactionCreate', async (interaction) => {
                         await interaction.reply({ content: 'Reputation added.', ephemeral: true });
                     } else {
                         // build modal
+                        let now = Date.now();
                         let modal = new ModalBuilder()
-                            .setCustomId('RepCWFlagModal');
+                            .setCustomId('RepCWFlagModal' + now);
                         if (visibility == 'cflag') {
                             modal.setTitle('Character Flag Selection');
                         } else {
@@ -2835,7 +2839,7 @@ client.on('interactionCreate', async (interaction) => {
                         modal.addComponents(nameActionRow, valueActionRow);
                         await interaction.showModal(modal);
                         let submittedModal = await interaction.awaitModalSubmit({ time: 60000 });
-                        if (submittedModal && submittedModal.member.id === interaction.member.id) {
+                        if (submittedModal && submittedModal.customId === 'RepCWFlagModal' + now && submittedModal.member.id === interaction.member.id) {
                             let cwflag_name = submittedModal.fields.getTextInputValue('flagName');
                             let value = submittedModal.fields.getTextInputValue('flagValue');
                             let cwflags;
@@ -2877,7 +2881,7 @@ client.on('interactionCreate', async (interaction) => {
                                             submittedModal.editReply({ content: 'Reputation added.', components: [] });
                                             collector.stop();
                                             // create modal
-                                        } else if (submittedModal.customId === 'RepVisCwAlphaSelector') {
+                                        } else if (interaction_third.customId === 'RepVisCwAlphaSelector') {
                                             let cwflags;
                                             if (visibility == 'cflag') {
                                                 cwflags = await connection.promise().query('select * from characterflags where guild_id = ? and lower(name) like lower(?) and upper(name) like ?', [interaction.guildId, '%' + cwflag_name + '%', characterSelected + '%']);
@@ -3042,8 +3046,9 @@ client.on('interactionCreate', async (interaction) => {
                         } else if (interaction_second.customId === 'VisibilitySelector') {
                             visible = interaction_second.values[0];
                             console.log(type);
+                            let now = Date.now();
                             let modal = new ModalBuilder()
-                                .setCustomId('RepEffectModal')
+                                .setCustomId('RepEffectModal' + now)
                                 .setTitle('Add Effect');
                             let requires_typeahead = ['wflag_inc', 'wflag_set', 'cflag_inc', 'cflag_set', 'stat_inc', 'stat_set', 'reputation_inc', 'reputation_set', 'item', 'skill', 'archetype'];
                             if (requires_typeahead.includes(type)) {
@@ -3100,7 +3105,7 @@ client.on('interactionCreate', async (interaction) => {
                             }
                             await interaction_second.showModal(modal);
                             let submittedModal = await interaction_second.awaitModalSubmit({ time: 300000 });
-                            if (submittedModal) {
+                            if (submittedModal.customId === 'RepEffectModal' + now && submittedModal.member.id === interaction.member.id) {
                                 let typeahead = false;
                                 let type_qty = null;
                                 let typedata = null;
@@ -3479,8 +3484,9 @@ client.on('interactionCreate', async (interaction) => {
                             } else {
                                 logical_and_group = interaction_second.values[0];
                             }
+                            let now = Date.now();
                             let modal = new ModalBuilder()
-                                .setCustomId('RepPrereqModal')
+                                .setCustomId('RepPrereqModal' + now)
                                 .setTitle('Add Prerequisite');
                             let typeaheadInput = new TextInputBuilder()
                                 .setCustomId('typeahead')
@@ -3507,7 +3513,7 @@ client.on('interactionCreate', async (interaction) => {
                             }
                             await interaction_second.showModal(modal);
                             let submittedModal = await interaction_second.awaitModalSubmit({ time: 300000 });
-                            if (submittedModal && submittedModal.member.id === interaction_second.member.id) {
+                            if (submittedModal && submittedModal.customId === 'RepPrereqModal' + now && submittedModal.member.id === interaction_second.member.id) {
                                 let typeahead = false;
                                 if (submittedModal.fields.fields.find(field => field.customId === 'typeahead')) {
                                     typeahead = submittedModal.fields.getTextInputValue('typeahead');
