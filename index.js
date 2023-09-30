@@ -4721,7 +4721,7 @@ client.on('interactionCreate', async (interaction) => {
                                                 characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
                                             } else {
                                                 let characterSelected = await connection.promise().query('select * from characters c where id = ?', [characterDetails[0][0].id]);
-                                                let effects = await connection.promise().query('select e.* from effects e join items_effects ie on se.effect_id = e.id where ie.item_id = ?', [selectedItem.id]);
+                                                let effects = await connection.promise().query('select e.* from effects e join items_effects ie on ie.effect_id = e.id where ie.item_id = ?', [selectedItem.id]);
                                                 for (const thisEffect of effects[0]) {
                                                     if (thisEffect.target == 'triggering_character') {
                                                         process_effect(characterDetails[0][0], thisEffect, 'item', interaction.guildId)
