@@ -4710,7 +4710,8 @@ client.on('interactionCreate', async (interaction) => {
                             if (interaction.member.id === interaction_second.member.id) {
                                 if (interaction_second.customId === 'ItemUseSelector') {
                                     itemSelected = interaction_second.values[0];
-                                    selectedItem = items.find(i => i.id == selectedItem);
+                                    selectedItem = items.find(i => i.id == itemSelected);
+                                    console.log(selectedItem);
                                     let characters;
                                     location_aware = await connection.promise().query('select setting_value from game_settings where guild_id = ? and setting_name = ?', [interaction.guildId, 'locationawareskills']);
                                     if (location_aware[0].length > 0 && location_aware[0][0].setting_value == 0) {
@@ -4763,7 +4764,6 @@ client.on('interactionCreate', async (interaction) => {
                                         }
                                     }
                                     if (selectedItem.self_targetable == 0 && selectedItem.other_targetable == 1) {
-                                        console.log(selectedItem);
                                         if (characters[0].length > 0) {
                                             let charactersAlphabetical;
                                             let characterSelectComponent;
