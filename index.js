@@ -3291,13 +3291,13 @@ client.on('interactionCreate', async (interaction) => {
                                             let reputation = await connection.promise().query('select * from reputations where id = ?', [effect.type_id]);
                                             effectsString == `Increment value for reputation ${reputation[0][0].name} by ${effect.type_qty}`;
                                         } else if (effect.type == 'stat_inc') {
-                                            let stat = await connection.promise().query('select * from stat where id = ?', [effect.type_id]);
+                                            let stat = await connection.promise().query('select * from stats where id = ?', [effect.type_id]);
                                             effectsString = `Increment value for stat ${stat[0][0].name} by ${effect.type_qty}`;
                                         } else if (effect.type == 'reputation_set') {
                                             let reputation = await connection.promise().query('select * from reputations where id = ?', [effect.type_id]);
                                             effectsString == `Increment value for reputation ${reputation[0][0].name} by ${effect.type_qty}`;
                                         } else if (effect.type == 'stat_set') {
-                                            let stat = await connection.promise().query('select * from stat where id = ?', [effect.type_id]);
+                                            let stat = await connection.promise().query('select * from stats where id = ?', [effect.type_id]);
                                             effectsString = `Increment value for stat ${stat[0][0].name} by ${effect.type_qty}`;
                                         } else if (effect.type == 'message') {
                                             effectsString = `Send message ${effect.typedata}`;
