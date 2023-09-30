@@ -1164,82 +1164,85 @@ client.on('interactionCreate', async (interaction) => {
                     interaction.reply({ content: "Create a whisper category first using `/whispercategory`.", ephemeral: true });
                 }
             } else if (interaction.options.getSubcommand() === 'populate') {
+
+                let channel = interaction.options.getChannel('whisperchannel');
+                let whisper = await connection.promise().query('select * from whispers where channel_id = ?', [channel.id]);
+                if (whisper[0].length > 0) {
+                    let existing_whisper_characters = await connection.promise().query('select * from whispers_characters where whisper_id = ?', [whisper[0][0].id]);
+                    let characters;
+                    if (existing_whisper_characters[0].length > 0) {
+                        let character_ids = [];
+                        for (const thisCharacter of existing_whisper_characters[0]) {
+                            character_ids.push(thisCharacter.character_id);
+                        }
+                        console.log(character_ids);
+                        characters = await connection.promise().query('select * from characters where guild_id = ? and id not in (?)', [interaction.guildId, character_ids.join(',')]);
+                    } else {
+                        characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
+                    }
+                    if (characters[0].length > 0) {
+                        let characterSelectComponent;
+                        if (characters[0].length <= 25) {
+                            let charactersKeyValues = [];
+                            for (const character of characters[0]) {
+                                charactersKeyValues.push({ label: character.name, value: character.id.toString() });
+                            }
+                            characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('WhisperPopCharacterSelector').setMinValues(1).setMaxValues(1);
+                        } else {
+                            let characters = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
+                            let charactersKeyValues = [];
+                            for (const character of characters) {
+                                charactersKeyValues.push({ label: character, value: character });
+                            }
+                            characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('WhisperPopAlphabetSelector').setMinValues(1).setMaxValues(1);
+                        }
+                        let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                        let message = await interaction.reply({ content: 'Please select a character to add:', components: [characterSelectRow], ephemeral: true });
+                        let collector = message.createMessageComponentCollector();
+                        collector.on('collect', async (interaction_second) => {
+                            if (interaction_second.member.id === interaction.member.id) {
+                                let characterSelected = interaction_second.values[0];
+                                if (interaction_second.customId === 'WhisperPopAlphabetSelector') {
+                                    let characters = await connection.promise().query('select * from characters where guild_id = ? and upper(character_name) like "?%"', [interaction.guildId, characterSelected]);
+                                    if (characters[0].length > 0) {
+                                        let charactersKeyValues = [];
+                                        for (const character of characters[0]) {
+                                            charactersKeyValues.push({ label: character.name, value: character.id.toString() });
+                                        }
+                                        let characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('WhisperPopCharacterSelector').setMinValues(1).setMaxValues(1);
+                                        let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                                        interaction.update({ components: [characterSelectRow] });
+                                    } else {
+                                        interaction.update({ content: 'No characters with this first letter', components: [] });
+                                    }
+                                } else {
+                                    let character_information = await connection.promise().query('select * from characters where id = ?', [characterSelected]);
+                                    let players = await connection.promise().query('select pc.*, p.user_id from players_characters pc join players p on pc.player_id = p.id where pc.character_id = ?', [characterSelected]);
+                                    let names = '';
+                                    for (const player of players[0]) {
+                                        let user = await client.users.fetch(player.user_id);
+                                        names += '@' + user + ' ';
+                                        if (whisper.locked == 1) {
+                                            channel.permissionOverwrites.create(user, { ViewChannel: true });
+                                        } else {
+                                            channel.permissionOverwrites.create(user, { ViewChannel: true, SendMessages: true });
+                                        }
+                                    }
+                                    channel.send(`${character_information[0][0].name} has joined the whisper!${(interaction.options.getBoolean('ping') ? ' (' + names + ')' : '')}`);
+                                    await connection.promise().query('insert into whispers_characters (whisper_id, character_id) values (?, ?)', [whisper[0][0].id, characterSelected]);
+                                    interaction.editReply({ content: 'Character added to whisper.', components: [] });
+                                    await collector.stop();
+                                }
+                            }
+                        });
+                    } else {
+                        await interaction.reply({ content: 'There don\'t seem to be any characters, have you made any?', ephemeral: true });
+                    }
+                } else {
+                    await interaction.reply({ content: 'This channel doesn\'t seem to be a registered whisper.', ephemeral: true });
+                }
             }
         } else if (interaction.commandName === 'populatewhisper') {
-            let channel = interaction.options.getChannel('whisperchannel');
-            let whisper = await connection.promise().query('select * from whispers where channel_id = ?', [channel.id]);
-            if (whisper[0].length > 0) {
-                let existing_whisper_characters = await connection.promise().query('select * from whispers_characters where whisper_id = ?', [whisper[0][0].id]);
-                let characters;
-                if (existing_whisper_characters[0].length > 0) {
-                    let character_ids = [];
-                    for (const thisCharacter of existing_whisper_characters[0]) {
-                        character_ids.push(thisCharacter.character_id);
-                    }
-                    console.log(character_ids);
-                    characters = await connection.promise().query('select * from characters where guild_id = ? and id not in (?)', [interaction.guildId, character_ids.join(',')]);
-                } else {
-                    characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
-                }
-                if (characters[0].length > 0) {
-                    let characterSelectComponent;
-                    if (characters[0].length <= 25) {
-                        let charactersKeyValues = [];
-                        for (const character of characters[0]) {
-                            charactersKeyValues.push({ label: character.name, value: character.id.toString() });
-                        }
-                        characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('WhisperPopCharacterSelector').setMinValues(1).setMaxValues(1);
-                    } else {
-                        let characters = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
-                        let charactersKeyValues = [];
-                        for (const character of characters) {
-                            charactersKeyValues.push({ label: character, value: character });
-                        }
-                        characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('WhisperPopAlphabetSelector').setMinValues(1).setMaxValues(1);
-                    }
-                    let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                    let message = await interaction.reply({ content: 'Please select a character to add:', components: [characterSelectRow], ephemeral: true });
-                    let collector = message.createMessageComponentCollector();
-                    collector.on('collect', async (interaction_second) => {
-                        if (interaction_second.member.id === interaction.member.id) {
-                            let characterSelected = interaction_second.values[0];
-                            if (interaction_second.customId === 'WhisperPopAlphabetSelector') {
-                                let characters = await connection.promise().query('select * from characters where guild_id = ? and upper(character_name) like "?%"', [interaction.guildId, characterSelected]);
-                                if (characters[0].length > 0) {
-                                    let charactersKeyValues = [];
-                                    for (const character of characters[0]) {
-                                        charactersKeyValues.push({ label: character.name, value: character.id.toString() });
-                                    }
-                                    let characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('WhisperPopCharacterSelector').setMinValues(1).setMaxValues(1);
-                                    let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                                    interaction.update({ components: [characterSelectRow] });
-                                } else {
-                                    interaction.update({ content: 'No characters with this first letter', components: [] });
-                                }
-                            } else {
-                                let character_information = await connection.promise().query('select * from characters where id = ?', [characterSelected]);
-                                let players = await connection.promise().query('select pc.*, p.user_id from players_characters pc join players p on pc.player_id = p.id where pc.character_id = ?', [characterSelected]);
-                                for (const player of players[0]) {
-                                    let user = await client.users.fetch(player.user_id);
-                                    if (whisper.locked == 1) {
-                                        channel.permissionOverwrites.create(user, { ViewChannel: true });
-                                    } else {
-                                        channel.permissionOverwrites.create(user, { ViewChannel: true, SendMessages: true });
-                                    }
-                                }
-                                channel.send(`${character_information[0][0].name} has joined the whisper!`);
-                                await connection.promise().query('insert into whispers_characters (whisper_id, character_id) values (?, ?)', [whisper[0][0].id, characterSelected]);
-                                interaction.editReply({ content: 'Character added to whisper.', components: [] });
-                                await collector.stop();
-                            }
-                        }
-                    });
-                } else {
-                    await interaction.reply({ content: 'There don\'t seem to be any characters, have you made any?', ephemeral: true });
-                }
-            } else {
-                await interaction.reply({ content: 'This channel doesn\'t seem to be a registered whisper.', ephemeral: true });
-            }
         } else if (interaction.commandName === 'player') {
             if (interaction.options.getSubcommand() === 'notifchannel') {
                 let channel = interaction.options.getChannel('channel');
