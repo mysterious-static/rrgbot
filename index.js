@@ -3586,7 +3586,8 @@ client.on('interactionCreate', async (interaction) => {
             if (interaction.options.getSubcommand() === 'addprereq') {
                 let choices = [
                     { label: 'Reputation Tier', value: 'reputation' },
-                    { label: 'Skill', value: 'skill' }
+                    { label: 'Skill', value: 'skill' },
+                    { label: 'Item', value: 'item' }
                 ];
                 const selectComponent = new StringSelectMenuBuilder().setOptions(choices).setCustomId('PrereqEffectSourceSelector').setMinValues(1).setMaxValues(1);
                 const selectRow = new ActionRowBuilder().addComponents(selectComponent);
@@ -3623,18 +3624,15 @@ client.on('interactionCreate', async (interaction) => {
                                 await interaction_second.update({ content: 'Please select the following options:', components: [reputationSelectRow], ephemeral: true });
                             } else if (type == 'skill') {
                                 let skills = await connection.promise().query('select distinct s.* from skills s inner join skills_effects se on s.id = se.skill_id where guild_id = ?', [interaction.guildId]);
-                                let skillsAlphabetical;
                                 let skillSelectComponent;
                                 if (skills[0].length > 0) {
                                     if (skills[0].length <= 25) {
-                                        skillsAlphabetical = false;
                                         let skillsKeyValues = [];
                                         for (const skill of skills[0]) {
                                             skillsKeyValues.push({ label: skill.name, value: skill.id.toString() });
                                         }
                                         skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('PrereqSkillSelector').setMinValues(1).setMaxValues(1);
                                     } else {
-                                        skillsAlphabetical = true;
                                         skills = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
                                         let skillsKeyValues = [];
                                         for (const skill of skills) {
@@ -3645,7 +3643,29 @@ client.on('interactionCreate', async (interaction) => {
                                     const skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
                                     await interaction_second.update({ content: 'Please select a skill:', components: [skillSelectRow], ephemeral: true });
                                 }
-                            }//extensible for quests and npcs and whatever else
+                            } else if (type == 'item') {
+                                let items = await connection.promise().query('select distinct i.* from items i inner join items_effects ie on s.id = ie.skill_id where guild_id = ?', [interaction.guildId]);
+                                let itemSelectComponent;
+                                if (items[0].length > 0) {
+                                    if (items[0].length <= 25) {
+                                        let itemsKeyValues = [];
+                                        for (const item of items[0]) {
+                                            itemsKeyValues.push({ label: item.name, value: item.id.toString() });
+                                        }
+                                        itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('PrereqItemSelector').setMinValues(1).setMaxValues(1);
+                                    } else {
+                                        items = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
+                                        let itemsKeyValues = [];
+                                        for (const item of items) {
+                                            skillsKeyValues.push({ label: item, value: item });
+                                        }
+                                        itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('PrereqItemAlphaSelector').setMinValues(1).setMaxValues(1);
+                                    }
+                                    const itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
+                                    await interaction_second.update({ content: 'Please select an item:', components: [itemSelectRow], ephemeral: true });
+                                }
+                            }
+                            //extensible for quests and npcs and whatever else
                         } else if (interaction_second.customId === 'PrereqRepAlphaSelector') {
                             let reputations = await connection.promise().query('select distinct r.* from reputations r inner join reputations_tiers rt on rt.reputation_id = r.id inner join reputations_tiers_effects rte on rt.id = rte.reputationtier_id where r.guild_id = ? and r.name like ?', [interaction.guildId, interaction_second.values[0] + '%']);
                             let reputationsKeyValues = [];
@@ -3691,7 +3711,7 @@ client.on('interactionCreate', async (interaction) => {
                             const skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
                             await interaction_second.update({ content: 'Please select a skill:', components: [skillSelectRow], ephemeral: true });
                         } else if (interaction_second.customId === 'PrereqSkillSelector') {
-                            let effects = await connection.promise().query('select e.* from effects e join skills_effects se on e.id = se.effect_id where se.skill_id = ?', [interaction_second.values[0] + '%']);
+                            let effects = await connection.promise().query('select e.* from effects e join skills_effects se on e.id = se.effect_id where se.skill_id = ?', [interaction_second.values[0]]);
                             let effectsKeyValues = [];
                             for (const effect of effects[0]) {
                                 let label;
@@ -3732,6 +3752,61 @@ client.on('interactionCreate', async (interaction) => {
                             const effectSelectRow = new ActionRowBuilder().addComponents(effectSelectComponent);
                             await interaction_second.update({ content: 'Please select an effect:', components: [effectSelectRow], ephemeral: true });
                             // Displays PrereqEffectSelector.
+                        } else if (interaction_second.customId === 'PrereqItemSelector') {
+                            let effects = await connection.promise().query('select e.* from effects e join items_effects ie on e.id = ie.effect_id where ie.skill_id = ?', [interaction_second.values[0]]);
+                            let effectsKeyValues = [];
+                            for (const effect of effects[0]) {
+                                let label;
+                                let description;
+                                let prereqs = await connection.promise().query('select * from effects_prereqs where effect_id = ?', [effect.id]);
+                                if (effect.type == 'message') {
+                                    label = `Send message`;
+                                    description = effect.typedata.slice(0, 18) + '...';
+                                } else if (effect.type == 'wflag_inc' || effect.type == 'wflag_set') {
+                                    let worldflag = await connection.promise().query('select * from worldflags where id = ?', [effect.type_id]);
+                                    label = `Adjust world flag`;
+                                    description = worldflag[0][0].name;
+                                } else if (effect.type == 'cflag_inc' || effect.type == 'cflag_set') {
+                                    let characterflag = await connection.promise().query('select * from characterflags where id = ?', [effect.type_id]);
+                                    label = `Adjust character flag`;
+                                    description = characterflag[0][0].name;
+                                } else if (effect.type == 'skill') {
+                                    let skill = await connection.promise().query('select * from skills where id = ?', [effect.type_id]);
+                                    label = `Grant skill`;
+                                    description = skill[0][0].name;
+                                } else if (effect.type == 'archetype') {
+                                    let archetype = await connection.promise().query('select * from archetypes where id = ?', [effect.type_id]);
+                                    label = `Grant archetype`;
+                                    description = archetype[0][0].name;
+                                } else if (effect.type == 'reputation_inc' || effect.type == 'reputation_set') {
+                                    let reputation = await connection.promise().query('select * from reputations where id = ?', [effect.type_id]);
+                                    label = `Modify reputation`;
+                                    description = reputation[0][0].name;
+                                } else if (effect.type == 'stat_set' || effect.type == 'stat_inc') {
+                                    let stat = await connection.promise().query('select * from stats where id = ?', [effect.type_id]);
+                                    label = `Modify stat`;
+                                    description = stat[0][0].name;
+                                }
+                                description += ` (${prereqs[0].length} prereqs already)`;
+                                effectsKeyValues.push({ label: label, description: description, value: effect.id.toString() });
+                            }
+                            const effectSelectComponent = new StringSelectMenuBuilder().setOptions(effectsKeyValues).setCustomId('PrereqEffectSelector').setMinValues(1).setMaxValues(1);
+                            const effectSelectRow = new ActionRowBuilder().addComponents(effectSelectComponent);
+                            await interaction_second.update({ content: 'Please select an effect:', components: [effectSelectRow], ephemeral: true });
+                        } else if (interaction_second.customId === 'PrereqItemAlphaSelector') {
+                            let items = await connection.promise().query('select distinct i.* from items i inner join items_effects ie on s.id = ie.skill_id where guild_id = ? and name like ?', [interaction.guildId, interaction_second.values[0] + '%']);
+                            let itemSelectComponent;
+                            if (items[0].length > 0) {
+
+                                let itemsKeyValues = [];
+                                for (const item of items[0]) {
+                                    itemsKeyValues.push({ label: item.name, value: item.id.toString() });
+                                }
+                                itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('PrereqItemSelector').setMinValues(1).setMaxValues(1);
+                            }
+                            const selectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
+                            await interaction_second.update({ content: 'Please select an item', components: [selectRow] });
+
                         } else if (interaction_second.customId === 'PrereqRepTierAlphaSelector') {
                             let result_values = await connection.promise().query('select distinct rt.* from reputations_tiers inner join reputations_tiers_effects rte on rt.id = rte.reputationtier_id where rt.reputation_id = ? and name like ?', [reputation_id, interaction_second.values[0] + '%']);
                             if (result_values.length > 0) {
