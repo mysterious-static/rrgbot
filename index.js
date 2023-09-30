@@ -4714,8 +4714,8 @@ client.on('interactionCreate', async (interaction) => {
                                     let characters;
                                     location_aware = await connection.promise().query('select setting_value from game_settings where guild_id = ? and setting_name = ?', [interaction.guildId, 'locationawareskills']);
                                     if (location_aware[0].length > 0 && location_aware[0][0].setting_value == 0) {
-                                        if (selectedItem.self_targetable) {
-                                            if (selectedItem.other_targetable) {
+                                        if (selectedItem.self_targetable == 1) {
+                                            if (selectedItem.other_targetable == 1) {
                                                 characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
                                             } else {
                                                 let characterSelected = await connection.promise().query('select * from characters c where id = ?', [characterDetails[0][0].id]);
@@ -4737,8 +4737,8 @@ client.on('interactionCreate', async (interaction) => {
                                             characters = await connection.promise().query('select * from characters where guild_id = ? and id != ?', [interaction.guildId, characterDetails[0][0].id]);
                                         }
                                     } else {
-                                        if (selectedItem.self_targetable) {
-                                            if (selectedItem.other_targetable) {
+                                        if (selectedItem.self_targetable == 1) {
+                                            if (selectedItem.other_targetable == 1) {
                                                 characters = await connection.promise().query('select * from characters where guild_id = ? and location_id = ?', [interaction.guildId, characterDetails[0][0].location_id]);
                                             } else {
                                                 let characterSelected = await connection.promise().query('select * from characters c where id = ?', [characterDetails[0][0].id]);
