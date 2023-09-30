@@ -3261,8 +3261,7 @@ client.on('interactionCreate', async (interaction) => {
                                         collector.stop();
                                     }
                                 } else if (interaction_second.customId === 'EffectViewTierSelector') {
-                                    let effects = await connection.promise().query('select e.* from effects e join reputations_tiers_effects rte on e.id = rte.effect_id where rte.reputationtier_id = ?', [interaction_second.values[0]]);
-                                    console.log(effects);
+                                    let effects = await connection.promise().query('select count(*) as prereq_count, e.* from effects e join reputations_tiers_effects rte join effects_prereqs ep on e.id = ep.effect_id on e.id = rte.effect_id where rte.reputationtier_id = ? group by ep.id', [interaction_second.values[0]]);
                                     let embed = new EmbedBuilder()
                                         .setTitle('Effects for selected reputation tier');
                                     let effectsString = '';
@@ -3303,7 +3302,7 @@ client.on('interactionCreate', async (interaction) => {
                                         } else if (effect.type == 'message') {
                                             effectsString += `Send message \`${effect.typedata}\``;
                                         }
-                                        effectsString += ` to ${effect.target}\n`;
+                                        effectsString += ` to ${effect.target} (${effect.prereq_count} prereqs)\n`;
                                     }
                                     embed.setDescription(effectsString);
                                     await interaction_second.update({ content: '', components: [], embeds: [embed] });
