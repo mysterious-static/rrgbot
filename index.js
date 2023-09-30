@@ -1166,6 +1166,7 @@ client.on('interactionCreate', async (interaction) => {
                 } else {
                     interaction.reply({ content: "Create a whisper category first using `/whispercategory`.", ephemeral: true });
                 }
+            } else if (interaction.options.getSubcommand() === 'populate') {
             }
         } else if (interaction.commandName === 'populatewhisper') {
             let channel = interaction.options.getChannel('whisperchannel');
