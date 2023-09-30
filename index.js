@@ -843,7 +843,10 @@ client.on('ready', async () => {
                 .addIntegerOption(option =>
                     option.setName('quantity')
                         .setDescription('The quantity of item you are giving.')
-                        .setRequired(true)));
+                        .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand.setName('use')
+                .setDescription('Use an item.'));
 
     let duel = new SlashCommandBuilder().setName('duel')
         .setDescription('Duels another player.')
