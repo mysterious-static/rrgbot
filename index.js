@@ -2207,7 +2207,7 @@ client.on('interactionCreate', async (interaction) => {
                     let message = false;
                     if (skill[0].length == 1) {
                         selectedSkillName = skill[0][0].name;
-                        let effects = await connection.promise().query('select ifnull(count(ep.id), 0) as prereq_count, e.* from effects e join skills_effects se on e.id = se.effect_id left outer join effects_prereqs ep on e.id = ep.effect_id where se.skill_id = ? group by e.id', [interaction_second.values[0]]);
+                        let effects = await connection.promise().query('select ifnull(count(ep.id), 0) as prereq_count, e.* from effects e join skills_effects se on e.id = se.effect_id left outer join effects_prereqs ep on e.id = ep.effect_id where se.skill_id = ? group by e.id', [skill[0][0].id]);
                         let embed = new EmbedBuilder()
                             .setTitle(`Effects for ${selectedSkillName}`);
                         let effectsString = '';
