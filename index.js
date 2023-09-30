@@ -4692,6 +4692,7 @@ client.on('interactionCreate', async (interaction) => {
                         interaction.reply({ content: 'You can\'t give a negative number or zero of an item.', ephemeral: true });
                     }
                 } else if (interaction.options.getSubcommand() === 'use') {
+                    let current_character = await connection.promise().query('select pc.character_id, c.name from players_characters pc join players p on p.id = pc.player_id join characters c on c.id = pc.character_id where p.user_id = ? and p.guild_id = ? and pc.active = 1', [interaction.user.id, interaction.guildId]);
                     let items = await connection.promise().query('select i.* from characters_items ci join items i on ci.item_id = i.id where ci.character_id = ? and (i.other_targetable = 1 or i.self_targetable = 1)', [current_character[0][0].character_id]);
                     let selectedItem;
                     let location_aware;
