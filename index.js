@@ -3929,9 +3929,7 @@ client.on('interactionCreate', async (interaction) => {
                             collector.on('collect', async (interaction_second) => {
                                 if (interaction_second.member.id === interaction.member.id) {
                                     if (interaction_second.values[0]) {
-                                        let skillSelected = skills.find(s => s.id === interaction_second.values[0]);
-                                        console.log(skills);
-                                        console.log(skillSelected);
+                                        let skillSelected = skills[0].find(s => s.id === interaction_second.values[0]);
                                         await interaction_second.reply({ content: `${current_character[0][0].name}'s **${skillSelected.name}**: ${skill.description}` });
                                         await collector.stop();
                                     }
