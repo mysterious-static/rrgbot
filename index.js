@@ -4166,7 +4166,7 @@ client.on('interactionCreate', async (interaction) => {
                             }
                         } else if (interaction_second.customId === 'PrereqEffectSelector') {
                             await connection.promise().query('delete from effects where id = ?', [interaction_second.values[0]]);
-                            await interaction_second.update('Effect removed.');
+                            await interaction_second.update({content: 'Effect removed.', components: []});
                             await collector.stop();
                         }
                     }
