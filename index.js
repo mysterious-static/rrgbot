@@ -5655,7 +5655,7 @@ client.on('interactionCreate', async (interaction) => {
             let sort = interaction.customId.split('-')[1];
             let character_id = interaction.customId.split('-')[2];
             let item_id = interaction.customId.split('-')[3];
-            let items = await connection.promise().query(`select i.*, ci.quantity from items i join characters_items ci on i.id = ci.item_id where ci.character_id = ? and ci.quantity > 0 order by i.id ${sort}`, [character_id]);
+            let items = await connection.promise().query(`select i.*, ci.quantity from items i join characters_items ci on i.id = ci.item_id and ci.character_id = ? where ci.character_id = ? and ci.quantity > 0 order by i.id ${sort}`, [character_id, character_id]);
             let msg = '';
             let firstDisplayedId = false;
             let lastDisplayedId = false;
