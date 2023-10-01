@@ -158,8 +158,12 @@ async function process_effect(character, effect, source, guildId, target = null)
             case 'skill':
                 {
                     await connection.promise().query('insert ignore into skills_characters (character_id, skill_id) values (?, ?)', [character.id, effect.type_id]);
-                    let skill = await connection.promise().query('select * from skills where id = ?', effect.type_id);
+                    let skill = await connection.promise().query('select s.*, sc.character_id from skills s left outer join skills_characters sc on sc.skill_id = s.id and sc.character_id = ? where id = ?', [character.id, effect.type_id]);
+
                     message += ` added *${skill[0][0].name}* to ${character.name}`;
+                    if (skill[0][0].character_id != null) {
+                        message += ` **(Skill already assigned!)**`;
+                    }
                 } break;
             case 'archetype':
                 {
