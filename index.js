@@ -2475,8 +2475,7 @@ client.on('interactionCreate', async (interaction) => {
                                                 } else {
                                                     await connection.promise().query('update characters_items set quantity = ? where character_id = ? and item_id = ?', [quantity + exists[0][0].quantity, characterSelected, itemSelected]);
                                                 }
-                                                await connection.promise().query('replace into characters_items (character_id, item_id) values (?, ?)', [characterSelected, itemSelected]);
-                                                await interaction_second.update({ content: 'Successfully added another of this item to character.', components: [] });
+                                                await interaction_second.update({ content: 'Successfully added additional copy/copies of this item to character.', components: [] });
                                                 await collector.stop();
                                             } else {
                                                 await interaction_second.update({ content: 'This character doesn\'t have enough of this item to remove that quantity.', components: [] });
