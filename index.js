@@ -2411,18 +2411,15 @@ client.on('interactionCreate', async (interaction) => {
             } else if (interaction.options.getSubcommand() === 'assign') {
                 let quantity = interaction.options.getInteger('quantity');
                 let items = await connection.promise().query('select i.* from items i where i.guild_id = ?', [interaction.guildId]);
-                let itemsAlphabetical;
                 let itemSelectComponent;
                 if (items[0].length > 0) {
                     if (items[0].length <= 25) {
-                        itemsAlphabetical = false;
                         let itemsKeyValues = [];
                         for (const item of items[0]) {
                             itemsKeyValues.push({ label: `${item.name}`, value: item.id.toString() });
                         }
                         itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemAssignmentItemSelector').setMinValues(1).setMaxValues(1);
                     } else {
-                        itemsAlphabetical = true;
                         let items = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
                         let itemsKeyValues = [];
                         for (const item of items) {
@@ -2479,7 +2476,7 @@ client.on('interactionCreate', async (interaction) => {
                                                     await connection.promise().query('update characters_items set quantity = ? where character_id = ? and item_id = ?', [quantity + exists[0][0].quantity, characterSelected, itemSelected]);
                                                 }
                                                 await connection.promise().query('replace into characters_items (character_id, item_id) values (?, ?)', [characterSelected, itemSelected]);
-                                                await interaction_second.update({ content: 'Successfully assigned item to character.', components: [] });
+                                                await interaction_second.update({ content: 'Successfully added another of this item to character.', components: [] });
                                                 await collector.stop();
                                             } else {
                                                 await interaction_second.update({ content: 'This character doesn\'t have enough of this item to remove that quantity.', components: [] });
