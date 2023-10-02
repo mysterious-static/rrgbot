@@ -3102,12 +3102,15 @@ client.on('interactionCreate', async (interaction) => {
                             }
                         }
                         console.log(reputations_sorted);
+                        var embed = new EmbedBuilder();
+                        embed.setTitle(`Reputation Summary for ${reputations[0][0].name}`);
                         for (const characterDisplay of reputations_sorted) {
                             console.log(characterDisplay.character_name);
-                            message = message.concat(characterDisplay.character_name + ' ' + characterDisplay.threshold_name + '\n');
+                            message = message.concat(characterDisplay.character_name + ' - ' + characterDisplay.threshold_name + '\n');
                         }
                         //await interaction.reply({ content: message });
-                        await interaction.reply({ content: message, ephemeral: true });
+                        embed.setDescription(message);
+                        await interaction.reply({ content: '', embeds: [embed], ephemeral: true });
                     } else {
                         await interaction.reply({ content: 'More than one reputation was found matching your query. Try again, please.', ephemeral: true });
                     }
