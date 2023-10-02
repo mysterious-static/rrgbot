@@ -3097,7 +3097,6 @@ client.on('interactionCreate', async (interaction) => {
                                 reputations_sorted[thisCharacter.character_name] = thisCharacter;
                             }
                         }
-                        console.log(reputations_sorted);
                         for (const characterDisplay of reputations_sorted) {
                             console.log(characterDisplay);
                             message.concat(characterDisplay.character_name + ' ' + characterDisplay.threshold_name + '\n');
