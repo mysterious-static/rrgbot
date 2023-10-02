@@ -3091,10 +3091,10 @@ client.on('interactionCreate', async (interaction) => {
                         let reputations_sorted = [];
                         let message = '';
                         for (const thisCharacter of reputations_tiers_characters[0]) {
-                            if (reputations_sorted[thisCharacter.character_id] == undefined) {
-                                reputations_sorted[thisCharacter.character_id] = thisCharacter;
-                            } else if (thisCharacter.tier_value > reputations_sorted[thisCharacter.character_id].tier_value) {
-                                reputations_sorted[thisCharacter.character_id] = thisCharacter;
+                            if (reputations_sorted[thisCharacter.character_name] == undefined) {
+                                reputations_sorted[thisCharacter.character_name] = thisCharacter;
+                            } else if (thisCharacter.tier_value > reputations_sorted[thisCharacter.character_name].tier_value) {
+                                reputations_sorted[thisCharacter.character_name] = thisCharacter;
                             }
                         }
                         console.log(reputations_sorted);
