@@ -443,6 +443,13 @@ client.on('ready', async () => {
                     option.setName('value')
                         .setDescription('The value by which the stat will be adjusted.')
                         .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand.setName('charactersummary')
+                .setDescription('List character levels on a given stat.')
+                .addStringOption(option =>
+                    option.setName('reputation_name')
+                        .setDescription('The stat for which to list values. (autocompletes)')
+                        .setRequired(true)))
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 
@@ -737,10 +744,10 @@ client.on('ready', async () => {
                         .setRequired(true)))
         .addSubcommand(subcommand =>
             subcommand.setName('charactersummary')
-                .setDescription('List effects on a given reputation tier.')
+                .setDescription('List character standings on a given reputation.')
                 .addStringOption(option =>
                     option.setName('reputation_name')
-                        .setDescription('The reputation which contains the tier. (autocompletes)')
+                        .setDescription('The reputation for which to list standings. (autocompletes)')
                         .setRequired(true)))
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
