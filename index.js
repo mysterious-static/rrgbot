@@ -3099,7 +3099,6 @@ client.on('interactionCreate', async (interaction) => {
                         }
                         console.log(reputations_sorted);
                         for (const characterDisplay of reputations_sorted) {
-                            console.log(characterDisplay);
                             //message.concat(thisCharacter.character_name + ' ' + thisCharacter.threshold_name + '\n');
                         }
                         //await interaction.reply({ content: message });
