@@ -1611,8 +1611,7 @@ client.on('interactionCreate', async (interaction) => {
                         let embed = new EmbedBuilder();
                         embed.setTitle(`Stat Summary for ${stats[0][0].name}`);
                         for (const characterDisplay of stats_characters[0]) {
-                            console.log(characterDisplay.character_name);
-                            message = message.concat(characterDisplay.character_name + ' - ' + (characterDisplay.override_value ? characterDisplay.override_value : characterDisplay.default_value) + '\n');
+                            message = message.concat(characterDisplay.name + ' - ' + characterDisplay.value + '\n');
                         }
                         //await interaction.reply({ content: message });
                         embed.setDescription(message);
