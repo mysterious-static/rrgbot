@@ -3089,6 +3089,7 @@ client.on('interactionCreate', async (interaction) => {
                     if (reputations[0].length == 1) {
                         let reputations_tiers_characters = await connection.promise().query('SELECT r.*, rt.threshold_name, c.name AS character_name, c.id AS character_id, cr.value AS rep_value, rt.value AS tier_value FROM reputations r JOIN characters_reputations cr ON r.id = cr.reputation_id JOIN reputations_tiers rt ON r.id = rt.reputation_id JOIN characters c ON cr.character_id = c.id WHERE r.id = ? AND rt.value <= cr.value', [reputations[0][0].id]);
                         let reputations_sorted = [];
+                        let message = '';
                         for (const thisCharacter of reputations_tiers_characters[0]) {
                             if (!reputations_sorted[thisCharacter.character_id]) {
                                 reputations_sorted[thisCharacter.character_id] = thisCharacter;
