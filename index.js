@@ -3096,7 +3096,7 @@ client.on('interactionCreate', async (interaction) => {
                             } else {
                                 let highest = reputations_sorted.find(i => i.character_id === thisCharacter.character_id);
                                 if (highest.tier_value < thisCharacter.tier_value) {
-                                    let index = highest.findIndex(i => i.character_id === thisCharacter.character_id);
+                                    let index = reputations_sorted.findIndex(i => i.character_id === thisCharacter.character_id);
                                     reputations_sorted[index] = thisCharacter;
                                 }
                             }
