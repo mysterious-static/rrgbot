@@ -3098,9 +3098,9 @@ client.on('interactionCreate', async (interaction) => {
                             }
                         }
                         console.log(reputations_sorted);
-                        for (const characterDisplay of reputations_sorted) {
-                            console.log(characterDisplay);
-                            message.concat(characterDisplay.character_name + ' ' + characterDisplay.threshold_name + '\n');
+                        for (var i = 0, j = reputations_sorted.length; i < j; i++) {
+                            console.log(characterDisplay[i].character_name);
+                            message.concat(characterDisplay[i].character_name + ' ' + characterDisplay[i].threshold_name + '\n');
                         }
                         //await interaction.reply({ content: message });
                         await interaction.reply({ content: message, ephemeral: true });
