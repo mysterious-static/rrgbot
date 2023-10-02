@@ -3087,7 +3087,7 @@ client.on('interactionCreate', async (interaction) => {
                 let reputations = await connection.promise().query('select * from reputations where guild_id = ? and name like ?', [interaction.guildId, '%' + interaction.options.getString('reputation_name') + '%']);
                 if (reputations[0].length > 0) {
                     if (reputations[0].length == 1) {
-                        let reputations_tiers_characters = await connection.promise().query('select r.*, rt.threshold_name, c.name as character_name from reputations r join characters_reputations cr on r.id = cr.reputation_id join reputations_tiers rt on r.id = rt.reputation_id join characters c on cr.character_id = c.id having MAX(rt.value)<= cr.value where r.guild_id = ?', [interaction.guild_id]);
+                        let reputations_tiers_characters = await connection.promise().query('select r.*, rt.threshold_name, c.name as character_name from reputations r join characters_reputations cr on r.id = cr.reputation_id join reputations_tiers rt on r.id = rt.reputation_id join characters c on cr.character_id = c.id where r.guild_id = ? having MAX(rt.value)<= cr.value', [interaction.guildId]);
                         let message = '';
                         for (const thisCharacter of reputations_tiers_characters[0]) {
                             message.concat(thisCharacter.character_name + ' ' + thisCharacter.threshold_name + '\n');
