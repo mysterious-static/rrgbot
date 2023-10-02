@@ -3087,9 +3087,16 @@ client.on('interactionCreate', async (interaction) => {
                 let reputations = await connection.promise().query('select * from reputations where guild_id = ? and name like ?', [interaction.guildId, '%' + interaction.options.getString('reputation_name') + '%']);
                 if (reputations[0].length > 0) {
                     if (reputations[0].length == 1) {
-                        let reputations_tiers_characters = await connection.promise().query('select r.*, rt.threshold_name, c.name as character_name, cr.value as rep_value from reputations r join characters_reputations cr on r.id = cr.reputation_id join reputations_tiers rt on r.id = rt.reputation_id join characters c on cr.character_id = c.id where r.id = ? having MAX(rt.value)<= cr.value', [reputations[0][0].id]);
-                        let message = '';
+                        let reputations_tiers_characters = await connection.promise().query('SELECT r.*, rt.threshold_name, c.name AS character_name, c.id AS character_id, cr.value AS rep_value, rt.value AS tier_value FROM reputations r JOIN characters_reputations cr ON r.id = cr.reputation_id JOIN reputations_tiers rt ON r.id = rt.reputation_id JOIN characters c ON cr.character_id = c.id WHERE r.id = ? AND rt.value <= cr.value', [reputations[0][0].id]);
+                        let reputations_sorted = [];
                         for (const thisCharacter of reputations_tiers_characters[0]) {
+                            if (!reputations_sorted[thisCharacter.character_id]) {
+                                reputations_sorted[thisCharacter.character_id] = thisCharacter;
+                            } else if (thisCharacter.tier_value > reputations_sorted[thisCharacter.character_id].tier_value) {
+                                reputations_sorted[thisCharacter.character_id] = thisCharacter;
+                            }
+                        }
+                        for (const thisCharacter of reputations_sorted) {
                             message.concat(thisCharacter.character_name + ' ' + thisCharacter.threshold_name + '\n');
                         }
                         await interaction.reply({ content: message });
