@@ -1606,15 +1606,19 @@ client.on('interactionCreate', async (interaction) => {
                 let stats = await connection.promise().query('select * from stats where guild_id = ? and name like ?', [interaction.guildId, '%' + interaction.options.getString('name') + '%']);
                 if (stats[0].length > 0) {
                     if (stats[0].length == 1) {
-                        let message = '';
+                        let names = '';
+                        let values = '';
                         let stats_characters = await connection.promise().query('SELECT c.name, coalesce(cs.override_value, s.default_value) as value from characters c left outer join characters_stats cs on c.id = cs.character_id and cs.stat_id = ? join stats s on s.id = ? where c.guild_id = ?', [stats[0][0].id, stats[0][0].id, interaction.guildId]);
                         let embed = new EmbedBuilder();
                         embed.setTitle(`Stat Summary for ${stats[0][0].name}`);
                         for (const characterDisplay of stats_characters[0]) {
+                            names = names.concat(characterDisplay.name + '\n');
+                            values = values.concat(characterDisplay.value + '\n');
                             message = message.concat(characterDisplay.name + ' - ' + characterDisplay.value + '\n');
                         }
                         //await interaction.reply({ content: message });
-                        embed.setDescription(message);
+                        //embed.setDescription(message);
+                        embed.addFields({ name: 'Character Names', value: names, inline: true }, { name: 'Stat Values', value: values, inline: true });
                         await interaction.reply({ content: '', embeds: [embed], ephemeral: true });
                     } else {
                         await interaction.reply({ content: 'More than one stat was found matching your query. Try again, please.', ephemeral: true });
