@@ -1599,7 +1599,7 @@ client.on('interactionCreate', async (interaction) => {
                 let stats = await connection.promise().query('select * from stats where guild_id = ? and name like ?', [interaction.guildId, '%' + interaction.options.getString('name') + '%']);
                 if (stats[0].length > 0) {
                     if (stats[0].length == 1) {
-                        let stats_characters = await connection.promise().query('SELECT c.name, coalesce(cs.override_value, s.default_value) as value from characters c left outer join characters_stats cs on c.id = cs.character_id join stats s on s.id = ? where c.guild_id = ?', [stats[0][0].id, interaction.guildId]);
+                        let stats_characters = await connection.promise().query('SELECT c.name, coalesce(cs.override_value, s.default_value) as value from characters c left outer join characters_stats cs on c.id = cs.character_id and cs.stat_id = ? join stats s on s.id = ? where c.guild_id = ?', [stats[0][0].id, stats[0][0].id, interaction.guildId]);
                         var embed = new EmbedBuilder();
                         embed.setTitle(`Stat Summary for ${stats[0][0].name}`);
                         for (const characterDisplay of stats_characters[0]) {
