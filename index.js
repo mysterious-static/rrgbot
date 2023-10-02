@@ -3091,16 +3091,20 @@ client.on('interactionCreate', async (interaction) => {
                         let reputations_sorted = [];
                         let message = '';
                         for (const thisCharacter of reputations_tiers_characters[0]) {
-                            if (reputations_sorted[thisCharacter.character_name] == undefined) {
-                                reputations_sorted[thisCharacter.character_name] = thisCharacter;
-                            } else if (thisCharacter.tier_value > reputations_sorted[thisCharacter.character_name].tier_value) {
-                                reputations_sorted[thisCharacter.character_name] = thisCharacter;
+                            if (!reputations_sorted.find(i => i.character_id === thisCharacter.character_id)) {
+                                reputations_sorted.push(thisCharacter);
+                            } else {
+                                let highest = reputations_sorted.find(i => i.character_id === thisCharacter.character_id);
+                                if (highest.tier_value < thisCharacter.tier_value) {
+                                    let index = highest.findIndex(i => i.character_id === thisCharacter.character_id);
+                                    reputations_sorted[index] = thisCharacter;
+                                }
                             }
                         }
                         console.log(reputations_sorted);
-                        for (var i = 0, j = reputations_sorted.length; i < j; i++) {
-                            console.log(characterDisplay[i].character_name);
-                            message.concat(characterDisplay[i].character_name + ' ' + characterDisplay[i].threshold_name + '\n');
+                        for (const characterDisplay of reputations_sorted) {
+                            console.log(characterDisplay.character_name);
+                            message.concat(characterDisplay.character_name + ' ' + characterDisplay.threshold_name + '\n');
                         }
                         //await interaction.reply({ content: message });
                         await interaction.reply({ content: message, ephemeral: true });
