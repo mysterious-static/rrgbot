@@ -1614,7 +1614,7 @@ client.on('interactionCreate', async (interaction) => {
                         for (const characterDisplay of stats_characters[0]) {
                             names = names.concat(characterDisplay.name + '\n');
                             values = values.concat(characterDisplay.value + '\n');
-                            message = message.concat(characterDisplay.name + ' - ' + characterDisplay.value + '\n');
+                            //message = message.concat(characterDisplay.name + ' - ' + characterDisplay.value + '\n');
                         }
                         //await interaction.reply({ content: message });
                         //embed.setDescription(message);
