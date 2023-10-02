@@ -447,7 +447,7 @@ client.on('ready', async () => {
             subcommand.setName('charactersummary')
                 .setDescription('List character levels on a given stat.')
                 .addStringOption(option =>
-                    option.setName('reputation_name')
+                    option.setName('name')
                         .setDescription('The stat for which to list values. (autocompletes)')
                         .setRequired(true)))
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
