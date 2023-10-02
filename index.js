@@ -735,6 +735,13 @@ client.on('ready', async () => {
                     option.setName('reputation')
                         .setDescription('The reputation which contains the tier. (autocompletes)')
                         .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand.setName('charactersummary')
+                .setDescription('List effects on a given reputation tier.')
+                .addStringOption(option =>
+                    option.setName('reputation_name')
+                        .setDescription('The reputation which contains the tier. (autocompletes)')
+                        .setRequired(true)))
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
     let effect = new SlashCommandBuilder().setName('effect')
@@ -3076,6 +3083,23 @@ client.on('interactionCreate', async (interaction) => {
                 await interaction.reply({ content: 'World flag added.', ephemeral: true });
             }
         } else if (interaction.commandName === 'reputation') {
+            if (interaction.options.getSubcommand() === 'charactersummary') {
+                let reputations = await connection.promise().query('select * from reputations where guild_id = ? and name like ?', [interaction.guildId, '%' + interaction.options.getString('reputation_name') + '%']);
+                if (reputations[0].length > 0) {
+                    if (reputations[0].length == 1) {
+                        let reputations_tiers_characters = await connection.promise().query('select r.*, rt.threshold_name, c.name as character_name from reputations r join characters_reputations cr on r.id = cr.reputation_id join reputations_tiers rt on r.id = rt.reputation_id join characters c on cr.character_id = c.id having MAX(rt.value)<= cr.value where r.guild_id = ?', [interaction.guild_id]);
+                        let message = '';
+                        for (const thisCharacter of reputations_tiers_characters[0]) {
+                            message.concat(thisCharacter.character_name + ' ' + thisCharacter.threshold_name + '\n');
+                        }
+                        await interaction.reply({ content: message });
+                    } else {
+                        await interaction.reply({ content: 'More than one reputation was found matching your query. Try again, please.', ephemeral: true });
+                    }
+                } else {
+                    await interaction.reply({ content: 'No reputations found matching your query.', ephemeral: true });
+                }
+            }
             if (interaction.options.getSubcommand() === 'enable') {
                 let enabled = interaction.options.getBoolean('enabled');
                 await connection.promise().query('replace into game_settings (setting_name, setting_value, guild_id) values (?, ?, ?)', ['reputation', enabled, interaction.guildId]);
@@ -4166,7 +4190,7 @@ client.on('interactionCreate', async (interaction) => {
                             }
                         } else if (interaction_second.customId === 'PrereqEffectSelector') {
                             await connection.promise().query('delete from effects where id = ?', [interaction_second.values[0]]);
-                            await interaction_second.update({content: 'Effect removed.', components: []});
+                            await interaction_second.update({ content: 'Effect removed.', components: [] });
                             await collector.stop();
                         }
                     }
