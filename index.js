@@ -1595,7 +1595,27 @@ client.on('interactionCreate', async (interaction) => {
                 interaction.reply({ content: 'No archetype exists.', ephemeral: true })
             }
         } else if (interaction.commandName === 'stat') {
-            if (interaction.options.getSubcommand() === 'add') {
+            if (interaction.options.getSubcommand() === 'charactersummary') {
+                let stats = await connection.promise().query('select * from stats where guild_id = ? and name like ?', [interaction.guildId, '%' + interaction.options.getString('name') + '%']);
+                if (stats[0].length > 0) {
+                    if (stats[0].length == 1) {
+                        let stats_characters = await connection.promise().query('SELECT c.name, coalesce(cs.override_value, s.default_value) as value from characters c left outer join characters_stats cs on c.id = cs.character_id join stats s on s.id = ? where c.guild_id = ?', [stats[0][0].id, interaction.guildId]);
+                        var embed = new EmbedBuilder();
+                        embed.setTitle(`Stat Summary for ${stats[0][0].name}`);
+                        for (const characterDisplay of stats_characters[0]) {
+                            console.log(characterDisplay.character_name);
+                            message = message.concat(characterDisplay.character_name + ' - ' + (characterDisplay.override_value ? characterDisplay.override_value : characterDisplay.default_value) + '\n');
+                        }
+                        //await interaction.reply({ content: message });
+                        embed.setDescription(message);
+                        await interaction.reply({ content: '', embeds: [embed], ephemeral: true });
+                    } else {
+                        await interaction.reply({ content: 'More than one stat was found matching your query. Try again, please.', ephemeral: true });
+                    }
+                } else {
+                    await interaction.reply({ content: 'No stats found matching your query.', ephemeral: true });
+                }
+            } else if (interaction.options.getSubcommand() === 'add') {
                 let name = interaction.options.getString('stat')
                 let defaultValue = interaction.options.getInteger('defaultvalue');
                 let exists = await connection.promise().query('select * from stats where guild_id = ? and name = ?', [interaction.guildId, name]);
