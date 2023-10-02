@@ -17,7 +17,7 @@ client.login(process.env.app_token);
 
 /* Functions */
 
-async function process_effect(character, effect, source, guildId, target = null) {
+async function process_effect(character, effect, source, guildId, channel, target = null) {
     console.log('process effect ' + effect.id);
     //TODO: care about charges!
     let message;
@@ -186,7 +186,7 @@ async function process_effect(character, effect, source, guildId, target = null)
                     let effects = await connection.promise().query('select e.* from effects e join reputations_tiers_effects rte on e.id = rte.effect_id join reputations_tiers rt on rt.id = rte.reputationtier_id where rt.value > ? and rt.value <= ? and rt.reputation_id = ?', [old_value, old_value + effect.type_qty, effect.type_id]);
                     if (effects[0].length > 0) {
                         for (const thisEffect of effects[0]) {
-                            await process_effect(character, thisEffect, 'reputationtier', guildId);
+                            await process_effect(character, thisEffect, 'reputationtier', guildId, channel);
                         }
                     }
                 } break;
@@ -204,7 +204,7 @@ async function process_effect(character, effect, source, guildId, target = null)
                 let effects = await connection.promise().query('select e.* from effects e join reputations_tiers_effects rte on e.id = rte.effect_id join reputations_tiers rt on rt.id = rte.reputationtier_id where rt.value > ? and rt.value <= ? and rt.reputation_id = ?', [old_value, old_value + effect.type_qty, effect.type_id]);
                 if (effects[0].length > 0) {
                     for (const thisEffect of effects[0]) {
-                        await process_effect(character, thisEffect, 'reputationtier', guildId);
+                        await process_effect(character, thisEffect, 'reputationtier', guildId, channel);
                     }
                 }
             } break;
@@ -4623,9 +4623,9 @@ client.on('interactionCreate', async (interaction) => {
                                                     let effects = await connection.promise().query('select e.* from effects e join skills_effects se on se.effect_id = e.id where se.skill_id = ?', [selectedSkill.id]);
                                                     for (const thisEffect of effects[0]) {
                                                         if (thisEffect.target == 'triggering_character') {
-                                                            process_effect(characterDetails[0][0], thisEffect, 'skill', interaction.guildId)
+                                                            process_effect(characterDetails[0][0], thisEffect, 'skill', interaction.guildId, interaction.channel);
                                                         } else if (thisEffect.target == 'target') {
-                                                            process_effect(characterDetails[0][0], thisEffect, 'skill', interaction.guildId, characterSelected[0][0]);
+                                                            process_effect(characterDetails[0][0], thisEffect, 'skill', interaction.guildId, interaction.channel, characterSelected[0][0]);
                                                         } //potentially *specific* effects at some poitn in the future
                                                     }
                                                     await interaction_second.update({ content: 'Successfully used the skill!', components: [] });
@@ -4643,9 +4643,9 @@ client.on('interactionCreate', async (interaction) => {
                                                     let effects = await connection.promise().query('select e.* from effects e join skills_effects se on se.effect_id = e.id where se.skill_id = ?', [selectedSkill.id]);
                                                     for (const thisEffect of effects[0]) {
                                                         if (thisEffect.target == 'triggering_character') {
-                                                            process_effect(characterDetails[0][0], thisEffect, 'skill', interaction.guildId)
+                                                            process_effect(characterDetails[0][0], thisEffect, 'skill', interaction.guildId, interaction.channel);
                                                         } else if (thisEffect.target == 'target') {
-                                                            process_effect(characterDetails[0][0], thisEffect, 'skill', interaction.guildId, characterSelected[0][0]);
+                                                            process_effect(characterDetails[0][0], thisEffect, 'skill', interaction.guildId, interaction.channel, characterSelected[0][0]);
                                                         } //potentially *specific* effects at some poitn in the future
                                                     }
                                                     await interaction_second.update({ content: 'Successfully used the skill!', components: [] });
@@ -4716,9 +4716,9 @@ client.on('interactionCreate', async (interaction) => {
                                         let effects = await connection.promise().query('select e.* from effects e join skills_effects se on se.effect_id = e.id where se.skill_id = ?', [selectedSkill.id]);
                                         for (const thisEffect of effects[0]) {
                                             if (thisEffect.target == 'triggering_character') {
-                                                process_effect(characterDetails[0][0], thisEffect, 'skill', interaction.guildId)
+                                                process_effect(characterDetails[0][0], thisEffect, 'skill', interaction.guildId, interaction.channel);
                                             } else if (thisEffect.target == 'target') {
-                                                process_effect(characterDetails[0][0], thisEffect, 'skill', interaction.guildId, characterSelected[0][0]);
+                                                process_effect(characterDetails[0][0], thisEffect, 'skill', interaction.guildId, interaction.channel, characterSelected[0][0]);
                                             } //potentially *specific* effects at some poitn in the future
                                         }
                                         await interaction_second.update({ content: 'Successfully used the skill!', components: [] });
@@ -4893,9 +4893,9 @@ client.on('interactionCreate', async (interaction) => {
                                                 let effects = await connection.promise().query('select e.* from effects e join items_effects ie on ie.effect_id = e.id where ie.item_id = ?', [selectedItem.id]);
                                                 for (const thisEffect of effects[0]) {
                                                     if (thisEffect.target == 'triggering_character') {
-                                                        process_effect(characterDetails[0][0], thisEffect, 'item', interaction.guildId)
+                                                        process_effect(characterDetails[0][0], thisEffect, 'item', interaction.guildId, interaction.channel);
                                                     } else if (thisEffect.target == 'target') {
-                                                        process_effect(characterDetails[0][0], thisEffect, 'item', interaction.guildId, characterSelected[0][0]);
+                                                        process_effect(characterDetails[0][0], thisEffect, 'item', interaction.guildId, interaction.channel, characterSelected[0][0]);
                                                     } //potentially *specific* effects at some poitn in the future
                                                 }
                                                 if (selectedItem.consumable) {
@@ -4917,9 +4917,9 @@ client.on('interactionCreate', async (interaction) => {
                                                 let effects = await connection.promise().query('select e.* from effects e join items_effects se on ie.effect_id = e.id where ie.item_id = ?', [selectedItem.id]);
                                                 for (const thisEffect of effects[0]) {
                                                     if (thisEffect.target == 'triggering_character') {
-                                                        process_effect(characterDetails[0][0], thisEffect, 'item', interaction.guildId)
+                                                        process_effect(characterDetails[0][0], thisEffect, 'item', interaction.guildId, interaction.channel);
                                                     } else if (thisEffect.target == 'target') {
-                                                        process_effect(characterDetails[0][0], thisEffect, 'item', interaction.guildId, characterSelected[0][0]);
+                                                        process_effect(characterDetails[0][0], thisEffect, 'item', interaction.guildId, interaction.channel, characterSelected[0][0]);
                                                     } //potentially *specific* effects at some poitn in the future
                                                 }
                                                 if (selectedItem.consumable) {
@@ -4992,9 +4992,9 @@ client.on('interactionCreate', async (interaction) => {
                                     let effects = await connection.promise().query('select e.* from effects e join items_effects ie on ie.effect_id = e.id where ie.item_id = ?', [selectedItem.id]);
                                     for (const thisEffect of effects[0]) {
                                         if (thisEffect.target == 'triggering_character') {
-                                            process_effect(characterDetails[0][0], thisEffect, 'item', interaction.guildId)
+                                            process_effect(characterDetails[0][0], thisEffect, 'item', interaction.guildId, interaction.channel);
                                         } else if (thisEffect.target == 'target') {
-                                            process_effect(characterDetails[0][0], thisEffect, 'item', interaction.guildId, characterSelected[0][0]);
+                                            process_effect(characterDetails[0][0], thisEffect, 'item', interaction.guildId, interaction.channel, characterSelected[0][0]);
                                         } //potentially *specific* effects at some poitn in the future
                                     }
                                     if (selectedItem.consumable) {
