@@ -3097,10 +3097,13 @@ client.on('interactionCreate', async (interaction) => {
                                 reputations_sorted[thisCharacter.character_id] = thisCharacter;
                             }
                         }
+                        console.log(reputations_sorted);
                         for (const thisCharacter of reputations_sorted) {
-                            message.concat(thisCharacter.character_name + ' ' + thisCharacter.threshold_name + '\n');
+                            console.log(thisCharacter);
+                            //message.concat(thisCharacter.character_name + ' ' + thisCharacter.threshold_name + '\n');
                         }
-                        await interaction.reply({ content: message });
+                        //await interaction.reply({ content: message });
+                        await interaction.reply({ content: 'debug', ephemeral: true });
                     } else {
                         await interaction.reply({ content: 'More than one reputation was found matching your query. Try again, please.', ephemeral: true });
                     }
