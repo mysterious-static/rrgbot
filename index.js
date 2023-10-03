@@ -659,6 +659,9 @@ client.on('ready', async () => {
                     option.setName('ping')
                         .setDescription('Whether to ping this character\'s players.')
                         .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand.setName('close')
+                .setDescription('Close the whisper in the current channel.'))
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 
@@ -1183,6 +1186,51 @@ client.on('interactionCreate', async (interaction) => {
                     interaction.reply({ content: `Whisper created: ${whisper_channel}. Add characters using \`/populatewhisper\`.`, ephemeral: true });
                 } else {
                     interaction.reply({ content: "Create a whisper category first using `/whispercategory`.", ephemeral: true });
+                }
+            } else if (interaction.options.getSubcommand() === 'close') {
+                let whisper_data = await connection.promise().query('select * from whispers where channel_id = ?', [interaction.channel.id]);
+                if (whisper_data[0].length > 0) {
+                    await interaction.channel.send('Whisper closed!');
+                    let thisWhisper = whisper_data[0][0];
+                    //await channel.lockPermissions(); // Sync permissions with category
+                    let users = await connection.promise().query('select p.user_id from whispers_characters wc join players_characters pc on wc.character_id = pc.character_id join players p on pc.player_id = p.id where whisper_id = ?', [thisWhisper.id]);
+                    let characters = await connection.promise().query('select distinct c.name from whispers_characters wc join characters c on wc.character_id = c.id where whisper_id = ?', [thisWhisper.id]);
+                    if (users[0].length > 0) {
+                        for (const thisUser of users[0]) {
+                            let user = await client.users.fetch(thisUser.user_id);
+                            interaction.channel.permissionOverwrites.edit(user, { SendMessages: false });
+                        }
+                    }
+                    await connection.promise().query('update whispers set locked = 1 where channel_id = ?', thisWhisper.channel_id);
+                    let settingvalue = await connection.promise().query('select * from game_settings where guild_id = ? and setting_name = ?', [interaction.guildId, 'audit_channel']);
+                    if (settingvalue[0].length > 0) {
+                        let audit_channel = await client.channels.cache.get(settingvalue[0][0].setting_value);
+                        let embed = new EmbedBuilder()
+                            .setTitle('Whisper closed!')
+                            .setDescription('MANUAL close notification for whisper ID ' + thisWhisper.id)
+                            .addFields(
+                                {
+                                    name: 'Channel link',
+                                    value: channel.toString(),
+                                    inline: true
+                                },
+                                {
+                                    name: 'Whisper members',
+                                    value: (characters[0].length > 0 ? characters[0].map(a => a.name).join('\n') : '*none*'),
+                                    inline: true
+                                },
+                                {
+                                    name: 'Closing user',
+                                    value: interaction.member.name,
+                                    inline: true
+                                }
+                            )
+                            .setTimestamp();
+                        audit_channel.send({ embeds: [embed] });
+                    }
+
+                } else {
+                    interaction.reply({ content: 'This channel isn\'t a whisper.', ephemeral: true });
                 }
             } else if (interaction.options.getSubcommand() === 'populate') {
                 let channel = interaction.options.getChannel('whisperchannel');
