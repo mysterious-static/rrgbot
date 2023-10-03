@@ -1608,7 +1608,7 @@ client.on('interactionCreate', async (interaction) => {
                     if (stats[0].length == 1) {
                         let names = '';
                         let values = '';
-                        let stats_characters = await connection.promise().query('SELECT c.name, coalesce(cs.override_value, s.default_value) as value from characters c left outer join characters_stats cs on c.id = cs.character_id and cs.stat_id = ? join stats s on s.id = ? where c.guild_id = ?', [stats[0][0].id, stats[0][0].id, interaction.guildId]);
+                        let stats_characters = await connection.promise().query('SELECT c.name, coalesce(cs.override_value, s.default_value) as value from characters c left outer join characters_stats cs on c.id = cs.character_id and cs.stat_id = ? join stats s on s.id = ? where c.guild_id = ? order by c.name asc', [stats[0][0].id, stats[0][0].id, interaction.guildId]);
                         let embed = new EmbedBuilder();
                         embed.setTitle(`Stat Summary for ${stats[0][0].name}`);
                         for (const characterDisplay of stats_characters[0]) {
@@ -3118,9 +3118,9 @@ client.on('interactionCreate', async (interaction) => {
                 let reputations = await connection.promise().query('select * from reputations where guild_id = ? and name like ?', [interaction.guildId, '%' + interaction.options.getString('reputation_name') + '%']);
                 if (reputations[0].length > 0) {
                     if (reputations[0].length == 1) {
-                        let reputations_tiers_characters = await connection.promise().query('SELECT r.*, rt.threshold_name, c.name AS character_name, c.id AS character_id, cr.value AS rep_value, rt.value AS tier_value FROM reputations r JOIN characters_reputations cr ON r.id = cr.reputation_id JOIN reputations_tiers rt ON r.id = rt.reputation_id JOIN characters c ON cr.character_id = c.id WHERE r.id = ? AND rt.value <= cr.value', [reputations[0][0].id]);
+                        let reputations_tiers_characters = await connection.promise().query('SELECT r.*, rt.threshold_name, c.name AS character_name, c.id AS character_id, cr.value AS rep_value, rt.value AS tier_value FROM reputations r JOIN characters_reputations cr ON r.id = cr.reputation_id JOIN reputations_tiers rt ON r.id = rt.reputation_id JOIN characters c ON cr.character_id = c.id WHERE r.id = ? AND rt.value <= cr.value order by c.name', [reputations[0][0].id]);
                         let reputations_sorted = [];
-                        let message = '';
+                        //let message = '';
                         for (const thisCharacter of reputations_tiers_characters[0]) {
                             if (!reputations_sorted.find(i => i.character_id === thisCharacter.character_id)) {
                                 reputations_sorted.push(thisCharacter);
@@ -3133,14 +3133,19 @@ client.on('interactionCreate', async (interaction) => {
                             }
                         }
                         console.log(reputations_sorted);
+                        names = '';
+                        values = '';
                         let embed = new EmbedBuilder();
                         embed.setTitle(`Reputation Summary for ${reputations[0][0].name}`);
                         for (const characterDisplay of reputations_sorted) {
                             console.log(characterDisplay.character_name);
-                            message = message.concat(characterDisplay.character_name + ' - ' + characterDisplay.threshold_name + '\n');
+                            //message = message.concat(characterDisplay.character_name + ' - ' + characterDisplay.threshold_name + '\n');
+                            names = names.concat(characterDisplay.character_name + '\n');
+                            values = values.concat(characterDisplay.threshold_name + '\n');
                         }
                         //await interaction.reply({ content: message });
-                        embed.setDescription(message);
+                        //embed.setDescription(message);
+                        embed.addFields({ title: 'Characters', content: names, inline: true }, { title: 'Standing', content: values, inline: true });
                         await interaction.reply({ content: '', embeds: [embed], ephemeral: true });
                     } else {
                         await interaction.reply({ content: 'More than one reputation was found matching your query. Try again, please.', ephemeral: true });
