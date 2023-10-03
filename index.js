@@ -1221,7 +1221,7 @@ client.on('interactionCreate', async (interaction) => {
                                 },
                                 {
                                     name: 'Closing user',
-                                    value: interaction.member.name,
+                                    value: interaction.member.displayName,
                                     inline: true
                                 }
                             )
