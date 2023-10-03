@@ -3141,7 +3141,7 @@ client.on('interactionCreate', async (interaction) => {
                             console.log(characterDisplay.character_name);
                             //message = message.concat(characterDisplay.character_name + ' - ' + characterDisplay.threshold_name + '\n');
                             names = names.concat(characterDisplay.character_name + '\n');
-                            values = values.concat(characterDisplay.threshold_name + '\n');
+                            values = values.concat(characterDisplay.threshold_name + ' (' + characterDisplay.rep_value + ')\n');
                         }
                         //await interaction.reply({ content: message });
                         //embed.setDescription(message);
