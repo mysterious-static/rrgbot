@@ -1211,7 +1211,7 @@ client.on('interactionCreate', async (interaction) => {
                             .addFields(
                                 {
                                     name: 'Channel link',
-                                    value: channel.toString(),
+                                    value: interaction.channel.toString(),
                                     inline: true
                                 },
                                 {
