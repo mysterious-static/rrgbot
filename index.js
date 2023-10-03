@@ -3145,7 +3145,7 @@ client.on('interactionCreate', async (interaction) => {
                         }
                         //await interaction.reply({ content: message });
                         //embed.setDescription(message);
-                        embed.addFields({ title: 'Characters', content: names, inline: true }, { title: 'Standing', content: values, inline: true });
+                        embed.addFields({ name: 'Characters', value: names, inline: true }, { name: 'Standing', value: values, inline: true });
                         await interaction.reply({ content: '', embeds: [embed], ephemeral: true });
                     } else {
                         await interaction.reply({ content: 'More than one reputation was found matching your query. Try again, please.', ephemeral: true });
