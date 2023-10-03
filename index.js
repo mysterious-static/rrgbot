@@ -1190,7 +1190,7 @@ client.on('interactionCreate', async (interaction) => {
             } else if (interaction.options.getSubcommand() === 'close') {
                 let whisper_data = await connection.promise().query('select * from whispers where channel_id = ?', [interaction.channel.id]);
                 if (whisper_data[0].length > 0) {
-                    await interaction.channel.send('Whisper closed!');
+                    await interaction.reply('Whisper closed!');
                     let thisWhisper = whisper_data[0][0];
                     //await channel.lockPermissions(); // Sync permissions with category
                     let users = await connection.promise().query('select p.user_id from whispers_characters wc join players_characters pc on wc.character_id = pc.character_id join players p on pc.player_id = p.id where whisper_id = ?', [thisWhisper.id]);
