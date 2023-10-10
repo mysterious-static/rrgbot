@@ -582,6 +582,13 @@ client.on('ready', async () => {
                     option.setName('name')
                         .setDescription('The name of the item.')
                         .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand.setName('edit')
+                .setDescription('Edit a text field on an item.')
+                .addStringOption(option =>
+                    option.setName('name')
+                        .setDescription('The name of the item (partial okay)')
+                        .setRequired(true)))
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
     let addworldstat = new SlashCommandBuilder().setName('addworldstat')
@@ -1908,8 +1915,7 @@ client.on('interactionCreate', async (interaction) => {
                 }
 
 
-            }
-            if (interaction.options.getSubcommand() === 'add') {
+            } else if (interaction.options.getSubcommand() === 'add') {
                 let name = interaction.options.getString('name');
                 let type = interaction.options.getString('type');
                 let other_targetable = interaction.options.getBoolean('other_targetable');
@@ -2442,7 +2448,87 @@ client.on('interactionCreate', async (interaction) => {
                 }
             }
         } else if (interaction.commandName === 'itemadmin') {
-            if (interaction.options.getSubcommand() === 'add') {
+            if (interaction.options.getSubcommand() === 'edit') {
+                let item_name = interaction.options.getString('name');
+                let item_id;
+                let column_name;
+                let process = true;
+                let columns = await connection.promise().query('show columns from items where Type = "text"');
+                let message;
+                let item = await connection.promise().query('select * from items where name like ? and guild_id = ?', ['%' + item_name + '%', interaction.guildId]);
+                if (item[0].length > 0) { // CLEAN THIS MESS UP
+                    if (item[0].length == 1) {
+                        let keyValues = [];
+                        item_id = item[0][0].id;
+                        for (const column of columns[0]) {
+                            keyValues.push({ label: column.Field, value: column.Field });
+                        }
+                        const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('itemEditColumnSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
+                        let selectRow = new ActionRowBuilder().addComponents(selectComponent);
+                        message = await interaction.reply({ content: 'Please select a property from the dropdown to edit.', components: [selectRow], ephemeral: true });
+
+                        //show dropdown for column to edit, then show modal
+                    } else if (item[0].length > 25) {
+                        await interaction.reply({ content: 'Your string match returned more than 25 items. Please try again with a more specific string match.', ephemeral: true });
+                        process = false;
+                    } else if (item[0].length > 1) {
+                        let keyValues = [];
+                        for (const thisitem of item[0]) {
+                            keyValues.push({ label: thisitem.name, value: thisitem.id.toString() });
+                        }
+                        const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('itemEdititemSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
+                        let selectRow = new ActionRowBuilder().addComponents(selectComponent);
+                        message = await interaction.reply({ content: 'Please select an item from the dropdown to edit.', components: [selectRow], ephemeral: true });
+                        //show dropdown for item, then show dropdown for column, then show modal
+                    } else {
+                        await interaction.reply({ content: 'Your string match didn\'t return any results, try again please', ephemeral: true });
+                        process = false;
+                    }
+                    if (process) {
+                        let collector = message.createMessageComponentCollector();
+                        collector.on('collect', async (interaction_second) => {
+                            if (interaction_second.customId === 'itemEdititemSelector' + interaction_second.member.id) {
+                                item_id = interaction_second.values[0];
+                                let keyValues = [];
+                                item_id = item[0][0].id;
+                                for (const column of columns[0]) {
+                                    keyValues.push({ label: column.Field, value: column.Field });
+                                }
+                                const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('itemEditColumnSelector' + interaction_second.member.id).setMinValues(1).setMaxValues(1);
+                                let selectRow = new ActionRowBuilder().addComponents(selectComponent);
+                                await interaction_second.update({ content: 'Please select a property from the dropdown to edit.', components: [selectRow] });
+                            } else if (interaction_second.customId === 'itemEditColumnSelector' + interaction_second.member.id) {
+                                column_name = interaction_second.values[0];
+                                let now = Date.now();
+                                let modal = new ModalBuilder()
+                                    .setCustomId('itemEditModal' + now);
+                                modal.setTitle(`item Update - ${column_name}`);
+                                let currentValue = await connection.promise().query(`select ?? as current_value from items where id = ?`, [column_name, item_id]);
+                                let newValueInput = new TextInputBuilder()
+                                    .setCustomId('newValue')
+                                    .setLabel('New value for this field')
+                                    .setPlaceholder(currentValue[0][0].current_value)
+                                    .setStyle(TextInputStyle.Short);
+                                let valueActionRow = new ActionRowBuilder().addComponents(newValueInput);
+                                modal.addComponents(valueActionRow);
+                                await interaction_second.showModal(modal);
+                                let submittedModal = await interaction_second.awaitModalSubmit({ time: 60000 });
+                                if (submittedModal) {
+                                    if (submittedModal.customId === ('itemEditModal' + now) && submittedModal.member.id == interaction.member.id) {
+                                        const newValue = submittedModal.fields.getTextInputValue('newValue');
+                                        await connection.promise().query('update items set ?? = ? where id = ?', [column_name, newValue, item_id]);
+                                        submittedModal.update({ content: 'Successfully updated this item entry.', components: [] });
+                                    }
+                                }
+                            }
+                        });
+                    }
+                } else {
+                    await interaction.reply({ content: 'No items found matching your entry. Please double check and try again.', ephemeral: true });
+                }
+
+
+            } else if (interaction.options.getSubcommand() === 'add') {
                 let name = interaction.options.getString('itemname')
                 let description = interaction.options.getString('description');
                 let consumable = interaction.options.getBoolean('consumable');
