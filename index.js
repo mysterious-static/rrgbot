@@ -595,6 +595,13 @@ client.on('ready', async () => {
                     option.setName('name')
                         .setDescription('The name of the item (partial okay)')
                         .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand.setName('slotadd')
+                .setDescription('Add an equipment slot.')
+                .addStringOption(option =>
+                    option.setName('name')
+                        .setDescription('The name of the equipment slot.')
+                        .setRequired(true)))
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
     let setarchetypestat = new SlashCommandBuilder().setName('setarchetypestat')
@@ -2524,8 +2531,26 @@ client.on('interactionCreate', async (interaction) => {
                 let self_targetable = interaction.options.getBoolean('self_targetable');
                 let other_targetable = interaction.options.getBoolean('other_targetable');
                 let equippable = interaction.options.getBoolean('equippable');
-                await connection.promise().query('insert into items (name, description, guild_id, consumable, self_targetable, other_targetable, equippable) values (?, ?, ?, ?, ?, ?, ?)', [name, description, interaction.guildId, consumable, self_targetable, other_targetable, equippable]);
-                interaction.reply({ content: 'Item added!', ephemeral: true });
+                if (equippable) {
+                    let slots = await connection.promise().query('select * from equipslots where guild_id = ?', [interaction.guildId]);
+                    if (slots[0].length > 0) {
+                        //TODO: slot assignment dropdown, probably
+                    } else {
+                        await interaction.reply({content: 'No item slots exist, please use `/itemadmin slotadd` first.', ephemeral: true});
+                    }
+                } else {
+                    await connection.promise().query('insert into items (name, description, guild_id, consumable, self_targetable, other_targetable, equippable) values (?, ?, ?, ?, ?, ?, ?)', [name, description, interaction.guildId, consumable, self_targetable, other_targetable, equippable]);
+                    interaction.reply({ content: 'Item added!', ephemeral: true });
+                }
+            } else if (interaction.options.getSubcommand() === 'slotadd') {
+                let name = interaction.options.getString('name');
+                let slots = await connection.promise().query('select * from equipslots where guild_id = ? and name = ?', [interaction.guildId, name]);
+                if (slots[0].length > 0) {
+                    await interaction.reply({ content: 'oh no! there\'s already an item slot with this name.', ephemeral: true });
+                } else {
+                    await connection.promise().query('insert into equipslots (name, guild_id) values (?, ?)', [name, interaction.guildId]);
+                    await interaction.reply({ content: 'Added the equipment slot.', ephemeral: true });
+                }
             } else if (interaction.options.getSubcommand() === 'transfer') {
                 let quantity = interaction.options.getInteger('quantity'); //implement in future state
                 let characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
