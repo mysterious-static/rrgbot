@@ -400,21 +400,23 @@ client.on('ready', async () => {
                 .setRequired(true)
         ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
-    let addcharacterarchetype = new SlashCommandBuilder().setName('addcharacterarchetype')
-        .setDescription('Add a character-assignable archetype (think "class"). Characters can have multiple archetypes.')
-        .addStringOption(option =>
-            option.setName('archetype')
-                .setDescription('The name of the archetype')
-                .setRequired(true))
-        .addStringOption(option =>
-            option.setName('description')
-                .setDescription('The archetype description.')
-                .setRequired(true))
+    let archetype = new SlashCommandBuilder().setName('archetype')
+        .addSubcommand(subcommand =>
+            subcommand.setName('add')
+                .setDescription('Add a character-assignable archetype (think "class"). Characters can have multiple archetypes.')
+                .addStringOption(option =>
+                    option.setName('archetype')
+                        .setDescription('The name of the archetype')
+                        .setRequired(true))
+                .addStringOption(option =>
+                    option.setName('description')
+                        .setDescription('The archetype description.')
+                        .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand.setName('assign')
+                .setDescription('Assign an archetype to a character or characters.')
+        )
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-    let assignarchetype = new SlashCommandBuilder().setName('assignarchetype')
-        .setDescription('Assign an archetype to a character or characters.')
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator); // Dropdowns.
 
     let stat = new SlashCommandBuilder().setName('stat')
         .setDescription('Stat administration.')
@@ -557,6 +559,10 @@ client.on('ready', async () => {
                 .addBooleanOption(option =>
                     option.setName('consumable')
                         .setDescription('Whether item is consumed on use.')
+                        .setRequired(true))
+                .addBooleanOption(option =>
+                    option.setName('equippable')
+                        .setDescription('Wehther the item is equippable.')
                         .setRequired(true)))
         .addSubcommand(subcommand =>
             subcommand.setName('assign')
@@ -589,26 +595,6 @@ client.on('ready', async () => {
                     option.setName('name')
                         .setDescription('The name of the item (partial okay)')
                         .setRequired(true)))
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-    let addworldstat = new SlashCommandBuilder().setName('addworldstat')
-        .setDescription('Add a world stat for view in character sheet. World stats visibility can be assigned.')
-        .addStringOption(option =>
-            option.setName('name')
-                .setDescription('The name of the stat')
-                .setRequired(true))
-        .addIntegerOption(option =>
-            option.setName('value')
-                .setDescription('The value of the stat')
-                .setRequired(true))
-        .addStringOption(option =>
-            option.setName('description')
-                .setDescription('What this stat means or does.')
-                .setRequired(true))
-        .addBooleanOption(option =>
-            option.setName('globallyvisible')
-                .setDescription('Whether this is globally visible or needs to be targeted.')
-                .setRequired(true))
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
     let setarchetypestat = new SlashCommandBuilder().setName('setarchetypestat')
@@ -691,7 +677,10 @@ client.on('ready', async () => {
                 .addStringOption(option =>
                     option.setName('name')
                         .setDescription('A searchable name for this flag.')
-                        .setRequired(true)))
+                        .setRequired(true))
+                .addBooleanOption(option =>
+                    option.setName('visible')
+                        .setDescription('Visibility on player sheets (default false)')))
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
     let reputation = new SlashCommandBuilder().setName('reputation')
@@ -979,13 +968,11 @@ client.on('ready', async () => {
         rps.toJSON(),
         move.toJSON(),
         sheet.toJSON(),
-        addcharacterarchetype.toJSON(),
-        assignarchetype.toJSON(),
+        archetype.toJSON(),
         stat.toJSON(),
         addarchetypestat.toJSON(),
         skilladmin.toJSON(),
         itemadmin.toJSON(),
-        addworldstat.toJSON(),
         setarchetypestat.toJSON(),
         skill.toJSON(),
         item.toJSON(),
@@ -1603,58 +1590,60 @@ client.on('interactionCreate', async (interaction) => {
             } else {
                 interaction.reply({ content: "You don't have any inactive characters.", ephemeral: true });
             }
-        } else if (interaction.commandName === 'addcharacterarchetype') {
-            let archetype = interaction.options.getString('archetype');
-            let description = interaction.options.getString('description');
-            let archetypeExists = await connection.promise().query('select * from archetypes where guild_id = ? and name = ?', [interaction.guildId, archetype]);
-            if (archetypeExists[0].length == 0) {
-                await connection.promise().query('insert into archetypes (name, guild_id, description) values (?, ?, ?)', [archetype, interaction.guildId, description]);
-                interaction.reply({ content: 'Archetype added!', ephemeral: true });
-            } else {
-                interaction.reply({ content: 'Archetype already exists for this game.', ephemeral: true });
-            }
-        } else if (interaction.commandName === 'assignarchetype') {
-            let archetypes = await connection.promise().query('select * from archetypes where guild_id = ?', [interaction.guildId]);
-            let archetypesKeyValues = [];
-            if (archetypes[0].length > 0) {
-                for (const archetype of archetypes[0]) {
-                    archetypesKeyValues.push({ label: archetype.name, value: archetype.id.toString() });
+        } else if (interaction.commandName === 'archetype') {
+            if (interaction.getSubcommand() === 'add') {
+                let archetype = interaction.options.getString('archetype');
+                let description = interaction.options.getString('description');
+                let archetypeExists = await connection.promise().query('select * from archetypes where guild_id = ? and name = ?', [interaction.guildId, archetype]);
+                if (archetypeExists[0].length == 0) {
+                    await connection.promise().query('insert into archetypes (name, guild_id, description) values (?, ?, ?)', [archetype, interaction.guildId, description]);
+                    interaction.reply({ content: 'Archetype added!', ephemeral: true });
+                } else {
+                    interaction.reply({ content: 'Archetype already exists for this game.', ephemeral: true });
                 }
-                const archetypeSelectComponent = new StringSelectMenuBuilder().setOptions(archetypesKeyValues).setCustomId('ArchetypeAssignmentSelector').setMinValues(1).setMaxValues(1);
-                let archetypeSelectRow = new ActionRowBuilder().addComponents(archetypeSelectComponent);
-                let message = await interaction.reply({ content: 'Select an archetype to manage assignments:', components: [archetypeSelectRow], ephemeral: true });
-                let collector = message.createMessageComponentCollector({ time: 35000 });
-                let selectedArchetype;
-                collector.on('collect', async (interaction_second) => {
-                    if (interaction_second.member.id === interaction.member.id) {
-                        if (interaction_second.customId === 'ArchetypeAssignmentSelector') {
-                            selectedArchetype = interaction_second.values[0];
-                            let characters = await connection.promise().query('select distinct characters.* from characters left outer join characters_archetypes ca on characters.id = ca.character_id where guild_id = ? and (ca.archetype_id <> ? or ca.archetype_id is null)', [interaction.guildId, selectedArchetype]);
-                            let charactersKeyValues = [];
-                            if (characters[0].length > 0) {
-                                for (const character of characters[0]) {
-                                    charactersKeyValues.push({ label: character.name, value: character.id.toString() });
+            } else if (interaction.getSubcommand() === 'assign') {
+                let archetypes = await connection.promise().query('select * from archetypes where guild_id = ?', [interaction.guildId]);
+                let archetypesKeyValues = [];
+                if (archetypes[0].length > 0) {
+                    for (const archetype of archetypes[0]) {
+                        archetypesKeyValues.push({ label: archetype.name, value: archetype.id.toString() });
+                    }
+                    const archetypeSelectComponent = new StringSelectMenuBuilder().setOptions(archetypesKeyValues).setCustomId('ArchetypeAssignmentSelector').setMinValues(1).setMaxValues(1);
+                    let archetypeSelectRow = new ActionRowBuilder().addComponents(archetypeSelectComponent);
+                    let message = await interaction.reply({ content: 'Select an archetype to manage assignments:', components: [archetypeSelectRow], ephemeral: true });
+                    let collector = message.createMessageComponentCollector({ time: 35000 });
+                    let selectedArchetype;
+                    collector.on('collect', async (interaction_second) => {
+                        if (interaction_second.member.id === interaction.member.id) {
+                            if (interaction_second.customId === 'ArchetypeAssignmentSelector') {
+                                selectedArchetype = interaction_second.values[0];
+                                let characters = await connection.promise().query('select distinct characters.* from characters left outer join characters_archetypes ca on characters.id = ca.character_id where guild_id = ? and (ca.archetype_id <> ? or ca.archetype_id is null)', [interaction.guildId, selectedArchetype]);
+                                let charactersKeyValues = [];
+                                if (characters[0].length > 0) {
+                                    for (const character of characters[0]) {
+                                        charactersKeyValues.push({ label: character.name, value: character.id.toString() });
+                                    }
+                                    const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterAssignmentSelector').setMinValues(1).setMaxValues(characters[0].length);
+                                    let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                                    await interaction_second.update({ content: 'Select a character or characters to assign to this archetype:', components: [characterSelectRow] });
+                                } else {
+                                    await interaction_second.update({ content: 'No characters are valid to assign to this archetype.', components: [] });
+                                    await collector.stop();
                                 }
-                                const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterAssignmentSelector').setMinValues(1).setMaxValues(characters[0].length);
-                                let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                                await interaction_second.update({ content: 'Select a character or characters to assign to this archetype:', components: [characterSelectRow] });
-                            } else {
-                                await interaction_second.update({ content: 'No characters are valid to assign to this archetype.', components: [] });
+                            } else if (interaction_second.customId === 'CharacterAssignmentSelector') {
+                                for (const thisId of interaction_second.values) {
+                                    await connection.promise().query('insert into characters_archetypes (character_id, archetype_id) values (?, ?)', [thisId, selectedArchetype]);
+                                }
+                                await interaction_second.update({ content: 'Successfully assigned characters to archetype.', components: [] });
                                 await collector.stop();
                             }
-                        } else if (interaction_second.customId === 'CharacterAssignmentSelector') {
-                            for (const thisId of interaction_second.values) {
-                                await connection.promise().query('insert into characters_archetypes (character_id, archetype_id) values (?, ?)', [thisId, selectedArchetype]);
-                            }
-                            await interaction_second.update({ content: 'Successfully assigned characters to archetype.', components: [] });
-                            await collector.stop();
                         }
-                    }
-                })
+                    })
 
 
-            } else {
-                interaction.reply({ content: 'No archetype exists.', ephemeral: true })
+                } else {
+                    interaction.reply({ content: 'No archetype exists.', ephemeral: true })
+                }
             }
         } else if (interaction.commandName === 'stat') {
             if (interaction.options.getSubcommand() === 'charactersummary') {
@@ -2534,7 +2523,8 @@ client.on('interactionCreate', async (interaction) => {
                 let consumable = interaction.options.getBoolean('consumable');
                 let self_targetable = interaction.options.getBoolean('self_targetable');
                 let other_targetable = interaction.options.getBoolean('other_targetable');
-                await connection.promise().query('insert into items (name, description, guild_id, consumable, self_targetable, other_targetable) values (?, ?, ?, ?, ?, ?)', [name, description, interaction.guildId, consumable, self_targetable, other_targetable]);
+                let equippable = interaction.options.getBoolean('equippable');
+                await connection.promise().query('insert into items (name, description, guild_id, consumable, self_targetable, other_targetable, equippable) values (?, ?, ?, ?, ?, ?, ?)', [name, description, interaction.guildId, consumable, self_targetable, other_targetable, equippable]);
                 interaction.reply({ content: 'Item added!', ephemeral: true });
             } else if (interaction.options.getSubcommand() === 'transfer') {
                 let quantity = interaction.options.getInteger('quantity'); //implement in future state
@@ -3022,18 +3012,6 @@ client.on('interactionCreate', async (interaction) => {
                     await interaction.reply({ content: 'No item in this game matched the name you gave. Please try again.', ephemeral: true });
                 }
             }
-        } else if (interaction.commandName === 'addworldstat') {
-            let name = interaction.options.getString('name');
-            let description = interaction.options.getString('description');
-            let globallyvisible = interaction.options.getBoolean('globally_visible');
-            let value = interaction.options.getInteger('value')
-            let exists = await connection.promise().query('select * from worldstats where guild_id = ? and name = ?', [interaction.guildId, name]);
-            if (exists[0].length == 0) {
-                await connection.promise().query('insert into worldstats (name, description, globally_visible, value, guild_id) values (?, ?, ?, ?, ?)', [name, description, globallyvisible, value, interaction.guildId]);
-                interaction.reply({ content: 'World stat added!', ephemeral: true });
-            } else {
-                interaction.reply({ content: 'Skill with this name already exists!', ephemeral: true });
-            }
         } else if (interaction.commandName === 'setarchetypestat') {
             let value = interaction.options.getInteger('value');
             // Create two dropdowns. For character and stat. See characterlocation for details.
@@ -3138,7 +3116,7 @@ client.on('interactionCreate', async (interaction) => {
                             let character_archetypes = await connection.promise().query('select * from archetypes a join characters_archetypes ca on ca.archetype_id = a.id where ca.character_id = ?', [characterSelected]);
                             let character_stats = await connection.promise().query('select s.*, cs.override_value from stats s left outer join characters_stats cs on cs.stat_id = s.id and cs.character_id = ? where guild_id = ? order by s.id asc', [characterSelected, interaction.guildId]);
                             let archetype_stats = await connection.promise().query('select ars.*, ca2.override_value from archetypestats ars join archetypes_archetypestats aa on ars.id = aa.archetypestat_id join characters_archetypes ca on aa.archetype_id = ca.archetype_id and ca.character_id = ? left outer join characters_archetypestats ca2 on ca2.stat_id = ars.id and ca2.character_id = ?', [characterSelected, characterSelected]);
-                            let world_stats = [[]]; //TODO
+                            let world_flags = await connection.promise().query('select * from worldflags where guild_id = ? and visible = 1', [interaction.guildId]);
                             let msg = `**${character_information[0][0].name}** - ${character_information[0][0].description}\n`
                             if (character_archetypes[0].length > 0) {
                                 msg = msg.concat(`\n__Archetypes__\n`);
@@ -3146,7 +3124,7 @@ client.on('interactionCreate', async (interaction) => {
                                     msg = msg.concat(`**${thisArchetype.name}** - ${thisArchetype.description}\n`);
                                 }
                             }
-                            if (character_stats[0].length > 0 || archetype_stats[0].length > 0 || world_stats[0].length > 0) {
+                            if (character_stats[0].length > 0 || archetype_stats[0].length > 0 || world_flags[0].length > 0) {
                                 msg = msg.concat(`\n__Stats__\n`);
                             }
                             if (character_stats[0].length > 0) {
@@ -3168,8 +3146,12 @@ client.on('interactionCreate', async (interaction) => {
                                     }
                                 }
                             }
-                            if (world_stats[0].length > 0) {
+                            if (world_flags[0].length > 0) {
                                 // TODO
+                                msg = msg.concat('\n--- *World Information* ---\n\n');
+                                for (const thisFlag of world_flags[0]) {
+                                    msg = msg.concat(`**${thisFlag.name}** - ${thisFlag.value}\n`);
+                                }
                             }
                             const buttonActionRow = new ActionRowBuilder()
                                 .addComponents(
@@ -3244,7 +3226,8 @@ client.on('interactionCreate', async (interaction) => {
         } else if (interaction.commandName === 'worldflag') {
             if (interaction.options.getSubcommand() === 'add') {
                 let name = interaction.options.getString('name');
-                await connection.promise().query('insert into worldflags (name, guild_id) values (?, ?)', [name, interaction.guildId]);
+                let visible = interaction.options.getString('visible') || false;
+                await connection.promise().query('insert into worldflags (name, guild_id, visible) values (?, ?, ?)', [name, interaction.guildId, visible]);
                 await interaction.reply({ content: 'World flag added.', ephemeral: true });
             }
         } else if (interaction.commandName === 'reputation') {
@@ -4547,7 +4530,7 @@ client.on('interactionCreate', async (interaction) => {
                     let character_archetypes = await connection.promise().query('select * from archetypes a join characters_archetypes ca on ca.archetype_id = a.id where ca.character_id = ?', [current_character[0][0].character_id]);
                     let character_stats = await connection.promise().query('select s.*, cs.override_value from stats s left outer join characters_stats cs on cs.stat_id = s.id and cs.character_id = ? where guild_id = ? order by s.id asc', [current_character[0][0].character_id, interaction.guildId]);
                     let archetype_stats = await connection.promise().query('select ars.*, ca2.override_value from archetypestats ars join archetypes_archetypestats aa on ars.id = aa.archetypestat_id join characters_archetypes ca on aa.archetype_id = ca.archetype_id and ca.character_id = ? left outer join characters_archetypestats ca2 on ca2.stat_id = ars.id and ca2.character_id = ?', [current_character[0][0].character_id, current_character[0][0].character_id]);
-                    let world_stats = [[]]; //TODO
+                    let world_flags = await connection.promise().query('select * from worldflags where guild_id = ? and visible = 1', [interaction.guildId]);
                     let msg = `**${character_information[0][0].name}** - ${character_information[0][0].description}\n`
                     if (character_archetypes[0].length > 0) {
                         msg = msg.concat(`\n__Archetypes__\n`);
@@ -4555,7 +4538,7 @@ client.on('interactionCreate', async (interaction) => {
                             msg = msg.concat(`**${thisArchetype.name}** - ${thisArchetype.description}\n`);
                         }
                     }
-                    if (character_stats[0].length > 0 || archetype_stats[0].length > 0 || world_stats[0].length > 0) {
+                    if (character_stats[0].length > 0 || archetype_stats[0].length > 0 || world_flags[0].length > 0) {
                         msg = msg.concat(`\n__Stats__\n`);
                     }
                     if (character_stats[0].length > 0) {
@@ -4577,8 +4560,12 @@ client.on('interactionCreate', async (interaction) => {
                             }
                         }
                     }
-                    if (world_stats[0].length > 0) {
+                    if (world_flags[0].length > 0) {
                         // TODO
+                        msg = msg.concat('\n--- *World Information* ---\n\n');
+                        for (const thisFlag of world_flags[0]) {
+                            msg = msg.concat(`**${thisFlag.name}** - ${thisFlag.value}\n`);
+                        }
                     }
                     const buttonActionRow = new ActionRowBuilder()
                         .addComponents(
@@ -5886,7 +5873,7 @@ client.on('interactionCreate', async (interaction) => {
             let character_archetypes = await connection.promise().query('select * from archetypes a join characters_archetypes ca on ca.archetype_id = a.id where ca.character_id = ?', [character_id]);
             let character_stats = await connection.promise().query('select s.*, cs.override_value from stats s left outer join characters_stats cs on cs.stat_id = s.id and cs.character_id = ? where guild_id = ? order by s.id asc', [character_id, interaction.guildId]);
             let archetype_stats = await connection.promise().query('select ars.*, ca2.override_value from archetypestats ars join archetypes_archetypestats aa on ars.id = aa.archetypestat_id join characters_archetypes ca on aa.archetype_id = ca.archetype_id and ca.character_id = ? left outer join characters_archetypestats ca2 on ca2.stat_id = ars.id and ca2.character_id = ? order by ars.id asc', [character_id, character_id]);
-            let world_stats = [[]]; //TODO
+            let world_flags = await connection.promise().query('select * from worldflags where guild_id = ? and visible = 1', [interaction.guildId]);
             let msg = `**${character_information[0][0].name}** - ${character_information[0][0].description}\n`
             if (character_archetypes[0].length > 0) {
                 msg = msg.concat(`\n__Archetypes__\n`);
@@ -5894,7 +5881,7 @@ client.on('interactionCreate', async (interaction) => {
                     msg = msg.concat(`**${thisArchetype.name}** - ${thisArchetype.description}\n`);
                 }
             }
-            if (character_stats[0].length > 0 || archetype_stats[0].length > 0 || world_stats[0].length > 0) {
+            if (character_stats[0].length > 0 || archetype_stats[0].length > 0 || world_flags[0].length > 0) {
                 msg = msg.concat(`\n__Stats__\n`);
             }
             if (character_stats[0].length > 0) {
@@ -5916,8 +5903,12 @@ client.on('interactionCreate', async (interaction) => {
                     }
                 }
             }
-            if (world_stats[0].length > 0) {
+            if (world_flags[0].length > 0) {
                 // TODO
+                msg = msg.concat('\n--- *World Information* ---\n\n');
+                for (const thisFlag of world_flags[0]) {
+                    msg = msg.concat(`**${thisFlag.name}** - ${thisFlag.value}\n`);
+                }
             }
             const buttonActionRow = new ActionRowBuilder()
                 .addComponents(
