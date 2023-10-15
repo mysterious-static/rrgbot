@@ -401,6 +401,7 @@ client.on('ready', async () => {
         ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
     let archetype = new SlashCommandBuilder().setName('archetype')
+    .setDescription('Archetype administration.')
         .addSubcommand(subcommand =>
             subcommand.setName('add')
                 .setDescription('Add a character-assignable archetype (think "class"). Characters can have multiple archetypes.')
@@ -414,8 +415,7 @@ client.on('ready', async () => {
                         .setRequired(true)))
         .addSubcommand(subcommand =>
             subcommand.setName('assign')
-                .setDescription('Assign an archetype to a character or characters.')
-        )
+                .setDescription('Assign an archetype to a character or characters.'))
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
     let stat = new SlashCommandBuilder().setName('stat')
