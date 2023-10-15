@@ -401,7 +401,7 @@ client.on('ready', async () => {
         ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
     let archetype = new SlashCommandBuilder().setName('archetype')
-    .setDescription('Archetype administration.')
+        .setDescription('Archetype administration.')
         .addSubcommand(subcommand =>
             subcommand.setName('add')
                 .setDescription('Add a character-assignable archetype (think "class"). Characters can have multiple archetypes.')
@@ -1890,7 +1890,7 @@ client.on('interactionCreate', async (interaction) => {
                                 let newValueInput = new TextInputBuilder()
                                     .setCustomId('newValue')
                                     .setLabel('New value for this field')
-                                    .setPlaceholder(currentValue[0][0].current_value)
+                                    .setPlaceholder(currentValue[0][0].current_value.substring(0, 100))
                                     .setStyle(TextInputStyle.Paragraph);
                                 let valueActionRow = new ActionRowBuilder().addComponents(newValueInput);
                                 modal.addComponents(valueActionRow);
@@ -2503,7 +2503,7 @@ client.on('interactionCreate', async (interaction) => {
                                 let newValueInput = new TextInputBuilder()
                                     .setCustomId('newValue')
                                     .setLabel('New value for this field')
-                                    .setPlaceholder(currentValue[0][0].current_value)
+                                    .setPlaceholder(currentValue[0][0].current_value.substring(0, 100))
                                     .setStyle(TextInputStyle.Paragraph);
                                 let valueActionRow = new ActionRowBuilder().addComponents(newValueInput);
                                 modal.addComponents(valueActionRow);
