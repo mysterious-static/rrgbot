@@ -801,7 +801,7 @@ client.on('ready', async () => {
                         .setDescription('The user with an active player entry.')
                         .setRequired(true)))
         .addSubcommand(subcommand =>
-            subcommand.setName('charactercreate')
+            subcommand.setName('create')
                 .setDescription('Create a new character.')
                 .addStringOption(option =>
                     option.setName('name')
@@ -1891,7 +1891,7 @@ client.on('interactionCreate', async (interaction) => {
                                     .setCustomId('newValue')
                                     .setLabel('New value for this field')
                                     .setPlaceholder(currentValue[0][0].current_value)
-                                    .setStyle(TextInputStyle.Short);
+                                    .setStyle(TextInputStyle.Paragraph);
                                 let valueActionRow = new ActionRowBuilder().addComponents(newValueInput);
                                 modal.addComponents(valueActionRow);
                                 await interaction_second.showModal(modal);
@@ -2504,7 +2504,7 @@ client.on('interactionCreate', async (interaction) => {
                                     .setCustomId('newValue')
                                     .setLabel('New value for this field')
                                     .setPlaceholder(currentValue[0][0].current_value)
-                                    .setStyle(TextInputStyle.Short);
+                                    .setStyle(TextInputStyle.Paragraph);
                                 let valueActionRow = new ActionRowBuilder().addComponents(newValueInput);
                                 modal.addComponents(valueActionRow);
                                 await interaction_second.showModal(modal);
@@ -2531,15 +2531,10 @@ client.on('interactionCreate', async (interaction) => {
                 let self_targetable = interaction.options.getBoolean('self_targetable');
                 let other_targetable = interaction.options.getBoolean('other_targetable');
                 let equippable = interaction.options.getBoolean('equippable');
+                await connection.promise().query('insert into items (name, description, guild_id, consumable, self_targetable, other_targetable, equippable) values (?, ?, ?, ?, ?, ?, ?)', [name, description, interaction.guildId, consumable, self_targetable, other_targetable, equippable]);
                 if (equippable) {
-                    let slots = await connection.promise().query('select * from equipslots where guild_id = ?', [interaction.guildId]);
-                    if (slots[0].length > 0) {
-                        //TODO: slot assignment dropdown, probably
-                    } else {
-                        await interaction.reply({content: 'No item slots exist, please use `/itemadmin slotadd` first.', ephemeral: true});
-                    }
+                    interaction.reply({ content: 'Item added! Assign slots using `/itemadmin assignslot`', ephemeral: true });
                 } else {
-                    await connection.promise().query('insert into items (name, description, guild_id, consumable, self_targetable, other_targetable, equippable) values (?, ?, ?, ?, ?, ?, ?)', [name, description, interaction.guildId, consumable, self_targetable, other_targetable, equippable]);
                     interaction.reply({ content: 'Item added!', ephemeral: true });
                 }
             } else if (interaction.options.getSubcommand() === 'slotadd') {
