@@ -2619,11 +2619,11 @@ client.on('interactionCreate', async (interaction) => {
                         for (const character of characters[0]) {
                             charactersKeyValues.push({ label: character.name, value: character.id.toString() });
                         }
-                        const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ItemAssignmentCharacterSelector').setMinValues(1).setMaxValues(1);
+                        const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ItemAssignmentCharacterSelector').setMinValues(1).setMaxValues(charactersKeyValues.length);
                         let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
                         let message = await interaction.reply({ content: 'Please select the following options:', components: [itemSelectRow, characterSelectRow], ephemeral: true });
                         let collector = message.createMessageComponentCollector();
-                        let characterSelected;
+                        let charactersSelected;
                         let itemSelected;
                         let alphabetSelected;
                         collector.on('collect', async (interaction_second) => {
@@ -2634,7 +2634,7 @@ client.on('interactionCreate', async (interaction) => {
                                     } else if (interaction_second.customId === 'ItemAssignmentAlphabetSelector') {
                                         alphabetSelected = interaction_second.values[0];
                                     } else if (interaction_second.customId === 'ItemAssignmentCharacterSelector') {
-                                        characterSelected = interaction_second.values[0];
+                                        charactersSelected = interaction_second.values;
                                     }
                                     if (alphabetSelected && !itemSelected) {
                                         let items;
@@ -2651,26 +2651,21 @@ client.on('interactionCreate', async (interaction) => {
                                         const itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemAssignmentItemSelector').setMinValues(1).setMaxValues(1);
                                         const itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
                                         await interaction_second.update({ content: 'Please select the following options:', components: [itemSelectRow, characterSelectRow] });
-                                    } else if (itemSelected && characterSelected) {
-                                        let exists = await connection.promise().query('select * from characters_items where character_id = ? and item_id = ?', [characterSelected, itemSelected]);
-                                        if (exists[0].length > 0) {
-                                            if (quantity + exists[0][0].quantity >= 0) {
-                                                if (quantity + exists[0][0].quantity == 0) {
+                                    } else if (itemSelected && charactersSelected) {
+                                        for (const characterSelected of charactersSelected) {
+                                            let exists = await connection.promise().query('select * from characters_items where character_id = ? and item_id = ?', [characterSelected, itemSelected]);
+                                            if (exists[0].length > 0) {
+                                                if (quantity + exists[0][0].quantity <= 0) {
                                                     await connection.promise().query('delete from characters_items where character_id = ? and item_id = ?', [characterSelected, itemSelected]);
                                                 } else {
                                                     await connection.promise().query('update characters_items set quantity = ? where character_id = ? and item_id = ?', [quantity + exists[0][0].quantity, characterSelected, itemSelected]);
                                                 }
-                                                await interaction_second.update({ content: 'Successfully added additional copy/copies of this item to character.', components: [] });
-                                                await collector.stop();
                                             } else {
-                                                await interaction_second.update({ content: 'This character doesn\'t have enough of this item to remove that quantity.', components: [] });
-                                                await collector.stop();
+                                                await connection.promise().query('insert into characters_items (character_id, item_id, quantity) values (?, ?, ?)', [characterSelected, itemSelected, quantity]);
                                             }
-                                        } else {
-                                            await connection.promise().query('insert into characters_items (character_id, item_id, quantity) values (?, ?, ?)', [characterSelected, itemSelected, quantity]);
-                                            await interaction_second.update({ content: 'Successfully assigned item to character.', components: [] });
-                                            await collector.stop();
                                         }
+                                        await interaction_second.update({ content: 'Successfully added items to selected character or characters.', components: [] });
+                                        await collector.stop();
                                     } else {
                                         await interaction_second.deferUpdate();
                                     }
