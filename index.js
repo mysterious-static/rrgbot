@@ -183,7 +183,12 @@ async function process_effect(character, effect, source, guildId, channel, targe
                     }
                     let reputation = await connection.promise().query('select * from reputations where id = ?', effect.type_id);
                     message += ` ${adjusted} ${character.name}'s standing with *${reputation[0][0].name}* by ${Math.abs(effect.type_qty)}`;
-                    let effects = await connection.promise().query('select e.* from effects e join reputations_tiers_effects rte on e.id = rte.effect_id join reputations_tiers rt on rt.id = rte.reputationtier_id where rt.value > ? and rt.value <= ? and rt.reputation_id = ?', [old_value, reputation_exists[0][0].value + effect.type_qty, effect.type_id]);
+                    let effects;
+                    if (reputation_exists[0].length == 1) {
+                        effects = await connection.promise().query('select e.* from effects e join reputations_tiers_effects rte on e.id = rte.effect_id join reputations_tiers rt on rt.id = rte.reputationtier_id where rt.value > ? and rt.value <= ? and rt.reputation_id = ?', [old_value, reputation_exists[0][0].value + effect.type_qty, effect.type_id]);
+                    } else {
+                        effects = await connection.promise().query('select e.* from effects e join reputations_tiers_effects rte on e.id = rte.effect_id join reputations_tiers rt on rt.id = rte.reputationtier_id where rt.value > ? and rt.value <= ? and rt.reputation_id = ?', [old_value, effect.type_qty, effect.type_id]);
+                    }
                     if (effects[0].length > 0) {
                         for (const thisEffect of effects[0]) {
                             await process_effect(character, thisEffect, 'reputationtier', guildId, channel);
@@ -201,7 +206,12 @@ async function process_effect(character, effect, source, guildId, channel, targe
                 await connection.promise().query('replace into characters_reputations (character_id, reputation_id, value, max_value) values (?, ?, ?, greatest(max_value, ?))', [character.id, effect.type_id, effect.type_qty, effect.type_qty]);
                 let reputation = await connection.promise().query('select * from reputations where id = ?', effect.type_id);
                 message += ` set ${character.name}'s standing with *${reputation[0][0].name}* to ${effect.type_qty}`;
-                let effects = await connection.promise().query('select e.* from effects e join reputations_tiers_effects rte on e.id = rte.effect_id join reputations_tiers rt on rt.id = rte.reputationtier_id where rt.value > ? and rt.value <= ? and rt.reputation_id = ?', [old_value, reputation_exists[0][0].value + effect.type_qty, effect.type_id]);
+                let effects;
+                if (reputation_exists[0].length == 1) {
+                    effects = await connection.promise().query('select e.* from effects e join reputations_tiers_effects rte on e.id = rte.effect_id join reputations_tiers rt on rt.id = rte.reputationtier_id where rt.value > ? and rt.value <= ? and rt.reputation_id = ?', [old_value, reputation_exists[0][0].value + effect.type_qty, effect.type_id]);
+                } else {
+                    effects = await connection.promise().query('select e.* from effects e join reputations_tiers_effects rte on e.id = rte.effect_id join reputations_tiers rt on rt.id = rte.reputationtier_id where rt.value > ? and rt.value <= ? and rt.reputation_id = ?', [old_value, effect.type_qty, effect.type_id]);
+                }
                 if (effects[0].length > 0) {
                     for (const thisEffect of effects[0]) {
                         await process_effect(character, thisEffect, 'reputationtier', guildId, channel);
