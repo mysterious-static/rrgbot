@@ -524,7 +524,10 @@ client.on('ready', async () => {
                 .addBooleanOption(option =>
                     option.setName('to_character')
                         .setDescription('Set to true if you\'re unassigning from a character, false if from an archetype.')
-                        .setRequired(true)))
+                        .setRequired(true))
+                .addStringOption(option =>
+                    option.setName('skill_name')
+                        .setDescription('Optional typeahead for the skill name, if you know it.')))
         .addSubcommand(subcommand =>
             subcommand.setName('addeffect')
                 .setDescription('Add effect to targetable skill.'))
@@ -2041,6 +2044,12 @@ client.on('interactionCreate', async (interaction) => {
                 let unassignSkillRow;
                 let characters = false;
                 let archetypes = false;
+                let skillName;
+                if (interaction.options.getString('skill_name')) {
+                    skillName = interaction.options.getString('skill_name');
+                } else {
+                    skillName = false;
+                }
                 if (to_character) {
                     characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
                     if (characters[0].length > 0) {
@@ -2078,25 +2087,38 @@ client.on('interactionCreate', async (interaction) => {
                                 skillSelected = interaction_second.values[0];
                             }
                             if (!skillSelected && (characterSelected || archetypeSelected)) {
-                                let skills;
-                                if (characterSelected) {
-                                    skills = await connection.promise().query('select s.* from skills s join skills_characters sc on s.id = sc.skill_id where sc.character_id = ?', [characterSelected]);
-                                } else {
-                                    skills = await connection.promise().query('select s.* from skills s join skills_archetypes sa on s.id = sa.skill_id where sa.archetype_id = ?', [archetypeSelected]);
-                                }
-                                if (skills[0].length > 0) {
-                                    let skillsKeyValues = [];
-                                    for (const skill of skills[0]) {
-                                        skillsKeyValues.push({ label: skill.name, value: skill.id.toString() });
+                                if (skillName) {
+                                    if (characterSelected) {
+                                        skills = await connection.promise().query('select s.* from skills s join skills_characters sc on s.id = sc.skill_id where sc.character_id = ? and s.name like ?', [characterSelected, skillName]);
+                                    } else {
+                                        skills = await connection.promise().query('select s.* from skills s join skills_characters sc on s.id = sc.skill_id where sc.character_id = ? and s.name like ?', [characterSelected, skillName]);
                                     }
-                                    const unassignSkillComponent2 = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillUnassignmentSkillSelector').setMinValues(1).setMaxValues(1);
-                                    let unassignSkillRow2 = new ActionRowBuilder().addComponents(unassignSkillComponent2);
-                                    await interaction_second.update({ content: 'Now select a skill to unassign:', components: [unassignSkillRow2] });
+                                    if (skills[0].length == 1) {
+                                        skillSelected = skills[0][0].id;
+                                    } else {
+                                        await interaction_second.update({ content: 'Couldn\'t find any skills matching your specification.', components: [] });
+                                        collector.stop();
+                                    }
                                 } else {
-                                    await interaction_second.update({ content: 'Couldn\'t find any skills for this character/archetype.' });
-                                    collector.stop();
+                                    let skills;
+                                    if (characterSelected) {
+                                        skills = await connection.promise().query('select s.* from skills s join skills_characters sc on s.id = sc.skill_id where sc.character_id = ?', [characterSelected]);
+                                    } else {
+                                        skills = await connection.promise().query('select s.* from skills s join skills_archetypes sa on s.id = sa.skill_id where sa.archetype_id = ?', [archetypeSelected]);
+                                    }
+                                    if (skills[0].length > 0) {
+                                        let skillsKeyValues = [];
+                                        for (const skill of skills[0]) {
+                                            skillsKeyValues.push({ label: skill.name, value: skill.id.toString() });
+                                        }
+                                        const unassignSkillComponent2 = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillUnassignmentSkillSelector').setMinValues(1).setMaxValues(1);
+                                        let unassignSkillRow2 = new ActionRowBuilder().addComponents(unassignSkillComponent2);
+                                        await interaction_second.update({ content: 'Now select a skill to unassign:', components: [unassignSkillRow2] });
+                                    } else {
+                                        await interaction_second.update({ content: 'Couldn\'t find any skills for this character/archetype.' });
+                                        collector.stop();
+                                    }
                                 }
-
                             }
                             if (skillSelected && (characterSelected || archetypeSelected)) {
                                 if (characterSelected) {
