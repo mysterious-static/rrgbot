@@ -837,6 +837,13 @@ client.on('ready', async () => {
         .addSubcommand(subcommand =>
             subcommand.setName('move')
                 .setDescription('Move a character to a specific location.'))
+        .addSubcommand(subcommand =>
+            subcommand.setName('edit')
+                .setDescription('Edit a text field on an character.')
+                .addStringOption(option =>
+                    option.setName('name')
+                        .setDescription('The name of the character (partial okay)')
+                        .setRequired(true)))
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
     // Characters Per Player (switching system // bot echoes) - TODO
@@ -1356,6 +1363,86 @@ client.on('interactionCreate', async (interaction) => {
                 }
             }
         } else if (interaction.commandName === 'character') {
+            if (interaction.options.getSubcommand() === 'edit') {
+                let character_name = interaction.options.getString('name');
+                let character_id;
+                let column_name;
+                let process = true;
+                let columns = await connection.promise().query('show columns from characters where Type = "text"');
+                let message;
+                let character = await connection.promise().query('select * from characters where name like ? and guild_id = ?', ['%' + character_name + '%', interaction.guildId]);
+                if (character[0].length > 0) { // CLEAN THIS MESS UP
+                    if (character[0].length == 1) {
+                        let keyValues = [];
+                        character_id = character[0][0].id;
+                        for (const column of columns[0]) {
+                            keyValues.push({ label: column.Field, value: column.Field });
+                        }
+                        const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('characterEditColumnSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
+                        let selectRow = new ActionRowBuilder().addComponents(selectComponent);
+                        message = await interaction.reply({ content: 'Please select a property from the dropdown to edit.', components: [selectRow], ephemeral: true });
+
+                        //show dropdown for column to edit, then show modal
+                    } else if (character[0].length > 25) {
+                        await interaction.reply({ content: 'Your string match returned more than 25 characters. Please try again with a more specific string match.', ephemeral: true });
+                        process = false;
+                    } else if (character[0].length > 1) {
+                        let keyValues = [];
+                        for (const thischaracter of character[0]) {
+                            keyValues.push({ label: thischaracter.name, value: thischaracter.id.toString() });
+                        }
+                        const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('characterEditcharacterSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
+                        let selectRow = new ActionRowBuilder().addComponents(selectComponent);
+                        message = await interaction.reply({ content: 'Please select an character from the dropdown to edit.', components: [selectRow], ephemeral: true });
+                        //show dropdown for character, then show dropdown for column, then show modal
+                    } else {
+                        await interaction.reply({ content: 'Your string match didn\'t return any results, try again please', ephemeral: true });
+                        process = false;
+                    }
+                    if (process) {
+                        let collector = message.createMessageComponentCollector();
+                        collector.on('collect', async (interaction_second) => {
+                            if (interaction_second.customId === 'characterEditcharacterSelector' + interaction_second.member.id) {
+                                character_id = interaction_second.values[0];
+                                let keyValues = [];
+                                character_id = character[0][0].id;
+                                for (const column of columns[0]) {
+                                    keyValues.push({ label: column.Field, value: column.Field });
+                                }
+                                const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('characterEditColumnSelector' + interaction_second.member.id).setMinValues(1).setMaxValues(1);
+                                let selectRow = new ActionRowBuilder().addComponents(selectComponent);
+                                await interaction_second.update({ content: 'Please select a property from the dropdown to edit.', components: [selectRow] });
+                            } else if (interaction_second.customId === 'characterEditColumnSelector' + interaction_second.member.id) {
+                                column_name = interaction_second.values[0];
+                                let now = Date.now();
+                                let modal = new ModalBuilder()
+                                    .setCustomId('characterEditModal' + now);
+                                modal.setTitle(`character Update - ${column_name}`);
+                                let currentValue = await connection.promise().query(`select ?? as current_value from characters where id = ?`, [column_name, character_id]);
+                                let newValueInput = new TextInputBuilder()
+                                    .setCustomId('newValue')
+                                    .setLabel('New value for this field')
+                                    .setPlaceholder(currentValue[0][0].current_value.substring(0, 100))
+                                    .setStyle(TextInputStyle.Paragraph);
+                                let valueActionRow = new ActionRowBuilder().addComponents(newValueInput);
+                                modal.addComponents(valueActionRow);
+                                await interaction_second.showModal(modal);
+                                let submittedModal = await interaction_second.awaitModalSubmit({ time: 60000 });
+                                if (submittedModal) {
+                                    if (submittedModal.customId === ('characterEditModal' + now) && submittedModal.member.id == interaction.member.id) {
+                                        const newValue = submittedModal.fields.getTextInputValue('newValue');
+                                        await connection.promise().query('update characters set ?? = ? where id = ?', [column_name, newValue, character_id]);
+                                        submittedModal.update({ content: 'Successfully updated this character entry.', components: [] });
+                                    }
+                                }
+                            }
+                        });
+                    }
+                } else {
+                    await interaction.reply({ content: 'No characters found matching your entry. Please double check and try again.', ephemeral: true });
+                }
+
+            }
             if (interaction.options.getSubcommand() === 'unassign') {
                 let user = interaction.options.getUser('user');
                 let player = await connection.promise().query('select * from players where user_id = ? and guild_id = ?', [user.id, interaction.guildId]);
