@@ -1698,7 +1698,7 @@ client.on('interactionCreate', async (interaction) => {
                 interaction.reply({ content: "You don't have any inactive characters.", ephemeral: true });
             }
         } else if (interaction.commandName === 'archetype') {
-            if (interaction.getSubcommand() === 'add') {
+            if (interaction.options.getSubcommand() === 'add') {
                 let archetype = interaction.options.getString('archetype');
                 let description = interaction.options.getString('description');
                 let archetypeExists = await connection.promise().query('select * from archetypes where guild_id = ? and name = ?', [interaction.guildId, archetype]);
@@ -1708,7 +1708,7 @@ client.on('interactionCreate', async (interaction) => {
                 } else {
                     interaction.reply({ content: 'Archetype already exists for this game.', ephemeral: true });
                 }
-            } else if (interaction.getSubcommand() === 'assign') {
+            } else if (interaction.options.getSubcommand() === 'assign') {
                 let archetypes = await connection.promise().query('select * from archetypes where guild_id = ?', [interaction.guildId]);
                 let archetypesKeyValues = [];
                 if (archetypes[0].length > 0) {
