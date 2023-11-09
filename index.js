@@ -921,24 +921,6 @@ client.on('ready', async () => {
             option.setName('fixed_add')
                 .setDescription('Additional +/- modifier to your roll (optional).'));
 
-
-
-    let addticketcategory = new SlashCommandBuilder().setName('addticketcategory')
-        .setDescription('Add a ticket category to the dropdown menu.')
-        .addStringOption(option =>
-            option.setName('name')
-                .setDescription('Name of category.')
-                .setRequired(true))
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-    let ticketchannel = new SlashCommandBuilder().setName('ticketchannel')
-        .setDescription('Where the dropdown for selecting a ticket category / opening tickets will be.')
-        .addChannelOption(option =>
-            option.setName('channel')
-                .setDescription('Channel where you want the message')
-                .setRequired(true))
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
     let auditchannel = new SlashCommandBuilder().setName('auditchannel')
         .setDescription('Where the audit messages / notifications for opening and closing tickets will be.')
         .addChannelOption(option =>
@@ -947,20 +929,37 @@ client.on('ready', async () => {
                 .setRequired(true))
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
-    let setcategorygroup = new SlashCommandBuilder().setName('setcategorygroup')
-        .setDescription('What role or roles should be notified when a  ticket category')
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-    // Dropdowns / multisleect
 
-    let closeticket = new SlashCommandBuilder().setName('closeticket')
-        .setDescription('Closes the current ticket thread.')
-        .addStringOption(option =>
-            option.setName('reason')
-                .setDescription('Quick summary of ticket closure notes')
-                .setRequired(true));
-
-    let removeticketcategory = new SlashCommandBuilder().setName('removeticketcategory')
-        .setDescription('Removes a ticket category (nyi)')
+    let ticket = new SlashCommandBuilder().setName('ticket')
+        .setDescription('Ticket management')
+        .addSubcommand(subcommand =>
+            subcommand.setName('categorygroup') //setcategorygroup
+                .setDescription('Set a role to be notified when a ticket opens in a category')
+        )
+        .addSubcommand(subcommand =>
+            subcommand.setName('channel') //ticketchannel
+                .setDescription('Where the dropdown for opening tickets will live')
+                .addChannelOption(option =>
+                    option.setName('channel')
+                        .setDescription('Channel where you want the dropdown')
+                        .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand.setName('addcategory') //addticketcategory
+                .setDescription('Add a ticket category to the dropdown menu.')
+                .addStringOption(option =>
+                    option.setName('name')
+                        .setDescription('Name of category.')
+                        .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand.setName('close') //closeticket
+                .setDescription('Closes the current ticket thread.')
+                .addStringOption(option =>
+                    option.setName('reason')
+                        .setDescription('Quick summary of ticket closure notes')
+                        .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand.setName('removecategory')
+                .setDescription('Removes a ticket category (nyi)'))
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 
@@ -1011,12 +1010,8 @@ client.on('ready', async () => {
         active.toJSON(),
         whispercategory.toJSON(),
         whisper.toJSON(),
-        addticketcategory.toJSON(),
-        ticketchannel.toJSON(),
         auditchannel.toJSON(),
-        setcategorygroup.toJSON(),
-        closeticket.toJSON(),
-        removeticketcategory.toJSON(),
+        ticket.toJSON(),
         sendas.toJSON(),
         roll.toJSON(),
         locationawareness.toJSON(),
@@ -5382,162 +5377,164 @@ client.on('interactionCreate', async (interaction) => {
                 } else {
                     interaction.reply({ content: '`' + dice + 'd' + sides + (interaction.options.getInteger('fixed_add') ? ' + ' + interaction.options.getInteger('fixed_add').toString() : '') + ' = ' + indivDice + (interaction.options.getInteger('fixed_add') ? ' + ' + interaction.options.getInteger('fixed_add') : '') + ' = ' + total + '`', ephemeral: true });
                 }
-            } else if (interaction.commandName === 'addticketcategory') {
-                let name = interaction.options.getString('name');
-                let categories = await connection.promise().query('select * from tickets_categories where guildid = ? and name = ?', [interaction.guild.id, name]);
-                if (categories[0].length > 0) {
-                    interaction.reply({ content: 'You already have a category with that name.', ephemeral: true });
-                } else {
-                    await connection.promise().query('insert into tickets_categories (guildid, name) values (?, ?)', [interaction.guild.id, name]);
-                    let channel = await connection.promise().query('select * from game_settings where setting_name = "ticket_channel" and guild_id = ?', [interaction.guild.id]);
-                    if (channel[0].length > 0) {
-                        let message = await connection.promise().query('select * from game_settings where setting_name = "ticket_message" and guild_id = ?', [interaction.guild.id]);
+            } else if (interaction.commandName === 'ticket') {
+                if (interaction.options.getSubcommand() === 'channel') {
+                    let audit_channel = await connection.promise().query('select * from game_settings where setting_name = "audit_channel" and guild_id = ?', [interaction.guild.id]);
+                    if (audit_channel[0].length > 0) {
                         let categories = await connection.promise().query('select * from tickets_categories where guildid = ?', [interaction.guild.id]);
-                        if (categories[0].length > 25) {
-                            await connection.promise().query('delete from tickets_categories where guildid = ? and name = ?', [interaction.guild.id, name]);
-                            interaction.reply({ content: 'You have more than 25 ticket categories. Please delete some and try adding this again.', ephemeral: true });
-                        } else {
-                            let channel = await client.channels.cache.get(channel[0][0].setting_value);
-                            let categoriesKeyValues = [];
+                        if (categories[0].length > 0) {
+                            let existing_channel = await connection.promise().query('select * from game_settings where setting_name = "ticket_channel" and guild_id = ?', [interaction.guild.id]);
+                            if (existing_channel[0].length > 0) {
+                                let channel = await client.channels.cache.get(existing_channel[0][0].setting_value);
+                                let existing_message = await connection.promise().query('select * from game_settings where setting_name = "ticket_message" and guild_id = ?', [interaction.guild.id]);
+                                await channel.messages.fetch(existing_message[0][0].setting_value).then(msg => msg.delete());
+                                await connection.promise().query('update game_settings set setting_value = ? where setting_name = "ticket_channel" and guild_id = ?', [interaction.options.getChannel('channel').id, interaction.guild.id]);
+                            } else {
+                                await connection.promise().query('insert into game_settings (setting_name, guild_id, setting_value) values (?, ?, ?)', ["ticket_channel", interaction.guild.id, interaction.options.getChannel('channel').id]) // really shouldnt we consolidate these into an replace into or whatever
+                            }
                             const embeddedMessage = new EmbedBuilder()
                                 .setColor(0x770000)
                                 .setTitle('Ticket System')
                                 .setDescription('Please select a ticket type from the dropdown menu to begin opening a support ticket.');
+                            let categoriesKeyValues = [];
                             for (const category of categories[0]) {
                                 categoriesKeyValues.push({ label: `${category.name}`, value: category.id.toString() });
                             }
                             const categorySelectComponent = new StringSelectMenuBuilder().setOptions(categoriesKeyValues).setCustomId('TicketCategorySelector').setMinValues(1).setMaxValues(1);
                             const categorySelectRow = new ActionRowBuilder().addComponents(categorySelectComponent);
-                            await channel.messages.fetch(message[0][0].setting_value).then(msg => msg.edit({ embeds: [embeddedMessage], components: [categorySelectRow] }));
-                            interaction.reply({ content: 'Created category.', ephemeral: true });
+                            let message = await interaction.options.getChannel('channel').send({ embeds: [embeddedMessage], components: [categorySelectRow] });
+                            await connection.promise().query('replace into game_settings (setting_name, guild_id, setting_value) values (?, ?, ?)', ["ticket_message", interaction.guild.id, message.id]);
+                            interaction.reply({ content: 'Assigned ticket channel and sent message.', ephemeral: true });
+                        } else {
+                            interaction.reply({ content: 'Please create at least one ticket category first, using `/addticketcategory`.', ephemeral: true })
                         }
                     } else {
-                        interaction.reply({ content: 'Created category.', ephemeral: true });
+                        interaction.reply({ content: 'Please create an audit channel first, using `/auditchannel`.', ephemeral: true });
                     }
-                }
-            } else if (interaction.commandName === 'ticketchannel') {
-                let audit_channel = await connection.promise().query('select * from game_settings where setting_name = "audit_channel" and guild_id = ?', [interaction.guild.id]);
-                if (audit_channel[0].length > 0) {
-                    let categories = await connection.promise().query('select * from tickets_categories where guildid = ?', [interaction.guild.id]);
+                } else if (interaction.options.getSubcommand() === 'addcategory') {
+                    let name = interaction.options.getString('name');
+                    let categories = await connection.promise().query('select * from tickets_categories where guildid = ? and name = ?', [interaction.guild.id, name]);
                     if (categories[0].length > 0) {
-                        let existing_channel = await connection.promise().query('select * from game_settings where setting_name = "ticket_channel" and guild_id = ?', [interaction.guild.id]);
-                        if (existing_channel[0].length > 0) {
-                            let channel = await client.channels.cache.get(existing_channel[0][0].setting_value);
-                            let existing_message = await connection.promise().query('select * from game_settings where setting_name = "ticket_message" and guild_id = ?', [interaction.guild.id]);
-                            await channel.messages.fetch(existing_message[0][0].setting_value).then(msg => msg.delete());
-                            await connection.promise().query('update game_settings set setting_value = ? where setting_name = "ticket_channel" and guild_id = ?', [interaction.options.getChannel('channel').id, interaction.guild.id]);
+                        interaction.reply({ content: 'You already have a category with that name.', ephemeral: true });
+                    } else {
+                        await connection.promise().query('insert into tickets_categories (guildid, name) values (?, ?)', [interaction.guild.id, name]);
+                        let channel = await connection.promise().query('select * from game_settings where setting_name = "ticket_channel" and guild_id = ?', [interaction.guild.id]);
+                        if (channel[0].length > 0) {
+                            let message = await connection.promise().query('select * from game_settings where setting_name = "ticket_message" and guild_id = ?', [interaction.guild.id]);
+                            let categories = await connection.promise().query('select * from tickets_categories where guildid = ?', [interaction.guild.id]);
+                            if (categories[0].length > 25) {
+                                await connection.promise().query('delete from tickets_categories where guildid = ? and name = ?', [interaction.guild.id, name]);
+                                interaction.reply({ content: 'You have more than 25 ticket categories. Please delete some and try adding this again.', ephemeral: true });
+                            } else {
+                                let channel = await client.channels.cache.get(channel[0][0].setting_value);
+                                let categoriesKeyValues = [];
+                                const embeddedMessage = new EmbedBuilder()
+                                    .setColor(0x770000)
+                                    .setTitle('Ticket System')
+                                    .setDescription('Please select a ticket type from the dropdown menu to begin opening a support ticket.');
+                                for (const category of categories[0]) {
+                                    categoriesKeyValues.push({ label: `${category.name}`, value: category.id.toString() });
+                                }
+                                const categorySelectComponent = new StringSelectMenuBuilder().setOptions(categoriesKeyValues).setCustomId('TicketCategorySelector').setMinValues(1).setMaxValues(1);
+                                const categorySelectRow = new ActionRowBuilder().addComponents(categorySelectComponent);
+                                await channel.messages.fetch(message[0][0].setting_value).then(msg => msg.edit({ embeds: [embeddedMessage], components: [categorySelectRow] }));
+                                interaction.reply({ content: 'Created category.', ephemeral: true });
+                            }
                         } else {
-                            await connection.promise().query('insert into game_settings (setting_name, guild_id, setting_value) values (?, ?, ?)', ["ticket_channel", interaction.guild.id, interaction.options.getChannel('channel').id]) // really shouldnt we consolidate these into an replace into or whatever
+                            interaction.reply({ content: 'Created category.', ephemeral: true });
                         }
-                        const embeddedMessage = new EmbedBuilder()
-                            .setColor(0x770000)
-                            .setTitle('Ticket System')
-                            .setDescription('Please select a ticket type from the dropdown menu to begin opening a support ticket.');
-                        let categoriesKeyValues = [];
+                    }
+                } else if (interaction.options.getSubcommand() === 'close') {
+                    if (interaction.channel.isThread()) {
+                        let ticket = await connection.promise().query('select * from tickets where thread_id = ?', [interaction.channel.id]);
+                        if (ticket[0].length > 0) {
+                            let ticketRole = await connection.promise().query('select * from tickets_categories_roles where category_id = ?', [ticket[0][0].category_id]);
+                            let category = await connection.promise().query('select * from tickets_categories where id = ?', [ticket[0][0].category_id]);
+                            if (interaction.member.permissions.has(PermissionsBitField.Flags.Administrator) || interaction.member.roles.cache.has(ticketRole[0][0].role_id)) {
+                                let reason = interaction.options.getString('reason');
+                                let openuser = await interaction.guild.members.fetch(ticket[0][0].uid_open);
+                                if (!openuser.permissions.has(PermissionsBitField.Flags.Administrator)) {
+                                    await interaction.channel.members.remove(openuser.id);
+                                }
+                                await interaction.reply({ content: `Ticket closed by ${interaction.user}` });
+                                await interaction.channel.setArchived(true);
+                                // Archive thread
+                                await connection.promise().query('update tickets set uid_close = ? where thread_id = ?', [interaction.member.id, interaction.channel.id]);
+                                // Create embed
+                                let settingvalue = await connection.promise().query('select * from game_settings where guild_id = ? and setting_name = ?', [interaction.guild.id, 'audit_channel']);
+                                let audit_channel = await client.channels.cache.get(settingvalue[0][0].setting_value);
+                                let embed = new EmbedBuilder()
+                                    .setTitle('Ticket closed!')
+                                    .setDescription(ticket[0][0].title)
+                                    .setAuthor({ name: interaction.member.displayName })
+                                    .addFields(
+                                        {
+                                            name: 'Thread link',
+                                            value: interaction.channel.toString(),
+                                            inline: true
+                                        },
+                                        {
+                                            name: 'Category',
+                                            value: category[0][0].name,
+                                            inline: true
+                                        },
+                                        {
+                                            name: 'Closure notes',
+                                            value: reason,
+                                            inline: false
+                                        }
+                                    )
+                                    .setTimestamp();
+                                audit_channel.send({ embeds: [embed] });
+                                // Remove open_uid from thread
+                                // Send message to audit channel
+                                // ack the interaction silently
+                                //TODO close reason
+                            } else {
+                                interaction.reply({ content: 'no admin or appropriate role', ephemeral: true });
+                            }
+                        } else {
+                            interaction.reply({ content: 'couldn\'t find ticket with thread id', ephemeral: true });
+                        }
+                    }
+                } else if (interaction.options.getSubcommand() === 'categorygroup') {
+                    let categories = await connection.promise().query('select * from tickets_categories where guildid = ?', [interaction.guild.id]);
+                    let categoriesKeyValues = [];
+                    if (categories[0].length > 0) {
                         for (const category of categories[0]) {
                             categoriesKeyValues.push({ label: `${category.name}`, value: category.id.toString() });
                         }
-                        const categorySelectComponent = new StringSelectMenuBuilder().setOptions(categoriesKeyValues).setCustomId('TicketCategorySelector').setMinValues(1).setMaxValues(1);
+                        const categorySelectComponent = new StringSelectMenuBuilder().setOptions(categoriesKeyValues).setCustomId('CategorySelector').setMinValues(1).setMaxValues(1);
                         const categorySelectRow = new ActionRowBuilder().addComponents(categorySelectComponent);
-                        let message = await interaction.options.getChannel('channel').send({ embeds: [embeddedMessage], components: [categorySelectRow] });
-                        await connection.promise().query('replace into game_settings (setting_name, guild_id, setting_value) values (?, ?, ?)', ["ticket_message", interaction.guild.id, message.id]);
-                        interaction.reply({ content: 'Assigned ticket channel and sent message.', ephemeral: true });
-                    } else {
-                        interaction.reply({ content: 'Please create at least one ticket category first, using `/addticketcategory`.', ephemeral: true })
+                        let message = await interaction.reply({ content: 'Select a category to assign a role to.', components: [categorySelectRow], ephemeral: true });
+                        const collector = message.createMessageComponentCollector();
+                        let categorySelected;
+                        let rolesSelected;
+                        collector.on('collect', async (interaction_select) => {
+                            if (interaction_select.values[0]) {
+                                if (interaction_select.customId === 'CategorySelector') {
+                                    interaction_select.deferUpdate();
+                                    categorySelected = interaction_select.values[0];
+                                    const roleSelectComponent = new RoleSelectMenuBuilder().setCustomId('RoleSelector').setMinValues(1).setMaxValues(5);
+                                    const roleSelectRow = new ActionRowBuilder().addComponents(roleSelectComponent);
+                                    await interaction.editReply({ content: 'Select the roles you want to assign.', components: [roleSelectRow] });
+                                } else if (interaction_select.customId === 'RoleSelector') {
+                                    rolesSelected = interaction_select.values;
+                                    for (const role of rolesSelected) {
+                                        await connection.promise().query('insert into tickets_categories_roles (category_id, role_id) values (?, ?)', [categorySelected, role]);
+                                    }
+                                    await interaction.editReply({ content: 'Role assigned to category successfully.', components: [] });
+                                    await collector.stop();
+                                }
+                            }
+                        });
                     }
-                } else {
-                    interaction.reply({ content: 'Please create an audit channel first, using `/auditchannel`.', ephemeral: true });
+                } else if (interaction.options.getSubcommand() === 'removecategory') {
+                    interaction.reply({ content: 'This command is not implemented yet. Sorry!', ephemeral: true });
                 }
             } else if (interaction.commandName === 'auditchannel') {
                 await connection.promise().query('replace into game_settings (guild_id, setting_name, setting_value) values (?, ?, ?)', [interaction.guild.id, "audit_channel", interaction.options.getChannel('channel').id]);
                 interaction.reply({ content: 'Audit channel created or updated.', ephemeral: true });
-            } else if (interaction.commandName === 'setcategorygroup') {
-                let categories = await connection.promise().query('select * from tickets_categories where guildid = ?', [interaction.guild.id]);
-                let categoriesKeyValues = [];
-                if (categories[0].length > 0) {
-                    for (const category of categories[0]) {
-                        categoriesKeyValues.push({ label: `${category.name}`, value: category.id.toString() });
-                    }
-                    const categorySelectComponent = new StringSelectMenuBuilder().setOptions(categoriesKeyValues).setCustomId('CategorySelector').setMinValues(1).setMaxValues(1);
-                    const categorySelectRow = new ActionRowBuilder().addComponents(categorySelectComponent);
-                    let message = await interaction.reply({ content: 'Select a category to assign a role to.', components: [categorySelectRow], ephemeral: true });
-                    const collector = message.createMessageComponentCollector();
-                    let categorySelected;
-                    let rolesSelected;
-                    collector.on('collect', async (interaction_select) => {
-                        if (interaction_select.values[0]) {
-                            if (interaction_select.customId === 'CategorySelector') {
-                                interaction_select.deferUpdate();
-                                categorySelected = interaction_select.values[0];
-                                const roleSelectComponent = new RoleSelectMenuBuilder().setCustomId('RoleSelector').setMinValues(1).setMaxValues(5);
-                                const roleSelectRow = new ActionRowBuilder().addComponents(roleSelectComponent);
-                                await interaction.editReply({ content: 'Select the roles you want to assign.', components: [roleSelectRow] });
-                            } else if (interaction_select.customId === 'RoleSelector') {
-                                rolesSelected = interaction_select.values;
-                                for (const role of rolesSelected) {
-                                    await connection.promise().query('insert into tickets_categories_roles (category_id, role_id) values (?, ?)', [categorySelected, role]);
-                                }
-                                await interaction.editReply({ content: 'Role assigned to category successfully.', components: [] });
-                                await collector.stop();
-                            }
-                        }
-                    });
-                }
-            } else if (interaction.commandName === 'closeticket') {
-                if (interaction.channel.isThread()) {
-                    let ticket = await connection.promise().query('select * from tickets where thread_id = ?', [interaction.channel.id]);
-                    if (ticket[0].length > 0) {
-                        let ticketRole = await connection.promise().query('select * from tickets_categories_roles where category_id = ?', [ticket[0][0].category_id]);
-                        let category = await connection.promise().query('select * from tickets_categories where id = ?', [ticket[0][0].category_id]);
-                        if (interaction.member.permissions.has(PermissionsBitField.Flags.Administrator) || interaction.member.roles.cache.has(ticketRole[0][0].role_id)) {
-                            let reason = interaction.options.getString('reason');
-                            let openuser = await interaction.guild.members.fetch(ticket[0][0].uid_open);
-                            if (!openuser.permissions.has(PermissionsBitField.Flags.Administrator)) {
-                                await interaction.channel.members.remove(openuser.id);
-                            }
-                            await interaction.reply({ content: `Ticket closed by ${interaction.user}` });
-                            await interaction.channel.setArchived(true);
-                            // Archive thread
-                            await connection.promise().query('update tickets set uid_close = ? where thread_id = ?', [interaction.member.id, interaction.channel.id]);
-                            // Create embed
-                            let settingvalue = await connection.promise().query('select * from game_settings where guild_id = ? and setting_name = ?', [interaction.guild.id, 'audit_channel']);
-                            let audit_channel = await client.channels.cache.get(settingvalue[0][0].setting_value);
-                            let embed = new EmbedBuilder()
-                                .setTitle('Ticket closed!')
-                                .setDescription(ticket[0][0].title)
-                                .setAuthor({ name: interaction.member.displayName })
-                                .addFields(
-                                    {
-                                        name: 'Thread link',
-                                        value: interaction.channel.toString(),
-                                        inline: true
-                                    },
-                                    {
-                                        name: 'Category',
-                                        value: category[0][0].name,
-                                        inline: true
-                                    },
-                                    {
-                                        name: 'Closure notes',
-                                        value: reason,
-                                        inline: false
-                                    }
-                                )
-                                .setTimestamp();
-                            audit_channel.send({ embeds: [embed] });
-                            // Remove open_uid from thread
-                            // Send message to audit channel
-                            // ack the interaction silently
-                            //TODO close reason
-                        } else {
-                            interaction.reply({ content: 'no admin or appropriate role', ephemeral: true });
-                        }
-                    } else {
-                        interaction.reply({ content: 'couldn\'t find ticket with thread id', ephemeral: true });
-                    }
-                }
-            } else if (interaction.commandName === 'removeticketcategory') {
-                interaction.reply({ content: 'This command isn\'t implemented yet. Sorry!', ephemeral: true });
             }
         }
     }
