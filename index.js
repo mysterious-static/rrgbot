@@ -2073,6 +2073,7 @@ client.on('interactionCreate', async (interaction) => {
                         let collector = message.createMessageComponentCollector();
                         let charactersSelected;
                         let archetypesSelected;
+                        let alphabetSelected;
                         let skillSelected;
                         collector.on('collect', async (interaction_second) => {
                             if (interaction.member.id === interaction_second.member.id) {
