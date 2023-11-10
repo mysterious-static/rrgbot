@@ -4039,7 +4039,7 @@ client.on('interactionCreate', async (interaction) => {
                         message = await interaction.reply({ content: 'Please select a skill to add an effect to:', components: [skillSelectRow], ephemeral: true });
                         collector = message.createMessageComponentCollector();
                     } else {
-                        await interaction.reply({ content: 'No reputations matching that name.', ephemeral: true });
+                        await interaction.reply({ content: 'No skills matching that name.', ephemeral: true });
                     }
                 } else if (effect_type === 'item') {
                     let items = await connection.promise().query('select * from items where guild_id = ? and (other_targetable = 1 or self_targetable = 1)', [interaction.guildId]);
@@ -4083,7 +4083,7 @@ client.on('interactionCreate', async (interaction) => {
                         message = await interaction.reply({ content: 'Please select an item to add an effect to:', components: [itemSelectRow], ephemeral: true });
                         collector = message.createMessageComponentCollector();
                     } else {
-                        await interaction.reply({ content: 'No reputations matching that name.', ephemeral: true });
+                        await interaction.reply({ content: 'No items matching that name.', ephemeral: true });
                     }
                 }
                 let type;
