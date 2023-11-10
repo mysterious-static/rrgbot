@@ -589,9 +589,6 @@ client.on('ready', async () => {
                         .setDescription('The quantity of the item to transfer')
                         .setRequired(true)))
         .addSubcommand(subcommand =>
-            subcommand.setName('addeffect')
-                .setDescription('Add effect to targetable item.'))
-        .addSubcommand(subcommand =>
             subcommand.setName('vieweffects')
                 .setDescription('View effects on an item.')
                 .addStringOption(option =>
