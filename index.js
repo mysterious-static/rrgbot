@@ -3971,9 +3971,10 @@ client.on('interactionCreate', async (interaction) => {
                                 selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('TierAlphaSelector').setMinValues(1).setMaxValues(1);
                             }
                             const selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                            await interaction_second.update({ content: 'Please select a reputation tier:', components: [selectRow], ephemeral: true });
+                            message = await interaction.reply({ content: 'Please select a reputation tier:', components: [selectRow], ephemeral: true });
+                            collector = message.createMessageComponentCollector();
                         } else {
-                            await interaction_second.update({ content: 'No reputation tiers available for this reputation.', components: [], ephemeral: true });
+                            await interaction.reply({ content: 'No reputation tiers available for this reputation.', components: [], ephemeral: true });
                         }
                     } else if (reputations[0].length > 1) {
                         let reputationSelectComponent;
