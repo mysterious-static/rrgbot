@@ -4022,23 +4022,25 @@ client.on('interactionCreate', async (interaction) => {
                             const selectRow = new ActionRowBuilder().addComponents(selectComponent);
                             message = await interaction.reply({ content: 'Please select a type of effect:', components: [selectRow], ephemeral: true });
                             collector = message.createMessageComponentCollector();
-                        } else if (skills[0].length <= 25) {
-                            let skillsKeyValues = [];
-                            for (const skill of skills[0]) {
-                                skillsKeyValues.push({ label: skill.name, value: skill.id.toString() });
-                            }
-                            skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillEffectSkillSelector').setMinValues(1).setMaxValues(1);
                         } else {
-                            let skills = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
-                            let skillsKeyValues = [];
-                            for (const skill of skills) {
-                                skillsKeyValues.push({ label: skill, value: skill });
+                            if (skills[0].length <= 25) {
+                                let skillsKeyValues = [];
+                                for (const skill of skills[0]) {
+                                    skillsKeyValues.push({ label: skill.name, value: skill.id.toString() });
+                                }
+                                skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillEffectSkillSelector').setMinValues(1).setMaxValues(1);
+                            } else {
+                                let skills = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
+                                let skillsKeyValues = [];
+                                for (const skill of skills) {
+                                    skillsKeyValues.push({ label: skill, value: skill });
+                                }
+                                skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillEffectAlphabetSelector').setMinValues(1).setMaxValues(1);
                             }
-                            skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillEffectAlphabetSelector').setMinValues(1).setMaxValues(1);
+                            let skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
+                            message = await interaction.reply({ content: 'Please select a skill to add an effect to:', components: [skillSelectRow], ephemeral: true });
+                            collector = message.createMessageComponentCollector();
                         }
-                        let skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
-                        message = await interaction.reply({ content: 'Please select a skill to add an effect to:', components: [skillSelectRow], ephemeral: true });
-                        collector = message.createMessageComponentCollector();
                     } else {
                         await interaction.reply({ content: 'No skills matching that name.', ephemeral: true });
                     }
@@ -4066,23 +4068,25 @@ client.on('interactionCreate', async (interaction) => {
                             const selectRow = new ActionRowBuilder().addComponents(selectComponent);
                             message = await interaction.reply({ content: 'Please select a type of effect:', components: [selectRow], ephemeral: true });
                             collector = message.createMessageComponentCollector();
-                        } else if (items[0].length <= 25) {
-                            let itemsKeyValues = [];
-                            for (const item of items[0]) {
-                                itemsKeyValues.push({ label: item.name, value: item.id.toString() });
-                            }
-                            itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemEffectItemSelector').setMinValues(1).setMaxValues(1);
                         } else {
-                            let items = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
-                            let itemsKeyValues = [];
-                            for (const item of items) {
-                                itemsKeyValues.push({ label: item, value: item });
+                            if (items[0].length <= 25) {
+                                let itemsKeyValues = [];
+                                for (const item of items[0]) {
+                                    itemsKeyValues.push({ label: item.name, value: item.id.toString() });
+                                }
+                                itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemEffectItemSelector').setMinValues(1).setMaxValues(1);
+                            } else {
+                                let items = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
+                                let itemsKeyValues = [];
+                                for (const item of items) {
+                                    itemsKeyValues.push({ label: item, value: item });
+                                }
+                                itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemEffectAlphabetSelector').setMinValues(1).setMaxValues(1);
                             }
-                            itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemEffectAlphabetSelector').setMinValues(1).setMaxValues(1);
+                            let itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
+                            message = await interaction.reply({ content: 'Please select an item to add an effect to:', components: [itemSelectRow], ephemeral: true });
+                            collector = message.createMessageComponentCollector();
                         }
-                        let itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
-                        message = await interaction.reply({ content: 'Please select an item to add an effect to:', components: [itemSelectRow], ephemeral: true });
-                        collector = message.createMessageComponentCollector();
                     } else {
                         await interaction.reply({ content: 'No items matching that name.', ephemeral: true });
                     }
