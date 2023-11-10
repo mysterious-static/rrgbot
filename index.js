@@ -3951,6 +3951,7 @@ client.on('interactionCreate', async (interaction) => {
                 let effect_type = interaction.options.getString('type');
                 if (effect_type === 'reputationtier') {
                     let reputations = await connection.promise().query('select * from reputations where guild_id = ? and name like ?', [interaction.guildId, interaction.options.getString('typeahead') + '%']);
+                    console.log(reputations);
                     if (reputations[0].length == 1) {
                         reputation_id = reputations[0][0].id;
                         let result_values = await connection.promise().query('select * from reputations_tiers where reputation_id = ?', [reputation_id]);
