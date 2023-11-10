@@ -3950,7 +3950,7 @@ client.on('interactionCreate', async (interaction) => {
                 let selected_id = false;
                 let effect_type = interaction.options.getString('type');
                 if (effect_type === 'reputationtier') {
-                    let reputations = await connection.promise().query('select * from reputations where guild_id = ? and name like \'?%\'', [interaction.guildId, interaction.options.getString('typeahead')]);
+                    let reputations = await connection.promise().query('select * from reputations where guild_id = ? and name like ?%', [interaction.guildId, interaction.options.getString('typeahead')]);
                     if (reputations[0].length == 1) {
                         reputation_id = reputations[0][0].id;
                         let result_values = await connection.promise().query('select * from reputations_tiers where reputation_id = ?', [reputation_id]);
@@ -3998,7 +3998,7 @@ client.on('interactionCreate', async (interaction) => {
                         await interaction.reply({ content: 'No reputations matching that name.', ephemeral: true });
                     }
                 } else if (effect_type === 'skill') {
-                    let skills = await connection.promise().query('select * from skills where guild_id = ? and (other_targetable = 1 or self_targetable = 1) and name like \'?%\'', [interaction.guildId, interaction.options.getString('typeahead')]);
+                    let skills = await connection.promise().query('select * from skills where guild_id = ? and (other_targetable = 1 or self_targetable = 1) and name like ?%', [interaction.guildId, interaction.options.getString('typeahead')]);
                     let skillSelectComponent;
                     if (skills[0].length > 0) {
                         if (skills[0].length == 1) {
@@ -4042,7 +4042,7 @@ client.on('interactionCreate', async (interaction) => {
                         await interaction.reply({ content: 'No skills matching that name.', ephemeral: true });
                     }
                 } else if (effect_type === 'item') {
-                    let items = await connection.promise().query('select * from items where guild_id = ? and (other_targetable = 1 or self_targetable = 1)', [interaction.guildId]);
+                    let items = await connection.promise().query('select * from items where guild_id = ? and (other_targetable = 1 or self_targetable = 1) and name like ?%', [interaction.guildId, interaction.options.getString('typeahead')]);
                     let itemSelectComponent;
                     if (items[0].length > 0) {
                         if (items[0].length == 1) {
