@@ -426,6 +426,9 @@ client.on('ready', async () => {
         .addSubcommand(subcommand =>
             subcommand.setName('assign')
                 .setDescription('Assign an archetype to a character or characters.'))
+        .addSubcommand(subcommand =>
+            subcommand.setName('unassign')
+                .setDescription('Unassign an archetype from a character.'))
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
     let stat = new SlashCommandBuilder().setName('stat')
@@ -1751,7 +1754,50 @@ client.on('interactionCreate', async (interaction) => {
 
 
                 } else {
-                    interaction.reply({ content: 'No archetype exists.', ephemeral: true })
+                    interaction.reply({ content: 'No archetypes exist.', ephemeral: true })
+                }
+            } else if (interaction.options.getSubcommand() === 'unassign') {
+                let archetypes = await connection.promise().query('select * from archetypes where guild_id = ?', [interaction.guildId]);
+                let archetypesKeyValues = [];
+                if (archetypes[0].length > 0) {
+                    for (const archetype of archetypes[0]) {
+                        archetypesKeyValues.push({ label: archetype.name, value: archetype.id.toString() });
+                    }
+                    const archetypeSelectComponent = new StringSelectMenuBuilder().setOptions(archetypesKeyValues).setCustomId('ArchetypeAssignmentSelector').setMinValues(1).setMaxValues(1);
+                    let archetypeSelectRow = new ActionRowBuilder().addComponents(archetypeSelectComponent);
+                    let message = await interaction.reply({ content: 'Select an archetype to manage assignments:', components: [archetypeSelectRow], ephemeral: true });
+                    let collector = message.createMessageComponentCollector({ time: 35000 });
+                    let selectedArchetype;
+                    collector.on('collect', async (interaction_second) => {
+                        if (interaction_second.member.id === interaction.member.id) {
+                            if (interaction_second.customId === 'ArchetypeAssignmentSelector') {
+                                selectedArchetype = interaction_second.values[0];
+                                let characters = await connection.promise().query('select distinct characters.* from characters left outer join characters_archetypes ca on characters.id = ca.character_id where guild_id = ? and (ca.archetype_id = ?)', [interaction.guildId, selectedArchetype]);
+                                let charactersKeyValues = [];
+                                if (characters[0].length > 0) {
+                                    for (const character of characters[0]) {
+                                        charactersKeyValues.push({ label: character.name, value: character.id.toString() });
+                                    }
+                                    const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterUnassignmentSelector').setMinValues(1).setMaxValues(characters[0].length);
+                                    let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                                    await interaction_second.update({ content: 'Select a character or characters to unassign to this archetype:', components: [characterSelectRow] });
+                                } else {
+                                    await interaction_second.update({ content: 'No characters are valid to assign to this archetype.', components: [] });
+                                    await collector.stop();
+                                }
+                            } else if (interaction_second.customId === 'CharacterUnassignmentSelector') {
+                                for (const thisId of interaction_second.values) {
+                                    await connection.promise().query('delete from characters_archetypes where character_id = ? and archetype_id = ?', [thisId, selectedArchetype]);
+                                }
+                                await interaction_second.update({ content: 'Successfully unassigned characters from archetype.', components: [] });
+                                await collector.stop();
+                            }
+                        }
+                    })
+
+
+                } else {
+                    interaction.reply({ content: 'No archetypes exist.', ephemeral: true })
                 }
             }
         } else if (interaction.commandName === 'stat') {
