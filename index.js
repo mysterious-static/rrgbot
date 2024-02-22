@@ -2196,7 +2196,7 @@ client.on('interactionCreate', async (interaction) => {
                                     } else {
                                         skills = await connection.promise().query('select s.* from skills s join skills_archetypes sa on s.id = sa.skill_id where sa.archetype_id = ?', [archetypeSelected]);
                                     }
-                                    if (skills[0].length > 0) {
+                                    if (skills[0].length > 0 && skills[0].length <= 25) {
                                         let skillsKeyValues = [];
                                         for (const skill of skills[0]) {
                                             skillsKeyValues.push({ label: skill.name, value: skill.id.toString() });
@@ -2204,8 +2204,11 @@ client.on('interactionCreate', async (interaction) => {
                                         const unassignSkillComponent2 = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillUnassignmentSkillSelector').setMinValues(1).setMaxValues(1);
                                         let unassignSkillRow2 = new ActionRowBuilder().addComponents(unassignSkillComponent2);
                                         await interaction_second.update({ content: 'Now select a skill to unassign:', components: [unassignSkillRow2] });
-                                    } else {
+                                    } else if (skills[0].length <= 0) {
                                         await interaction_second.update({ content: 'Couldn\'t find any skills for this character/archetype.' });
+                                        collector.stop();
+                                    } else {
+                                        await interaction_second.update({ content: "More than 25 skills are assigned to this character. Use the skill_name parameter in this command to remove a specific skill." });
                                         collector.stop();
                                     }
                                 }
@@ -5932,7 +5935,7 @@ client.on('interactionCreate', async (interaction) => {
                             } else {
                                 standing = [];
                                 standing[0] = [];
-                                standing[0][0] = {threshold_name: '*Not yet encountered!*'};
+                                standing[0][0] = { threshold_name: '*Not yet encountered!*' };
                             }
                             //let next_standing = await connection.promise().query('select * from reputations_tiers rt where value > ? order by value asc limit 1', [thisReputation.characterStanding]);
                             //eventually use these three numbers to do "0/12000" or whatever
