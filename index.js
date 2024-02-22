@@ -5926,7 +5926,12 @@ client.on('interactionCreate', async (interaction) => {
                     minId = (minId ? Math.min(minId, thisReputation.id) : thisReputation.id);
                     if (sort == 'asc' && thisReputation.id >= reputation_id || sort == 'desc' && thisReputation.id <= reputation_id) {
                         if (process_test_msg) {
-                            let standing = await connection.promise().query('select * from reputations_tiers rt where value <= ? order by value desc limit 1', [thisReputation.characterStanding]);
+                            let standing;
+                            if (thisReputation.characterStanding) {
+                                standing = await connection.promise().query('select * from reputations_tiers rt where value <= ? order by value desc limit 1', [thisReputation.characterStanding]);
+                            } else {
+                                standing[0][0].threshold_name = '*Not yet encountered!*';
+                            }
                             //let next_standing = await connection.promise().query('select * from reputations_tiers rt where value > ? order by value asc limit 1', [thisReputation.characterStanding]);
                             //eventually use these three numbers to do "0/12000" or whatever
                             let test_msg;
