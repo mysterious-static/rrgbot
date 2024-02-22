@@ -5930,6 +5930,7 @@ client.on('interactionCreate', async (interaction) => {
                             if (thisReputation.characterStanding) {
                                 standing = await connection.promise().query('select * from reputations_tiers rt where value <= ? order by value desc limit 1', [thisReputation.characterStanding]);
                             } else {
+                                standing[0] = [];
                                 standing[0][0].threshold_name = '*Not yet encountered!*';
                             }
                             //let next_standing = await connection.promise().query('select * from reputations_tiers rt where value > ? order by value asc limit 1', [thisReputation.characterStanding]);
