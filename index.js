@@ -2097,7 +2097,15 @@ client.on('interactionCreate', async (interaction) => {
                     let archetypes;
                     if (to_character) {
                         characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
-                        if (characters[0].length > 0) {
+                        if (characters[0].length >= 25) {
+                            let characters = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
+                            let charactersKeyValues = [];
+                            for (const character of characters) {
+                                charactersKeyValues.push({ label: character, value: character });
+                            }
+                            characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('SkillAssignmentCharacterAlphabetSelector').setMinValues(1).setMaxValues(1);
+                            secondSelectRow = new StringSelectMenuBuilder().setOptions(characterSelectComponent);
+                        } else if (characters[0].length > 0) {
                             let charactersKeyValues = [{ label: 'Select a character', value: '0' }];
                             for (const character of characters[0]) {
                                 charactersKeyValues.push({ label: character.name, value: character.id.toString() });
@@ -2122,6 +2130,7 @@ client.on('interactionCreate', async (interaction) => {
                         let charactersSelected;
                         let archetypesSelected;
                         let alphabetSelected;
+                        let alphabetCSelected;
                         let skillSelected;
                         collector.on('collect', async (interaction_second) => {
                             if (interaction.member.id === interaction_second.member.id) {
@@ -2130,6 +2139,8 @@ client.on('interactionCreate', async (interaction) => {
                                         skillSelected = interaction_second.values[0];
                                     } else if (interaction_second.customId === 'SkillAssignmentAlphabetSelector') {
                                         alphabetSelected = interaction_second.values[0];
+                                    } else if (interaction_second.customId === 'SkillAssignmentCharacterAlphabetSelector') {
+                                        alphabetCSelected = interaction_second.values[0];
                                     } else if (interaction_second.customId === 'SkillAssignmentCharacterSelector') {
                                         charactersSelected = interaction_second.values;
                                     } else {
@@ -2146,23 +2157,39 @@ client.on('interactionCreate', async (interaction) => {
                                         for (const skill of skills[0]) {
                                             skillsKeyValues.push({ label: skill.name, value: skill.id.toString() });
                                         }
-                                        let skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillAssignmentSkillSelector').setMinValues(1).setMaxValues(1);
-                                        let skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
+                                        skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillAssignmentSkillSelector').setMinValues(1).setMaxValues(1);
+                                        skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
                                         await interaction_second.update({ content: 'Please select the following options:', components: [skillSelectRow, secondSelectRow] });
-                                    } else if (skillSelected && (charactersSelected || archetypesSelected)) {
-                                        if (charactersSelected) {
-                                            for (const character_id of charactersSelected) {
-                                                await connection.promise().query('insert ignore into skills_characters (character_id, skill_id) values (?, ?)', [character_id, skillSelected]);
-                                            }
-                                        } else {
-                                            for (const archetype_id of archetypesSelected) {
-                                                await connection.promise().query('insert ignore into skills_archetypes (archetype_id, skill_id) values (?, ?)', [archetype_id, skillSelected]);
-                                            }
-                                        }
-                                        await interaction_second.update({ content: 'Successfully assigned skill to characters or archetypes. I\'d tell you which but Alli is lazy.', components: [] });
-                                        await collector.stop();
                                     } else {
-                                        await interaction_second.deferUpdate();
+                                        if (alphabetCSelected && !charactersSelected) {
+                                            let characters;
+                                            if (alphabetCSelected.length == 1) {
+                                                characters = await connection.promise().query('select * from characters where guild_id = ? and name like ?', [interaction_second.guildId, alphabetCSelected + '%']);
+                                            } else {
+                                                //hmm something is wrong, bail out
+                                            }
+                                            let charactersKeyValues = [{ label: 'Select a character', value: '0' }];
+                                            for (const character of characters[0]) {
+                                                charactersKeyValues.push({ label: character.name, value: character.id.toString() });
+                                            }
+                                            characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('SkillAssignmentCharacterSelector').setMinValues(1).setMaxValues(charactersKeyValues.length);
+                                            secondSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                                            await interaction_second.update({content: 'Please select the following options:', components: [skillSelectRow, secondSelectRow]});
+                                        } else if (skillSelected && (charactersSelected || archetypesSelected)) {
+                                            if (charactersSelected) {
+                                                for (const character_id of charactersSelected) {
+                                                    await connection.promise().query('insert ignore into skills_characters (character_id, skill_id) values (?, ?)', [character_id, skillSelected]);
+                                                }
+                                            } else {
+                                                for (const archetype_id of archetypesSelected) {
+                                                    await connection.promise().query('insert ignore into skills_archetypes (archetype_id, skill_id) values (?, ?)', [archetype_id, skillSelected]);
+                                                }
+                                            }
+                                            await interaction_second.update({ content: 'Successfully assigned skill to characters or archetypes. I\'d tell you which but Alli is lazy.', components: [] });
+                                            await collector.stop();
+                                        } else {
+                                            await interaction_second.deferUpdate();
+                                        }
                                     }
                                 } else {
                                     await interaction_second.deferUpdate();
