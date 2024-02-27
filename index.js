@@ -2174,7 +2174,7 @@ client.on('interactionCreate', async (interaction) => {
                                             }
                                             characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('SkillAssignmentCharacterSelector').setMinValues(1).setMaxValues(charactersKeyValues.length);
                                             secondSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                                            await interaction_second.update({content: 'Please select the following options:', components: [skillSelectRow, secondSelectRow]});
+                                            await interaction_second.update({ content: 'Please select the following options:', components: [skillSelectRow, secondSelectRow] });
                                         } else if (skillSelected && (charactersSelected || archetypesSelected)) {
                                             if (charactersSelected) {
                                                 for (const character_id of charactersSelected) {
@@ -3527,7 +3527,7 @@ client.on('interactionCreate', async (interaction) => {
                                     await interaction_second.update({ content: 'No reputation tiers available for this reputation.', components: [], ephemeral: true });
                                 }
                             } else if (interaction_second.customId === 'TierSelector' || interaction_second.customId === 'SkillEffectSkillSelector' || interaction_second.customId === 'ItemEffectItemSelector') {
-                                selected_id === interaction_second.values[0];
+                                selected_id = interaction_second.values[0];
                                 let types = [
                                     { label: 'Increment World Flag', value: 'wflag_inc' },
                                     { label: 'Set World Flag', value: 'wflag_set' },
