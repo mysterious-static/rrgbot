@@ -1297,7 +1297,7 @@ client.on('interactionCreate', async (interaction) => {
                             if (interaction_second.member.id === interaction.member.id) {
                                 let characterSelected = interaction_second.values[0];
                                 if (interaction_second.customId === 'WhisperPopAlphabetSelector') {
-                                    let characters = await connection.promise().query('select * from characters where guild_id = ? and upper(character_name) like "?%"', [interaction.guildId, characterSelected]);
+                                    let characters = await connection.promise().query('select * from characters where guild_id = ? and upper(name) like "?%"', [interaction.guildId, characterSelected]);
                                     if (characters[0].length > 0) {
                                         let charactersKeyValues = [];
                                         for (const character of characters[0]) {
@@ -1566,7 +1566,7 @@ client.on('interactionCreate', async (interaction) => {
                             if (interaction_second.customId === 'CharAvAlphabetSelector') {
                                 let characters;
                                 if (interaction.member.permissions.has('ADMINISTRATOR')) {
-                                    characters = await connection.promise().query('select * from characters where guild_id = ? and upper(character_name) like "?%"', [interaction.guildId, characterSelected]);
+                                    characters = await connection.promise().query('select * from characters where guild_id = ? and upper(name) like "?%"', [interaction.guildId, characterSelected]);
                                 } else {
                                     characters = await connection.promise().query('select c.* from players p join players_characters pc on p.id = pc.player_id join charactesr c on pc.character_id = c.id where p.user_id = ? and p.guild_id = ? and upper(c.character_name) like "?%"', [interaction.user.id, interaction.guildId, characterSelected]);
                                 }
@@ -2844,7 +2844,7 @@ client.on('interactionCreate', async (interaction) => {
                     if (interaction.member.id === interaction_second.member.id) {
                         let characterSelected = interaction_second.values[0];
                         if (interaction_second.customId === 'ModSheetAlphabetSelector') {
-                            characters = await connection.promise().query('select * from characters where guild_id = ? and upper(character_name) like "?%"', [interaction.guildId, characterSelected]);
+                            characters = await connection.promise().query('select * from characters where guild_id = ? and upper(name) like "?%"', [interaction.guildId, characterSelected]);
                             if (characters[0].length > 0) {
                                 let charactersKeyValues = [{ label: 'Select a characters', value: '0' }];
                                 for (const character of characters[0]) {
