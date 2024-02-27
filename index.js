@@ -2871,7 +2871,7 @@ client.on('interactionCreate', async (interaction) => {
                     if (interaction.member.id === interaction_second.member.id) {
                         let characterSelected = interaction_second.values[0];
                         if (interaction_second.customId === 'ModSheetAlphabetSelector') {
-                            characters = await connection.promise().query('select * from characters where guild_id = ? and upper(name) like "?%"', [interaction.guildId, characterSelected]);
+                            characters = await connection.promise().query('select * from characters where guild_id = ? and upper(name) like ?', [interaction.guildId, characterSelected + '%']);
                             if (characters[0].length > 0) {
                                 let charactersKeyValues = [{ label: 'Select a characters', value: '0' }];
                                 for (const character of characters[0]) {
