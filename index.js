@@ -2879,9 +2879,9 @@ client.on('interactionCreate', async (interaction) => {
                                 }
                                 const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ModSheetCharacterSelector').setMinValues(1).setMaxValues(1);
                                 const characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                                interaction.update({ components: [characterSelectRow] });
+                                interaction_second.update({ components: [characterSelectRow] });
                             } else {
-                                interaction.update({ content: 'No characters with this first letter', components: [] });
+                                interaction_second.update({ content: 'No characters with this first letter', components: [] });
                                 collector.stop();
                             }
                         } else {
