@@ -6004,7 +6004,7 @@ client.on('interactionCreate', async (interaction) => {
                         if (process_test_msg) {
                             let standing;
                             if (thisReputation.characterStanding) {
-                                standing = await connection.promise().query('select * from reputations_tiers rt where value <= ? order by value desc limit 1', [thisReputation.characterStanding]);
+                                standing = await connection.promise().query('select * from reputations_tiers rt where reputation_id = ? and value <= ? order by value desc limit 1', [thisReputation.id, thisReputation.characterStanding]);
                             } else {
                                 standing = [];
                                 standing[0] = [];
