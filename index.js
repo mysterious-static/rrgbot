@@ -2104,7 +2104,7 @@ client.on('interactionCreate', async (interaction) => {
                                 charactersKeyValues.push({ label: character, value: character });
                             }
                             characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('SkillAssignmentCharacterAlphabetSelector').setMinValues(1).setMaxValues(1);
-                            secondSelectRow = new StringSelectMenuBuilder().addComponents(characterSelectComponent);
+                            secondSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
                         } else if (characters[0].length > 0) {
                             let charactersKeyValues = [{ label: 'Select a character', value: '0' }];
                             for (const character of characters[0]) {
