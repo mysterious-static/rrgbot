@@ -1495,25 +1495,47 @@ client.on('interactionCreate', async (interaction) => {
                     } else {
                         characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
                     }
-                    let charactersKeyValues;
                     if (characters[0].length > 0) {
-                        charactersKeyValues = [];
-                        for (const character of characters[0]) {
-                            charactersKeyValues.push({ label: character.name, value: character.id.toString() });
-                        }
-                    }
-                    const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterAssignmentSelector').setMinValues(1).setMaxValues(characters[0].length);
-                    let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                    let message = await interaction.reply({ content: 'Select a character or characters to assign to this player:', components: [characterSelectRow], ephemeral: true });
-                    const collector = message.createMessageComponentCollector({ time: 35000 });
-                    collector.on('collect', async (interaction_second) => {
-                        if (interaction_second.customId === 'CharacterAssignmentSelector' && interaction.member.id == interaction_second.member.id) {
-                            for (const thisId of interaction_second.values) {
-                                await connection.promise().query('insert into players_characters (player_id, character_id, active) values (?, ?, ?)', [player[0][0].id, thisId, 0]);
+                        let characterSelectComponent;
+                        if (characters[0].length <= 25) {
+                            charactersKeyValues = [];
+                            for (const character of characters[0]) {
+                                let thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
+                                charactersKeyValues.push(thisCharacterKeyValue);
                             }
-                            interaction_second.update({ content: 'Successfully updated character-player relationships.', components: [] });
+                            characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterAssignmentSelector').setMinValues(1).setMaxValues(1);
+                        } else {
+                            let characters = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
+                            let charactersKeyValues = [];
+                            for (const character of characters) {
+                                let thisCharacterKeyValue = { label: character, value: character }
+                                charactersKeyValues.push(thisCharacterKeyValue);
+                            }
+                            characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterAlphabetSelector').setMinValues(1).setMaxValues(1);
                         }
-                    });
+                        let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                        let message = await interaction.reply({ content: 'Select a character or characters to assign to this player:', components: [characterSelectRow], ephemeral: true });
+                        const collector = message.createMessageComponentCollector({ time: 35000 });
+                        collector.on('collect', async (interaction_second) => {
+                            if (interaction_second.customId === 'CharacterAssignmentSelector' && interaction.member.id == interaction_second.member.id) {
+                                for (const thisId of interaction_second.values) {
+                                    await connection.promise().query('insert into players_characters (player_id, character_id, active) values (?, ?, ?)', [player[0][0].id, thisId, 0]);
+                                }
+                                interaction_second.update({ content: 'Successfully updated character-player relationships.', components: [] });
+                            } else if (interaction_second.customId === 'CharacterAlphabetSelector' && interaction.member.id == interaction_second.member.id) {
+                                let charactersKeyValues = [];
+                                for (const character of characters[0]) {
+                                    let thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
+                                    charactersKeyValues.push(thisCharacterKeyValue);
+                                }
+                                let characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterAssignmentSelector').setMinValues(1).setMaxValues(1);
+                                let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                                interaction_second.update({ content: 'Select a character', components: [characterSelectRow] });
+                            }
+                        });
+                    } else {
+                        await interaction.update('not enough cahracters.');
+                    }
                 } else {
                     await interaction.reply({ content: 'The user that you selected isn\'t a valid player.', ephemeral: true });
                 }
