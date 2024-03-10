@@ -1517,14 +1517,21 @@ client.on('interactionCreate', async (interaction) => {
                         let message = await interaction.reply({ content: 'Select a character or characters to assign to this player:', components: [characterSelectRow], ephemeral: true });
                         const collector = message.createMessageComponentCollector({ time: 35000 });
                         collector.on('collect', async (interaction_second) => {
+
                             if (interaction_second.customId === 'CharacterAssignmentSelector' && interaction.member.id == interaction_second.member.id) {
                                 for (const thisId of interaction_second.values) {
                                     await connection.promise().query('insert into players_characters (player_id, character_id, active) values (?, ?, ?)', [player[0][0].id, thisId, 0]);
                                 }
                                 interaction_second.update({ content: 'Successfully updated character-player relationships.', components: [] });
                             } else if (interaction_second.customId === 'CharacterAlphabetSelector' && interaction.member.id == interaction_second.member.id) {
+                                let characters;
+                                if (owned.length > 0) {
+                                    characters = await connection.promise().query('select * from characters where guild_id = ? and id not in (?) and name like ?', [interaction_second.guildId, owned, interaction_second.values[0] + '%']);
+                                }
+                                else {
+                                    characters = await connection.promise().query('select * from characters where guild_id = ? and name like ?', [interaction_second.guildId, interaction_second.values[0] + '%']);
+                                }
                                 let charactersKeyValues = [];
-                                let characters = await connection.promise().query('select * from characters where guild_id = ? and id not in (?) and name like ?', [interaction_second.guildId, owned, interaction_second.values[0] + '%']);
                                 if (characters[0].length > 0) {
                                     for (const character of characters[0]) {
                                         let thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
