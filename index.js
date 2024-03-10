@@ -1524,14 +1524,19 @@ client.on('interactionCreate', async (interaction) => {
                                 interaction_second.update({ content: 'Successfully updated character-player relationships.', components: [] });
                             } else if (interaction_second.customId === 'CharacterAlphabetSelector' && interaction.member.id == interaction_second.member.id) {
                                 let charactersKeyValues = [];
-                                let characters = await connection.promise().query('select distinct c.id from characters c join players_characters pc on c.id = pc.character_id join players p on pc.player_id = p.id where c.guild_id = ? and p.user_id = ? and c.name like ?', [interaction.guildId, user.id, interaction_second.values[0] + '%']);
-                                for (const character of characters[0]) {
-                                    let thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
-                                    charactersKeyValues.push(thisCharacterKeyValue);
+                                let characters = await connection.promise().query('select distinct c.id from characters c join players_characters pc on c.id = pc.character_id join players p on pc.player_id = p.id where c.guild_id = ? and p.user_id = ? and c.name like ?', [interaction_second.guildId, user.id, interaction_second.values[0] + '%']);
+                                if (characters[0].length > 0) {
+                                    for (const character of characters[0]) {
+                                        let thisCharacterKeyValue = { label: character.name, value: character.id.toString() };
+                                        charactersKeyValues.push(thisCharacterKeyValue);
+                                    }
+                                    let characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterAssignmentSelector').setMinValues(1).setMaxValues(1);
+                                    let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                                    interaction_second.update({ content: 'Select a character', components: [characterSelectRow] });
+                                } else {
+                                    interaction_second.update({ content: 'no characters found starting with that letter', components: [] });
+                                    collector.stop();
                                 }
-                                let characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterAssignmentSelector').setMinValues(1).setMaxValues(1);
-                                let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                                interaction_second.update({ content: 'Select a character', components: [characterSelectRow] });
                             }
                         });
                     } else {
