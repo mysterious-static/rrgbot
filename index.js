@@ -5263,15 +5263,15 @@ client.on('interactionCreate', async (interaction) => {
                         interaction.reply({ content: 'You already have a category with that name.', ephemeral: true });
                     } else {
                         await connection.promise().query('insert into tickets_categories (guildid, name) values (?, ?)', [interaction.guild.id, name]);
-                        let channel = await connection.promise().query('select * from game_settings where setting_name = "ticket_channel" and guild_id = ?', [interaction.guild.id]);
-                        if (channel[0].length > 0) {
+                        let channel_db = await connection.promise().query('select * from game_settings where setting_name = "ticket_channel" and guild_id = ?', [interaction.guild.id]);
+                        if (channel_db[0].length > 0) {
                             let message = await connection.promise().query('select * from game_settings where setting_name = "ticket_message" and guild_id = ?', [interaction.guild.id]);
                             let categories = await connection.promise().query('select * from tickets_categories where guildid = ?', [interaction.guild.id]);
                             if (categories[0].length > 25) {
                                 await connection.promise().query('delete from tickets_categories where guildid = ? and name = ?', [interaction.guild.id, name]);
                                 interaction.reply({ content: 'You have more than 25 ticket categories. Please delete some and try adding this again.', ephemeral: true });
                             } else {
-                                let channel = await client.channels.cache.get(channel[0][0].setting_value);
+                                let channel = await client.channels.cache.get(channel_db[0][0].setting_value);
                                 let categoriesKeyValues = [];
                                 const embeddedMessage = new EmbedBuilder()
                                     .setColor(0x770000)
@@ -5393,7 +5393,7 @@ client.on('interactionCreate', async (interaction) => {
                             if (channel[0].length > 0) {
                                 ticketMessage = await connection.promise().query('select * from game_settings where setting_name = "ticket_message" and guild_id = ?', [interaction.guild.id]);
                                 categories = await connection.promise().query('select * from tickets_categories where guildid = ?', [interaction.guild.id]);
-                                channel = await client.channels.cache.get(channel[0][0].value);
+                                channel = await client.channels.cache.get(channel[0][0].setting_value);
                                 let categoriesKeyValues = [];
                                 const embeddedMessage = new EmbedBuilder()
                                     .setColor(0x770000)
