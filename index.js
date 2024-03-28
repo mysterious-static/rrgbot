@@ -5404,7 +5404,7 @@ client.on('interactionCreate', async (interaction) => {
                                 }
                                 const categorySelectComponent = new StringSelectMenuBuilder().setOptions(categoriesKeyValues).setCustomId('TicketCategorySelector').setMinValues(1).setMaxValues(1);
                                 const categorySelectRow = new ActionRowBuilder().addComponents(categorySelectComponent);
-                                await channel.messages.fetch(ticketMessage[0][0].value).then(msg => msg.edit({ embeds: [embeddedMessage], components: [categorySelectRow] }));
+                                await channel.messages.fetch(ticketMessage[0][0].setting_value).then(msg => msg.edit({ embeds: [embeddedMessage], components: [categorySelectRow] }));
                                 await interaction.update('Removed ticket category');
                                 await collector.stop();
                             }
