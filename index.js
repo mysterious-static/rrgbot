@@ -2299,13 +2299,17 @@ client.on('interactionCreate', async (interaction) => {
                             }
                             if (cLetterSelected) {
                                 let characters = await connection.promise().query('select * from characters where guild_id = ? and name like ?', [interaction.guildId, cLetterSelected + '%']);
-                                let charactersKeyValues = [];
-                                for (const character of characters[0]) {
-                                    charactersKeyValues.push({ label: character.name, value: character.id.toString() });
+                                if (characters[0].length > 0) {
+                                    let charactersKeyValues = [];
+                                    for (const character of characters[0]) {
+                                        charactersKeyValues.push({ label: character.name, value: character.id.toString() });
+                                    }
+                                    const unassignSkillComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('SkillUnassignmentCharacterSelector').setMinValues(1).setMaxValues(1);
+                                    unassignSkillRow = new ActionRowBuilder().addComponents(unassignSkillComponent);
+                                    await interaction_second.update({ components: [unasssignSkillRow] });
+                                } else {
+                                    await interaction_second.update({ content: 'No characters start with that letter.', components: [] });
                                 }
-                                const unassignSkillComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('SkillUnassignmentCharacterSelector').setMinValues(1).setMaxValues(1);
-                                unassignSkillRow = new ActionRowBuilder().addComponents(unassignSkillComponent);
-                                await interaction_second.update({ components: [unasssignSkillRow] });
                             }
                             if (!skillSelected && (characterSelected || archetypeSelected)) {
                                 if (skillName) {
