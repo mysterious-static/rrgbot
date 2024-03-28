@@ -2250,13 +2250,23 @@ client.on('interactionCreate', async (interaction) => {
                 }
                 if (to_character) {
                     characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
-                    if (characters[0].length > 0) {
+                    if (characters[0].length > 0 && characters[0].length <= 25) {
                         let charactersKeyValues = [];
                         for (const character of characters[0]) {
                             charactersKeyValues.push({ label: character.name, value: character.id.toString() });
                         }
                         const unassignSkillComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('SkillUnassignmentCharacterSelector').setMinValues(1).setMaxValues(1);
                         unassignSkillRow = new ActionRowBuilder().addComponents(unassignSkillComponent);
+                    } else {
+                        if (characters[0].length > 25) {
+                            let characters = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
+                            let charactersKeyValues = [];
+                            for (const character of characters) {
+                                charactersKeyValues.push({ label: character, value: character });
+                            }
+                            const unassignSkillComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('SkillUnassignmentCharacterAlphabetSelector').setMinValues(1).setMaxValues(1);
+                            unassignSkillRow = new ActionRowBuilder().addComponents(unassignSkillComponent);
+                        }
                     }
                 } else {
                     let archetypes = await connection.promise().query('select * from archetypes where guild_id = ?', [interaction.guildId]);
@@ -2275,14 +2285,27 @@ client.on('interactionCreate', async (interaction) => {
                     let characterSelected;
                     let archetypeSelected;
                     let skillSelected;
+                    let cLetterSelected;
                     collector.on('collect', async (interaction_second) => {
                         if (interaction_second.member.id === interaction.member.id) {
                             if (interaction_second.customId === 'SkillUnassignmentCharacterSelector') {
                                 characterSelected = interaction_second.values[0];
                             } else if (interaction_second.customId === 'SkillUnassignmentArchetypeSelector') {
                                 archetypeSelected = interaction_second.values[0];
-                            } else {
+                            } else if (interaction_second.customId === 'SkillUnassignmentSkillSelector') {
                                 skillSelected = interaction_second.values[0];
+                            } else if (interaction_second.customId === 'SkillUnassignmentCharacterAlphabetSelector') {
+                                cLetterSelected = interaction_second.values[0];
+                            }
+                            if (cLetterSelected) {
+                                let characters = await connection.promise().query('select * from characters where guild_id = ? and name like ?', [interaction.guildId, cLetterSelected + '%']);
+                                let charactersKeyValues = [];
+                                for (const character of characters[0]) {
+                                    charactersKeyValues.push({ label: character.name, value: character.id.toString() });
+                                }
+                                const unassignSkillComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('SkillUnassignmentCharacterSelector').setMinValues(1).setMaxValues(1);
+                                unassignSkillRow = new ActionRowBuilder().addComponents(unassignSkillComponent);
+                                await interaction_second.update({ components: [unasssignSkillRow] });
                             }
                             if (!skillSelected && (characterSelected || archetypeSelected)) {
                                 if (skillName) {
