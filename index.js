@@ -5394,7 +5394,7 @@ client.on('interactionCreate', async (interaction) => {
                                 ticketMessage = await connection.promise().query('select * from game_settings where option_name = "ticket_message" and guild_id = ?', [interaction.guild.id]);
                                 categories = await connection.promise().query('select * from tickets_categories where guildid = ?', [interaction.guild.id]);
                                 channel = await client.channels.cache.get(channel[0][0].value);
-                                var categoriesKeyValues = [];
+                                let categoriesKeyValues = [];
                                 const embeddedMessage = new EmbedBuilder()
                                     .setColor(0x770000)
                                     .setTitle('Ticket System')
@@ -5403,7 +5403,7 @@ client.on('interactionCreate', async (interaction) => {
                                     categoriesKeyValues.push({ label: `${category.name}`, value: category.id.toString() });
                                 }
                                 const categorySelectComponent = new StringSelectMenuBuilder().setOptions(categoriesKeyValues).setCustomId('TicketCategorySelector').setMinValues(1).setMaxValues(1);
-                                var categorySelectRow = new ActionRowBuilder().addComponents(categorySelectComponent);
+                                const categorySelectRow = new ActionRowBuilder().addComponents(categorySelectComponent);
                                 await channel.messages.fetch(ticketMessage[0][0].value).then(msg => msg.edit({ embeds: [embeddedMessage], components: [categorySelectRow] }));
                                 await interaction_second.update('Removed ticket category');
                                 await collector.stop();
