@@ -5389,9 +5389,9 @@ client.on('interactionCreate', async (interaction) => {
                         collector.on('collect', async (interaction_second) => {
                             categorySelected = interaction_second.values[0];
                             await connection.promise().query('delete from tickets_categories where id = ? and guildid = ?', [categorySelected, interaction.guild.id]);
-                            let channel = await connection.promise().query('select * from game_settings where option_name = "ticket_channel" and guild_id = ?', [interaction.guild.id]);
+                            let channel = await connection.promise().query('select * from game_settings where setting_name = "ticket_channel" and guild_id = ?', [interaction.guild.id]);
                             if (channel[0].length > 0) {
-                                ticketMessage = await connection.promise().query('select * from game_settings where option_name = "ticket_message" and guild_id = ?', [interaction.guild.id]);
+                                ticketMessage = await connection.promise().query('select * from game_settings where setting_name = "ticket_message" and guild_id = ?', [interaction.guild.id]);
                                 categories = await connection.promise().query('select * from tickets_categories where guildid = ?', [interaction.guild.id]);
                                 channel = await client.channels.cache.get(channel[0][0].value);
                                 let categoriesKeyValues = [];
