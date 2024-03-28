@@ -1438,6 +1438,7 @@ client.on('interactionCreate', async (interaction) => {
                                         const newValue = submittedModal.fields.getTextInputValue('newValue');
                                         await connection.promise().query('update characters set ?? = ? where id = ?', [column_name, newValue, character_id]);
                                         submittedModal.update({ content: 'Successfully updated this character entry.', components: [] });
+                                        collector.stop();
                                     }
                                 }
                             }
@@ -1523,6 +1524,7 @@ client.on('interactionCreate', async (interaction) => {
                                     await connection.promise().query('insert into players_characters (player_id, character_id, active) values (?, ?, ?)', [player[0][0].id, thisId, 0]);
                                 }
                                 interaction_second.update({ content: 'Successfully updated character-player relationships.', components: [] });
+                                collector.stop();
                             } else if (interaction_second.customId === 'CharacterAlphabetSelector' && interaction.member.id == interaction_second.member.id) {
                                 let characters;
                                 if (owned.length > 0) {
@@ -2005,6 +2007,7 @@ client.on('interactionCreate', async (interaction) => {
                                 await connection.promise().query('insert into archetypes_archetypestats (archetype_id, archetypestat_id) values (?, ?)', [thisArchetype, addedStat[0].insertId]);
                             }
                             await interaction_second.update({ content: 'Successfully assigned stat to archetype(s).', components: [] });
+                            collector.stop();
                         }
                     });
                 } else {
@@ -2084,6 +2087,7 @@ client.on('interactionCreate', async (interaction) => {
                                         const newValue = submittedModal.fields.getTextInputValue('newValue');
                                         await connection.promise().query('update skills set ?? = ? where id = ?', [column_name, newValue, skill_id]);
                                         submittedModal.update({ content: 'Successfully updated this skill entry.', components: [] });
+                                        collector.stop();
                                     }
                                 }
                             }
@@ -2309,6 +2313,7 @@ client.on('interactionCreate', async (interaction) => {
                                     await interaction_second.update({ components: [unasssignSkillRow] });
                                 } else {
                                     await interaction_second.update({ content: 'No characters start with that letter.', components: [] });
+                                    collector.stop();
                                 }
                             }
                             if (!skillSelected && (characterSelected || archetypeSelected)) {
@@ -2557,6 +2562,7 @@ client.on('interactionCreate', async (interaction) => {
                                         const newValue = submittedModal.fields.getTextInputValue('newValue');
                                         await connection.promise().query('update items set ?? = ? where id = ?', [column_name, newValue, item_id]);
                                         submittedModal.update({ content: 'Successfully updated this item entry.', components: [] });
+                                        collector.stop();
                                     }
                                 }
                             }
@@ -5434,6 +5440,9 @@ client.on('interactionCreate', async (interaction) => {
                                 await channel.messages.fetch(ticketMessage[0][0].setting_value).then(msg => msg.edit({ embeds: [embeddedMessage], components: [categorySelectRow] }));
                                 await interaction.update('Removed ticket category');
                                 await collector.stop();
+                            } else {
+                                interaction.reply({content: 'No channel found in game settings. You should never see this message.'});
+                                collector.stop();
                             }
                         });
                     } else {
@@ -5577,6 +5586,8 @@ client.on('interactionCreate', async (interaction) => {
                                         await interaction_second.channel.send({ content: `${activeCharacter.name} uses ${skill[0][0].name}: ${skill[0][0].description}` });
                                         await interaction.update({ content: 'Thanks!', components: [] });
                                         await collector.stop();
+                                    } else {
+                                        interaction.reply({content: 'You aren\'t eligible to click this button.', ephemeral: true});
                                     }
                                 });
                                 // - Give a SpAtk dropdown.
