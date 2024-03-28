@@ -5375,7 +5375,43 @@ client.on('interactionCreate', async (interaction) => {
                         });
                     }
                 } else if (interaction.options.getSubcommand() === 'removecategory') {
-                    interaction.reply({ content: 'This command is not implemented yet. Sorry!', ephemeral: true });
+                    let categories = await connection.promise().query('select * from tickets_categories where guildid = ?', [interaction.guild.id, name]);
+                    if (categories[0].length > 0) {
+                        let categoriesKeyValues = [];
+                        for (const category of categories[0]) {
+                            categoriesKeyValues.push({ label: `${category.name}`, value: category.id.toString() });
+                        }
+                        const categorySelectComponent = new StringSelectMenuBuilder().setOptions(categoriesKeyValues).setCustomId('CategorySelector').setMinValues(1).setMaxValues(1);
+                        const categorySelectRow = new ActionRowBuilder().addComponents(categorySelectComponent);
+                        let message = await interaction.reply({ content: 'Select a category to delete.', components: [categorySelectRow], ephemeral: true });
+                        const collector = message.createMessageComponentCollector();
+                        let categorySelected;
+                        collector.on('collect', async (interaction_second) => {
+                            categorySelected = interaction_second.values[0];
+                            await connection.promise().query('delete from tickets_categories where id = ? and guildid = ?', [categorySelected, interaction.guild.id]);
+                            let channel = await connection.promise().query('select * from game_settings where option_name = "ticket_channel" and guild_id = ?', [interaction.guild.id]);
+                            if (channel[0].length > 0) {
+                                ticketMessage = await connection.promise().query('select * from game_settings where option_name = "ticket_message" and guild_id = ?', [interaction.guild.id]);
+                                categories = await connection.promise().query('select * from tickets_categories where guildid = ?', [interaction.guild.id, name]);
+                                channel = await client.channels.cache.get(channel[0][0].value);
+                                var categoriesKeyValues = [];
+                                const embeddedMessage = new EmbedBuilder()
+                                    .setColor(0x770000)
+                                    .setTitle('Ticket System')
+                                    .setDescription('Please select a ticket type from the dropdown menu to begin opening a support ticket.');
+                                for (const category of categories[0]) {
+                                    categoriesKeyValues.push({ label: `${category.name}`, value: category.id.toString() });
+                                }
+                                const categorySelectComponent = new StringSelectMenuBuilder().setOptions(categoriesKeyValues).setCustomId('TicketCategorySelector').setMinValues(1).setMaxValues(1);
+                                var categorySelectRow = new ActionRowBuilder().addComponents(categorySelectComponent);
+                                await channel.messages.fetch(ticketMessage[0][0].value).then(msg => msg.edit({ embeds: [embeddedMessage], components: [categorySelectRow] }));
+                                await interaction_second.update('Removed ticket category');
+                                await collector.stop();
+                            }
+                        });
+                    } else {
+                        interaction.reply({ content: 'No created categories.', ephemeral: true });
+                    }
                 }
             } else if (interaction.commandName === 'auditchannel') {
                 await connection.promise().query('replace into game_settings (guild_id, setting_name, setting_value) values (?, ?, ?)', [interaction.guild.id, "audit_channel", interaction.options.getChannel('channel').id]);
