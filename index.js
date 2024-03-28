@@ -2310,7 +2310,7 @@ client.on('interactionCreate', async (interaction) => {
                                     }
                                     const unassignSkillComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('SkillUnassignmentCharacterSelector').setMinValues(1).setMaxValues(1);
                                     unassignSkillRow = new ActionRowBuilder().addComponents(unassignSkillComponent);
-                                    await interaction_second.update({ components: [unasssignSkillRow] });
+                                    await interaction_second.update({ components: [unassignSkillRow] });
                                 } else {
                                     await interaction_second.update({ content: 'No characters start with that letter.', components: [] });
                                     collector.stop();
