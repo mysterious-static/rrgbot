@@ -5376,7 +5376,7 @@ client.on('interactionCreate', async (interaction) => {
                     }
                 } else if (interaction.options.getSubcommand() === 'removecategory') {
                     let categories = await connection.promise().query('select * from tickets_categories where guildid = ?', [interaction.guild.id]);
-                    if (categories[0].length > 0) {
+                    if (categories[0].length > 1) {
                         let categoriesKeyValues = [];
                         for (const category of categories[0]) {
                             categoriesKeyValues.push({ label: `${category.name}`, value: category.id.toString() });
@@ -5410,7 +5410,7 @@ client.on('interactionCreate', async (interaction) => {
                             }
                         });
                     } else {
-                        interaction.reply({ content: 'No created categories.', ephemeral: true });
+                        interaction.reply({ content: 'No created categories, or you have only one category, you can\'t delete your only category.', ephemeral: true });
                     }
                 }
             } else if (interaction.commandName === 'auditchannel') {
