@@ -1768,7 +1768,26 @@ client.on('interactionCreate', async (interaction) => {
                                 selectedArchetype = interaction_second.values[0];
                                 let characters = await connection.promise().query('select distinct characters.* from characters left outer join characters_archetypes ca on characters.id = ca.character_id where guild_id = ? and (ca.archetype_id <> ? or ca.archetype_id is null)', [interaction.guildId, selectedArchetype]);
                                 let charactersKeyValues = [];
-                                if (characters[0].length > 0) {
+                                if (characters[0].length > 0 && characters[0].length <= 25) {
+                                    for (const character of characters[0]) {
+                                        charactersKeyValues.push({ label: character.name, value: character.id.toString() });
+                                    }
+                                    const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterAssignmentSelector').setMinValues(1).setMaxValues(characters[0].length);
+                                    let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                                    await interaction_second.update({ content: 'Select a character or characters to assign to this archetype:', components: [characterSelectRow] });
+                                } else if (characters[0].length > 25) {
+                                    charactersKeyValues.push([...ABCDEFGHIJKLMNOPQRSTUVWYZ]);
+                                    const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterAssignmentAlphaSelector').setMinValues(1).setMaxValues(characters[0].length);
+                                    let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                                    await interaction_second.update({ content: 'Select a character or characters to assign to this archetype:', components: [characterSelectRow] });
+                                } else {
+                                    await interaction_second.update({ content: 'No characters are valid to assign to this archetype.', components: [] });
+                                    await collector.stop();
+                                }
+                            } else if (interaction_second.customId === 'CharacterAssignmentAlphaSelector') {
+                                let characters = await connection.promise().query('select distinct characters.* from characters left outer join characters_archetypes ca on characters.id = ca.character_id where guild_id = ? and (ca.archetype_id <> ? or ca.archetype_id is null) and characters.name like ?', [interaction.guildId, selectedArchetype, interaction_second.values[0] + '%']);
+                                let charactersKeyValues = [];
+                                if (characters[0].length > 0 && characters[0].length <= 25) {
                                     for (const character of characters[0]) {
                                         charactersKeyValues.push({ label: character.name, value: character.id.toString() });
                                     }
@@ -1776,8 +1795,8 @@ client.on('interactionCreate', async (interaction) => {
                                     let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
                                     await interaction_second.update({ content: 'Select a character or characters to assign to this archetype:', components: [characterSelectRow] });
                                 } else {
-                                    await interaction_second.update({ content: 'No characters are valid to assign to this archetype.', components: [] });
-                                    await collector.stop();
+                                    await interaction_second.update({ content: 'Either no characters or more than 25 characters with this first letter.', components: [] });
+                                    collector.stop();
                                 }
                             } else if (interaction_second.customId === 'CharacterAssignmentSelector') {
                                 for (const thisId of interaction_second.values) {
@@ -5442,7 +5461,7 @@ client.on('interactionCreate', async (interaction) => {
                                 await interaction.update('Removed ticket category');
                                 await collector.stop();
                             } else {
-                                interaction.reply({content: 'No channel found in game settings. You should never see this message.'});
+                                interaction.reply({ content: 'No channel found in game settings. You should never see this message.' });
                                 collector.stop();
                             }
                         });
@@ -5588,7 +5607,7 @@ client.on('interactionCreate', async (interaction) => {
                                         await interaction.update({ content: 'Thanks!', components: [] });
                                         await collector.stop();
                                     } else {
-                                        interaction.reply({content: 'You aren\'t eligible to click this button.', ephemeral: true});
+                                        interaction.reply({ content: 'You aren\'t eligible to click this button.', ephemeral: true });
                                     }
                                 });
                                 // - Give a SpAtk dropdown.
