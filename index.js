@@ -1925,6 +1925,7 @@ client.on('interactionCreate', async (interaction) => {
                             characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
                         } else {
                             characters = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
+                            let charactersKeyValues;
                             for (const character of characters[0]) {
                                 charactersKeyValues.push({ label: character, value: character });
                             }
