@@ -1926,7 +1926,7 @@ client.on('interactionCreate', async (interaction) => {
                         } else {
                             characters = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
                             let charactersKeyValues = [];
-                            for (const character of characters[0]) {
+                            for (const character of characters) {
                                 charactersKeyValues.push({ label: character, value: character });
                             }
                             const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('StatAssignmentCharacterAlphaSelector').setMinValues(1).setMaxValues(1);
