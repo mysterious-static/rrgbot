@@ -1936,6 +1936,7 @@ client.on('interactionCreate', async (interaction) => {
                         const collector = message.createMessageComponentCollector({ time: 35000 });
                         let statSelected;
                         let characterSelected;
+                        let alphaSelected;
                         collector.on('collect', async (interaction_second) => {
                             if (interaction_second.member.id === interaction.member.id) {
                                 if (interaction_second.values[0]) {
@@ -1944,6 +1945,7 @@ client.on('interactionCreate', async (interaction) => {
                                     } else if (interaction_second.customId === 'StatAssignmentCharacterSelector') {
                                         characterSelected = interaction_second.values[0];
                                     } else {
+                                        alphaSelected = true;
                                         let characters = await connection.promise().query('select * from characters where guild_id = ? and name like ?', [interaction.guildId, interaction_second.values[0] + '%']);
                                         let characterSelectRow;
                                         if (characters[0].length > 0) {
@@ -1966,7 +1968,7 @@ client.on('interactionCreate', async (interaction) => {
                                         }
                                         await interaction.editReply({ content: 'Successfully updated character stat value.', components: [] });
                                         await collector.stop();
-                                    } else {
+                                    } else if (!alphaSelected) {
                                         await interaction_second.deferUpdate();
                                     }
                                 } else {
