@@ -1424,17 +1424,18 @@ client.on('interactionCreate', async (interaction) => {
                                     .setCustomId('characterEditModal' + now);
                                 modal.setTitle(`character Update - ${column_name}`);
                                 let currentValue = await connection.promise().query(`select ?? as current_value from characters where id = ?`, [column_name, character_id]);
+                                let newValueInput;
                                 if (currentValue[0][0].current_value) {
-                                let newValueInput = new TextInputBuilder()
-                                    .setCustomId('newValue')
-                                    .setLabel('New value for this field')
-                                    .setPlaceholder(currentValue[0][0].current_value.substring(0, 100))
-                                    .setStyle(TextInputStyle.Paragraph);
+                                    newValueInput = new TextInputBuilder()
+                                        .setCustomId('newValue')
+                                        .setLabel('New value for this field')
+                                        .setPlaceholder(currentValue[0][0].current_value.substring(0, 100))
+                                        .setStyle(TextInputStyle.Paragraph);
                                 } else {
-                                    let newValueInput = new TextInputBuilder()
-                                    .setCustomId('newValue')
-                                    .setLabel('New value for this field')
-                                    .setStyle(TextInputStyle.Paragraph);
+                                    newValueInput = new TextInputBuilder()
+                                        .setCustomId('newValue')
+                                        .setLabel('New value for this field')
+                                        .setStyle(TextInputStyle.Paragraph);
                                 }
                                 let valueActionRow = new ActionRowBuilder().addComponents(newValueInput);
                                 modal.addComponents(valueActionRow);
