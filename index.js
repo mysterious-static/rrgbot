@@ -1671,22 +1671,30 @@ client.on('interactionCreate', async (interaction) => {
                                         let user = await client.users.fetch(character[0][0].user_id);
                                         for (const location of locations[0]) {
                                             let channel = await client.channels.cache.get(location.channel_id);
-                                            if (location.id == locationSelected) {
-                                                await channel.permissionOverwrites.edit(user, { ViewChannel: true, SendMessages: true });
-                                                if (location.announcements_channel) {
-                                                    new_announcements = await client.channels.cache.get(location.announcements_channel);
-                                                    new_name = location.friendly_name;
+                                            if (channel) {
+                                                if (location.id == locationSelected) {
+                                                    await channel.permissionOverwrites.edit(user, { ViewChannel: true, SendMessages: true });
+                                                    if (location.announcements_channel) {
+                                                        new_announcements = await client.channels.cache.get(location.announcements_channel);
+                                                        new_name = location.friendly_name;
+                                                    }
+                                                } else {
+                                                    if (location.global_read == 0) {
+                                                        await channel.permissionOverwrites.edit(user, { ViewChannel: false });
+                                                    }
+                                                    if (location.global_write == 0) {
+                                                        await channel.permissionOverwrites.edit(user, { SendMessages: false });
+                                                    }
+                                                    if (location.announcements_channel) {
+                                                        old_announcements = await client.channels.cache.get(location.announcements_channel);
+                                                        old_name = location.friendly_name;
+                                                    }
                                                 }
                                             } else {
-                                                if (location.global_read == 0) {
-                                                    await channel.permissionOverwrites.edit(user, { ViewChannel: false });
-                                                }
-                                                if (location.global_write == 0) {
-                                                    await channel.permissionOverwrites.edit(user, { SendMessages: false });
-                                                }
-                                                if (location.announcements_channel) {
-                                                    old_announcements = await client.channels.cache.get(location.announcements_channel);
-                                                    old_name = location.friendly_name;
+                                                if (interaction.replied) {
+                                                    interaction.followUp({ content: `Couldn't find channel for ${location.name}.`, ephemeral: true });
+                                                } else {
+                                                    interaction.reply({ content: `Couldn't find channel for ${location.name}.`, ephemeral: true });
                                                 }
                                             }
                                         }
@@ -1778,7 +1786,7 @@ client.on('interactionCreate', async (interaction) => {
                                 } else if (characters[0].length > 25) {
                                     characters = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
                                     for (const character of characters) {
-                                        charactersKeyValues.push({label: character, value: character});
+                                        charactersKeyValues.push({ label: character, value: character });
                                     }
                                     const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterAssignmentAlphaSelector').setMinValues(1).setMaxValues(characters[0].length);
                                     let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
