@@ -1776,7 +1776,10 @@ client.on('interactionCreate', async (interaction) => {
                                     let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
                                     await interaction_second.update({ content: 'Select a character or characters to assign to this archetype:', components: [characterSelectRow] });
                                 } else if (characters[0].length > 25) {
-                                    charactersKeyValues.push([...ABCDEFGHIJKLMNOPQRSTUVWYZ]);
+                                    characters = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
+                                    for (const character of characters) {
+                                        charactersKeyValues.push({label: character, value: character});
+                                    }
                                     const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterAssignmentAlphaSelector').setMinValues(1).setMaxValues(characters[0].length);
                                     let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
                                     await interaction_second.update({ content: 'Select a character or characters to assign to this archetype:', components: [characterSelectRow] });
