@@ -1914,13 +1914,23 @@ client.on('interactionCreate', async (interaction) => {
                     const statSelectComponent = new StringSelectMenuBuilder().setOptions(statsKeyValues).setCustomId('StatAssignmentStatSelector').setMinValues(1).setMaxValues(1);
                     let statSelectRow = new ActionRowBuilder().addComponents(statSelectComponent);
                     let characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
+                    let characterSelectRow;
                     if (characters[0].length > 0) {
-                        let charactersKeyValues = [{ label: 'Select a character', value: '0' }];
-                        for (const character of characters[0]) {
-                            charactersKeyValues.push({ label: character.name, value: character.id.toString() });
+                        if (characters[0].length <= 25) {
+                            let charactersKeyValues = [{ label: 'Select a character', value: '0' }];
+                            for (const character of characters[0]) {
+                                charactersKeyValues.push({ label: character.name, value: character.id.toString() });
+                            }
+                            const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('StatAssignmentCharacterSelector').setMinValues(1).setMaxValues(1);
+                            characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                        } else {
+                            characters = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
+                            for (const character of characters[0]) {
+                                charactersKeyValues.push({ label: character, value: character });
+                            }
+                            const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('StatAssignmentCharacterAlphaSelector').setMinValues(1).setMaxValues(1);
+                            characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
                         }
-                        const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('StatAssignmentCharacterSelector').setMinValues(1).setMaxValues(1);
-                        let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
                         let message = await interaction.reply({ content: '', components: [statSelectRow, characterSelectRow], ephemeral: true });
                         const collector = message.createMessageComponentCollector({ time: 35000 });
                         let statSelected;
@@ -1930,8 +1940,20 @@ client.on('interactionCreate', async (interaction) => {
                                 if (interaction_second.values[0]) {
                                     if (interaction_second.customId === 'StatAssignmentStatSelector') {
                                         statSelected = interaction_second.values[0];
-                                    } else {
+                                    } else if (interaction_second.customId === 'StatAssignmentCharacterSelector') {
                                         characterSelected = interaction_second.values[0];
+                                    } else {
+                                        let characters = await connection.promise().query('select * from characters where guild_id = ? and name like ?', [interaction.guildId, interaction_second.values[0] + '%']);
+                                        let characterSelectRow;
+                                        if (characters[0].length > 0) {
+                                            let charactersKeyValues = [{ label: 'Select a character', value: '0' }];
+                                            for (const character of characters[0]) {
+                                                charactersKeyValues.push({ label: character.name, value: character.id.toString() });
+                                            }
+                                            const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('StatAssignmentCharacterSelector').setMinValues(1).setMaxValues(1);
+                                            characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                                            interaction_second.update({ components: [statSelectRow, characterSelectRow] });
+                                        }
                                     }
                                     if (statSelected && characterSelected) {
                                         let exists = await connection.promise().query('select * from characters_stats where stat_id = ? and character_id = ?', [statSelected, characterSelected]);
