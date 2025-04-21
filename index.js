@@ -17,6 +17,28 @@ client.login(process.env.app_token);
 
 /* Functions */
 
+async function tetramaster_damage(attacker_power, attacker_class, defender_power, defender_pdef, defender_mdef) { // Cards have ACTUAL numeric values between 0 and 255 for each stat, they're just represented to the players as 0-F.
+    let def;
+    switch (attacker_class) {
+        case 'p':
+            def = defender_pdef;
+            break;
+        case 'm':
+            def = defender_mdef;
+            break;
+        case 'x':
+            def = Math.min(defender_pdef, defender_mdef);
+            break;
+        case 'a':
+            def = Math.min(defender_power, defender_pdef, defender_mdef);
+            break;
+    }
+    let attackroll = Math.floor(Math.random() * attacker_power);
+    let defenseroll = Math.floor(Math.random() * def);
+    // Remember the actual attack is "power minus the attack roll" and the defense is "defense value minus the roll", but this is actually ingame information shown to the player during a battle, so we want to pass that back for display.
+    return [attackroll, defenseroll];
+}
+
 async function process_effect(character, effect, source, guildId, channel, target = null) {
     console.log('process effect ' + effect.id);
     //TODO: care about charges!
@@ -34,6 +56,7 @@ async function process_effect(character, effect, source, guildId, channel, targe
     if (target && effect.target == 'target') {
         character = target;
     }
+
 
     // Eligibility check
     let prereqs = await connection.promise().query('select * from effects_prereqs where effect_id = ?', [effect.id]);
@@ -5141,7 +5164,7 @@ client.on('interactionCreate', async (interaction) => {
                                                 characters = await connection.promise().query('select * from characters where guild_id = ? and location_id = ?', [interaction.guildId, characterDetails[0][0].location_id]);
                                             } else {
                                                 let characterSelected = await connection.promise().query('select * from characters c where id = ?', [characterDetails[0][0].id]);
-                                                let effects = await connection.promise().query('select e.* from effects e join items_effects se on ie.effect_id = e.id where ie.item_id = ?', [selectedItem.id]);
+                                                let effects = await connection.promise().query('select e.* from effects e join items_effects ie on ie.effect_id = e.id where ie.item_id = ?', [selectedItem.id]);
                                                 for (const thisEffect of effects[0]) {
                                                     if (thisEffect.target == 'triggering_character') {
                                                         process_effect(characterDetails[0][0], thisEffect, 'item', interaction.guildId, interaction.channel);
