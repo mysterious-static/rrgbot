@@ -3802,7 +3802,7 @@ client.on('interactionCreate', async (interaction) => {
                                         }
 
                                         if (typeahead_results[0].length == 0) {
-                                            await interaction_second.update({ content: 'No match was found with the autocomplete text you entered. Please try again.', components: [], ephemeral: true });
+                                            await submittedModal.update({ content: 'No match was found with the autocomplete text you entered. Please try again.', components: [], ephemeral: true });
                                         } else if (typeahead_results[0].length == 1) {
                                             let insertedEffect;
                                             if (type_qty) {
