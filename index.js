@@ -260,6 +260,25 @@ async function process_effect(character, effect, source, guildId, channel, targe
                     let stat = await connection.promise().query('select * from stats where id = ?', effect.type_id);
                     message += ` set ${character.name}'s ${stat[0][0].name} stat to ${effect.type_qty}`;
                 } break;
+            case 'astat_inc':
+                {
+                    let stat_exists = await connection.promise().query('select * from characters_archetypestats where character_id = ? and stat_id = ?', [character.id, effect.type_id]);
+                    if (stat_exists[0].length == 1) {
+                        await connection.promise().query('update characters_archetypestats set override_value = override_value + ? where character_id = ? and stat_id = ?', [effect.type_qty, character.id, effect.type_id]);
+                    } else {
+                        let statdata = await connection.promise().query('select * from archetypestats where id = ?', [effect.type_id]);
+                        await connection.promise().query('insert into characters_archetypestats (character_id, stat_id, override_value) values (?, ?, ?)', [character.id, effect.type_id, statdata[0][0].default_value + effect.type_qty]);
+                        // When stats have archetype overrides, we will need t  check those first too
+                    }
+                    let stat = await connection.promise().query('select * from archetypestats where id = ?', effect.type_id);
+                    message += ` ${adjusted} ${character.name}'s ${stat[0][0].name} stat by ${Math.abs(effect.type_qty)}`;
+                } break;
+            case 'astat_set':
+                {
+                    await connection.promise().query('replace into characters_archetypestats (character_id, stat_id, override_value) values (?, ?, ?)', [character.id, effect.type_id, effect.type_qty]);
+                    let stat = await connection.promise().query('select * from archetypestats where id = ?', effect.type_id);
+                    message += ` set ${character.name}'s ${stat[0][0].name} stat to ${effect.type_qty}`;
+                } break;
             case 'message':
                 {
                     message += ` *Special Message:* ${effect.typedata}`;
@@ -2499,7 +2518,16 @@ client.on('interactionCreate', async (interaction) => {
                                 effectsString += `Increment value for reputation ${reputation[0][0].name} by ${effect.type_qty}`;
                             } else if (effect.type == 'stat_set') {
                                 let stat = await connection.promise().query('select * from stats where id = ?', [effect.type_id]);
+                                effectsString += `Set value for stat ${stat[0][0].name} to ${effect.type_qty}`;
+                            } else if (effect.type == 'astat_set') {
+                                let astat = await connection.promise().query('select * from archetypestats where id = ?', [effect.type_id]);
+                                effectsString += `Set value for archetype stat ${astat[0][0].name} to ${effect.type_qty}`;
+                            } else if (effect.type == 'stat_inc') {
+                                let stat = await connection.promise().query('select * from stats where id = ?', [effect.type_id]);
                                 effectsString += `Increment value for stat ${stat[0][0].name} by ${effect.type_qty}`;
+                            } else if (effect.type == 'astat_inc') {
+                                let astat = await connection.promise().query('select * from archetypestats where id = ?', [effect.type_id]);
+                                effectsString += `Increment value for archetype stat ${astat[0][0].name} by ${effect.type_qty}`;
                             } else if (effect.type == 'message') {
                                 effectsString += `Send message \`${effect.typedata}\``;
                             }
@@ -2556,12 +2584,18 @@ client.on('interactionCreate', async (interaction) => {
                                         } else if (effect.type == 'stat_inc') {
                                             let stat = await connection.promise().query('select * from stats where id = ?', [effect.type_id]);
                                             effectsString += `Increment value for stat ${stat[0][0].name} by ${effect.type_qty}`;
+                                        } else if (effect.type == 'astat_inc') {
+                                            let stat = await connection.promise().query('select * from archetypestats where id = ?', [effect.type_id]);
+                                            effectsString += `Increment value for archetype stat ${stat[0][0].name} by ${effect.type_qty}`;
                                         } else if (effect.type == 'reputation_set') {
                                             let reputation = await connection.promise().query('select * from reputations where id = ?', [effect.type_id]);
                                             effectsString += `Increment value for reputation ${reputation[0][0].name} by ${effect.type_qty}`;
                                         } else if (effect.type == 'stat_set') {
                                             let stat = await connection.promise().query('select * from stats where id = ?', [effect.type_id]);
                                             effectsString += `Increment value for stat ${stat[0][0].name} by ${effect.type_qty}`;
+                                        } else if (effect.type == 'astat_set') {
+                                            let stat = await connection.promise().query('select * from archetypestats where id = ?', [effect.type_id]);
+                                            effectsString += `Increment value for archetype stat ${stat[0][0].name} by ${effect.type_qty}`;
                                         } else if (effect.type == 'message') {
                                             effectsString += `Send message \`${effect.typedata}\``;
                                         }
@@ -2856,12 +2890,18 @@ client.on('interactionCreate', async (interaction) => {
                             } else if (effect.type == 'stat_inc') {
                                 let stat = await connection.promise().query('select * from stats where id = ?', [effect.type_id]);
                                 effectsString += `Increment value for stat ${stat[0][0].name} by ${effect.type_qty}`;
+                            } else if (effect.type == 'astat_inc') {
+                                let stat = await connection.promise().query('select * from archetypestats where id = ?', [effect.type_id]);
+                                effectsString += `Increment value for archetype stat ${stat[0][0].name} by ${effect.type_qty}`;
                             } else if (effect.type == 'reputation_set') {
                                 let reputation = await connection.promise().query('select * from reputations where id = ?', [effect.type_id]);
                                 effectsString += `Increment value for reputation ${reputation[0][0].name} by ${effect.type_qty}`;
                             } else if (effect.type == 'stat_set') {
                                 let stat = await connection.promise().query('select * from stats where id = ?', [effect.type_id]);
-                                effectsString += `Increment value for stat ${stat[0][0].name} by ${effect.type_qty}`;
+                                effectsString += `Set value for stat ${stat[0][0].name} to ${effect.type_qty}`;
+                            } else if (effect.type == 'astat_set') {
+                                let stat = await connection.promise().query('select * from archetypestats where id = ?', [effect.type_id]);
+                                effectsString += `Set value for archetype stat ${stat[0][0].name} to ${effect.type_qty}`;
                             } else if (effect.type == 'message') {
                                 effectsString += `Send message \`${effect.typedata}\``;
                             }
@@ -2918,12 +2958,18 @@ client.on('interactionCreate', async (interaction) => {
                                         } else if (effect.type == 'stat_inc') {
                                             let stat = await connection.promise().query('select * from stats where id = ?', [effect.type_id]);
                                             effectsString += `Increment value for stat ${stat[0][0].name} by ${effect.type_qty}`;
+                                        } else if (effect.type == 'astat_inc') {
+                                            let stat = await connection.promise().query('select * from archetypestats where id = ?', [effect.type_id]);
+                                            effectsString += `Increment value for archetype stat ${stat[0][0].name} by ${effect.type_qty}`;
                                         } else if (effect.type == 'reputation_set') {
                                             let reputation = await connection.promise().query('select * from reputations where id = ?', [effect.type_id]);
                                             effectsString += `Increment value for reputation ${reputation[0][0].name} by ${effect.type_qty}`;
                                         } else if (effect.type == 'stat_set') {
                                             let stat = await connection.promise().query('select * from stats where id = ?', [effect.type_id]);
-                                            effectsString += `Increment value for stat ${stat[0][0].name} by ${effect.type_qty}`;
+                                            effectsString += `Set value for stat ${stat[0][0].name} to ${effect.type_qty}`;
+                                        } else if (effect.type == 'astat_set') {
+                                            let stat = await connection.promise().query('select * from archetypestats where id = ?', [effect.type_id]);
+                                            effectsString += `Set value for archetype stat ${stat[0][0].name} to ${effect.type_qty}`;
                                         } else if (effect.type == 'message') {
                                             effectsString += `Send message \`${effect.typedata}\``;
                                         }
@@ -3462,12 +3508,18 @@ client.on('interactionCreate', async (interaction) => {
                                         } else if (effect.type == 'stat_inc') {
                                             let stat = await connection.promise().query('select * from stats where id = ?', [effect.type_id]);
                                             effectsString += `Increment value for stat ${stat[0][0].name} by ${effect.type_qty}`;
+                                        } else if (effect.type == 'astat_inc') {
+                                            let stat = await connection.promise().query('select * from archetypestats where id = ?', [effect.type_id]);
+                                            effectsString += `Increment value for archetype stat ${stat[0][0].name} by ${effect.type_qty}`;
                                         } else if (effect.type == 'reputation_set') {
                                             let reputation = await connection.promise().query('select * from reputations where id = ?', [effect.type_id]);
                                             effectsString += `Increment value for reputation ${reputation[0][0].name} by ${effect.type_qty}`;
                                         } else if (effect.type == 'stat_set') {
                                             let stat = await connection.promise().query('select * from stats where id = ?', [effect.type_id]);
-                                            effectsString += `Increment value for stat ${stat[0][0].name} by ${effect.type_qty}`;
+                                            effectsString += `Set value for stat ${stat[0][0].name} to ${effect.type_qty}`;
+                                        } else if (effect.type == 'astat_set') {
+                                            let stat = await connection.promise().query('select * from archetypestats where id = ?', [effect.type_id]);
+                                            effectsString += `Set value for archetype stat ${stat[0][0].name} to ${effect.type_qty}`;
                                         } else if (effect.type == 'message') {
                                             effectsString += `Send message \`${effect.typedata}\``;
                                         }
@@ -3553,6 +3605,8 @@ client.on('interactionCreate', async (interaction) => {
                                 { label: 'Set Character Flag', value: 'cflag_set' },
                                 { label: 'Increment Stat', value: 'stat_inc' },
                                 { label: 'Set Stat', value: 'stat_set' },
+                                { label: 'Increment Archetype Stat', value: 'astat_inc' },
+                                { label: 'Set Archetype Stat', value: 'astat_set' },
                                 { label: 'Increment Reputation', value: 'reputation_inc' },
                                 { label: 'Set Reputation', value: 'reputation_set' },
                                 { label: 'Add Item', value: 'item' },
@@ -3599,6 +3653,8 @@ client.on('interactionCreate', async (interaction) => {
                                 { label: 'Set Character Flag', value: 'cflag_set' },
                                 { label: 'Increment Stat', value: 'stat_inc' },
                                 { label: 'Set Stat', value: 'stat_set' },
+                                { label: 'Increment Archetype Stat', value: 'astat_inc' },
+                                { label: 'Set Archetype Stat', value: 'astat_set' },
                                 { label: 'Increment Reputation', value: 'reputation_inc' },
                                 { label: 'Set Reputation', value: 'reputation_set' },
                                 { label: 'Add Item', value: 'item' },
@@ -3690,6 +3746,8 @@ client.on('interactionCreate', async (interaction) => {
                                     { label: 'Set Character Flag', value: 'cflag_set' },
                                     { label: 'Increment Stat', value: 'stat_inc' },
                                     { label: 'Set Stat', value: 'stat_set' },
+                                    { label: 'Increment Archetype Stat', value: 'astat_inc' },
+                                    { label: 'Set Archetype Stat', value: 'astat_set' },
                                     { label: 'Increment Reputation', value: 'reputation_inc' },
                                     { label: 'Set Reputation', value: 'reputation_set' },
                                     { label: 'Add Item', value: 'item' },
@@ -3714,7 +3772,7 @@ client.on('interactionCreate', async (interaction) => {
                                 let modal = new ModalBuilder()
                                     .setCustomId('EffectModal' + now)
                                     .setTitle('Add Effect');
-                                let requires_typeahead = ['wflag_inc', 'wflag_set', 'cflag_inc', 'cflag_set', 'stat_inc', 'stat_set', 'reputation_inc', 'reputation_set', 'item', 'skill', 'archetype'];
+                                let requires_typeahead = ['wflag_inc', 'wflag_set', 'cflag_inc', 'cflag_set', 'stat_inc', 'stat_set', 'astat_inc', 'astat_set', 'reputation_inc', 'reputation_set', 'item', 'skill', 'archetype'];
                                 if (requires_typeahead.includes(type)) {
                                     let typeaheadInput = new TextInputBuilder()
                                         .setCustomId('typeahead')
@@ -3725,6 +3783,8 @@ client.on('interactionCreate', async (interaction) => {
                                         typeaheadInput.setLabel('Name of the character flag (autocompletes)');
                                     } else if (type == 'stat_inc' || type == 'stat_set') {
                                         typeaheadInput.setLabel('Name of the stat (autocompletes)');
+                                    } else if (type == 'astat_inc' || type == 'astat_set') {
+                                        typeaheadInput.setLabel('Name of the archetype stat (autocompletes)');
                                     } else if (type == 'reputation_inc' || type == 'reputation_set') {
                                         typeaheadInput.setLabel('Name of the reputation (autocompletes)');
                                     } else if (type == 'item') {
@@ -3737,7 +3797,7 @@ client.on('interactionCreate', async (interaction) => {
                                     let typeaheadActionRow = new ActionRowBuilder().addComponents(typeaheadInput);
                                     modal.addComponents(typeaheadActionRow);
                                 }
-                                let requires_quantity = ['wflag_inc', 'wflag_set', 'cflag_inc', 'cflag_set', 'stat_inc', 'stat_set', 'reputation_inc', 'reputation_set', 'item'];
+                                let requires_quantity = ['wflag_inc', 'wflag_set', 'cflag_inc', 'cflag_set', 'stat_inc', 'stat_set', 'astat_inc', 'astat_set', 'reputation_inc', 'reputation_set', 'item'];
                                 if (requires_quantity.includes(type)) {
                                     let quantityInput = new TextInputBuilder()
                                         .setCustomId('type_qty')
@@ -3791,6 +3851,8 @@ client.on('interactionCreate', async (interaction) => {
                                             typeahead_results = await connection.promise().query('select * from characterflags where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
                                         } else if (type == 'stat_inc' || type == 'stat_set') {
                                             typeahead_results = await connection.promise().query('select * from stats where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
+                                        } else if (type == 'astat_inc' || type == 'astat_set') {
+                                            typeahead_results = await connection.promise().query('select * from archetypestats where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
                                         } else if (type == 'item') {
                                             typeahead_results = await connection.promise().query('select * from items where guild_id = ? and name like ?', [interaction.guildId, '%' + typeahead + '%']);
                                         } else if (type == 'skill') {
@@ -4065,6 +4127,10 @@ client.on('interactionCreate', async (interaction) => {
                                 } else if (effect.type == 'stat_set' || effect.type == 'stat_inc') {
                                     let stat = await connection.promise().query('select * from stats where id = ?', [effect.type_id]);
                                     label = `Modify stat`;
+                                    description = stat[0][0].name;
+                                } else if (effect.type == 'astat_set' || effect.type == 'astat_inc') {
+                                    let stat = await connection.promise().query('select * from archetypestats where id = ?', [effect.type_id]);
+                                    label = `Modify archetype stat`;
                                     description = stat[0][0].name;
                                 }
                                 description += ` (${prereqs[0].length} prereqs already)`;
@@ -4416,6 +4482,10 @@ client.on('interactionCreate', async (interaction) => {
                                 } else if (effect.type == 'stat_set' || effect.type == 'stat_inc') {
                                     let stat = await connection.promise().query('select * from stats where id = ?', [effect.type_id]);
                                     label = `Modify stat`;
+                                    description = stat[0][0].name;
+                                } else if (effect.type == 'astat_set' || effect.type == 'astat_inc') {
+                                    let stat = await connection.promise().query('select * from archetypestats where id = ?', [effect.type_id]);
+                                    label = `Modify archetype stat`;
                                     description = stat[0][0].name;
                                 }
                                 description += ` (${prereqs[0].length} prereqs already)`;
