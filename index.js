@@ -6531,5 +6531,6 @@ async function main_timer_loop() {
         }
 
     }
+}
 
-    const interval = setInterval(main_timer_loop, 1000 * 30); // Run the main timer loop once every 30 seconds, for now.
+const interval = setInterval(main_timer_loop, 1000 * 30); // Run the main timer loop once every 30 seconds, for now.
