@@ -271,13 +271,13 @@ async function process_effect(character, effect, source, guildId, channel, targe
                         // When stats have archetype overrides, we will need t  check those first too
                     }
                     let stat = await connection.promise().query('select * from archetypestats where id = ?', effect.type_id);
-                    message += ` ${adjusted} ${character.name}'s ${stat[0][0].name} stat by ${Math.abs(effect.type_qty)}`;
+                    message += ` ${adjusted} ${character.name}'s ${stat[0][0].name} archetype stat by ${Math.abs(effect.type_qty)}`;
                 } break;
             case 'astat_set':
                 {
                     await connection.promise().query('replace into characters_archetypestats (character_id, stat_id, override_value) values (?, ?, ?)', [character.id, effect.type_id, effect.type_qty]);
                     let stat = await connection.promise().query('select * from archetypestats where id = ?', effect.type_id);
-                    message += ` set ${character.name}'s ${stat[0][0].name} stat to ${effect.type_qty}`;
+                    message += ` set ${character.name}'s ${stat[0][0].name} archetype stat to ${effect.type_qty}`;
                 } break;
             case 'message':
                 {
@@ -6471,42 +6471,65 @@ async function main_timer_loop() {
     if (whispers[0].length > 0) {
         for (const thisWhisper of whispers[0]) {
             let channel = await client.channels.fetch(thisWhisper.channel_id);
-            await channel.send('Whisper closed!');
-            //await channel.lockPermissions(); // Sync permissions with category
-            let users = await connection.promise().query('select p.user_id from whispers_characters wc join players_characters pc on wc.character_id = pc.character_id join players p on pc.player_id = p.id where whisper_id = ?', [thisWhisper.id]);
-            let characters = await connection.promise().query('select distinct c.name from whispers_characters wc join characters c on wc.character_id = c.id where whisper_id = ?', [thisWhisper.id]);
-            if (users[0].length > 0) {
-                for (const thisUser of users[0]) {
-                    let user = await client.users.fetch(thisUser.user_id);
-                    channel.permissionOverwrites.edit(user, { SendMessages: false });
+            try {
+                await channel.send('Whisper closed!'); //await channel.lockPermissions(); // Sync permissions with category
+                let users = await connection.promise().query('select p.user_id from whispers_characters wc join players_characters pc on wc.character_id = pc.character_id join players p on pc.player_id = p.id where whisper_id = ?', [thisWhisper.id]);
+                let characters = await connection.promise().query('select distinct c.name from whispers_characters wc join characters c on wc.character_id = c.id where whisper_id = ?', [thisWhisper.id]);
+                if (users[0].length > 0) {
+                    for (const thisUser of users[0]) {
+                        let user = await client.users.fetch(thisUser.user_id);
+                        channel.permissionOverwrites.edit(user, { SendMessages: false });
+                    }
                 }
-            }
-            await connection.promise().query('update whispers set locked = 1 where channel_id = ?', thisWhisper.channel_id);
-            let settingvalue = await connection.promise().query('select * from game_settings where guild_id = ? and setting_name = ?', [channel.guild.id, 'audit_channel']);
-            if (settingvalue[0].length > 0) {
-                let audit_channel = await client.channels.cache.get(settingvalue[0][0].setting_value);
-                let embed = new EmbedBuilder()
-                    .setTitle('Whisper closed!')
-                    .setDescription('Auto-close notification for whisper ID ' + thisWhisper.id)
-                    .addFields(
-                        {
-                            name: 'Channel link',
-                            value: channel.toString(),
-                            inline: true
-                        },
-                        {
-                            name: 'Whisper members',
-                            value: (characters[0].length > 0 ? characters[0].map(a => a.name).join('\n') : '*none*'),
-                            inline: true
-                        }
-                    )
-                    .setTimestamp();
-                audit_channel.send({ embeds: [embed] });
-            }
+                await connection.promise().query('update whispers set locked = 1 where channel_id = ?', thisWhisper.channel_id);
+                let settingvalue = await connection.promise().query('select * from game_settings where guild_id = ? and setting_name = ?', [channel.guild.id, 'audit_channel']);
+                if (settingvalue[0].length > 0) {
+                    let audit_channel = await client.channels.cache.get(settingvalue[0][0].setting_value);
+                    let embed = new EmbedBuilder()
+                        .setTitle('Whisper closed!')
+                        .setDescription('Auto-close notification for whisper ID ' + thisWhisper.id)
+                        .addFields(
+                            {
+                                name: 'Channel link',
+                                value: channel.toString(),
+                                inline: true
+                            },
+                            {
+                                name: 'Whisper members',
+                                value: (characters[0].length > 0 ? characters[0].map(a => a.name).join('\n') : '*none*'),
+                                inline: true
+                            }
+                        )
+                        .setTimestamp();
+                    audit_channel.send({ embeds: [embed] });
+                }
+            } catch {
+                let settingvalue = await connection.promise().query('select * from game_settings where guild_id = ? and setting_name = ?', [channel.guild.id, 'audit_channel']);
+                if (settingvalue[0].length > 0) {
+                    let audit_channel = await client.channels.cache.get(settingvalue[0][0].setting_value);
+                    let embed = new EmbedBuilder()
+                        .setTitle('Missing permissions!')
+                        .setDescription('Closing ' + thisWhisper.id + ' FAILED - Missing Permissions')
+                        .addFields(
+                            {
+                                name: 'Channel link',
+                                value: channel.toString(),
+                                inline: true
+                            },
+                            {
+                                name: 'Whisper members',
+                                value: (characters[0].length > 0 ? characters[0].map(a => a.name).join('\n') : '*none*'),
+                                inline: true
+                            }
+                        )
+                        .setTimestamp();
+                    audit_channel.send({ embeds: [embed] });
+                }
 
+
+            }
         }
+
     }
 
-}
-
-const interval = setInterval(main_timer_loop, 1000 * 30); // Run the main timer loop once every 30 seconds, for now.
+    const interval = setInterval(main_timer_loop, 1000 * 30); // Run the main timer loop once every 30 seconds, for now.
