@@ -6368,7 +6368,7 @@ client.on('interactionCreate', async (interaction) => {
             console.log(interaction.member.id);
             console.log(interaction.guildId);
             let locations = await connection.promise().query('select distinct ml.* from movement_locations ml left outer join characters c on c.location_id = ml.id left outer join players_characters pc on pc.character_id = c.id left outer join players p on p.id = pc.player_id where ((p.user_id = ? and pc.active = 1) or ml.id = ?) and ml.movement_allowed = 1 and ml.guild_id = ?', [interaction.member.id, dest_id, interaction.guildId]); //todo get dest id working
-            let active_character = await connection.promise().query('select c.* from characters c join players_characters pc on pc.character_id = c.id join players p on p.id = pc.player_id where p.user_id = ? and pc.active = 1', [interaction.member.id]);
+            let active_character = await connection.promise().query('select c.* from characters c join players_characters pc on pc.character_id = c.id join players p on p.id = pc.player_id where p.user_id = ? and pc.active = 1 and guild_id = ?', [interaction.member.id, interaction.guildId]);
             console.log(locations[0]);
             if (locations[0].length == 2) {
                 await interaction.update({ content: 'Location selected for movement!', components: [] });
