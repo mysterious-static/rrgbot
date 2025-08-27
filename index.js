@@ -3040,7 +3040,7 @@ client.on('interactionCreate', async (interaction) => {
                             if (interaction_second.customId === 'ArchetypeStatAssignmentStatSelector') {
                                 archetypeStatSelected = interaction_second.values[0];
                                 let archetype = await connection.promise().query('select archetype_id from archetypes_archetypestats where archetypestat_id = ?', [archetypeStatSelected]);
-                                let archetype_ids;
+                                let archetype_ids = [];
                                 for (const thisArchetype in archetype[0]) {
                                     archetype_ids.push(thisArchetype.id);
                                 }
