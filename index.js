@@ -2787,13 +2787,13 @@ client.on('interactionCreate', async (interaction) => {
                     let characterSelectComponent;
                     //if (!character) {
                         let characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
-                        if (characters[0].length > 0 && characters[0].length <= 25) {
+                        if (characters[0].length > 0 && characters[0].length <= 24) {
                             let charactersKeyValues = [{ label: 'Select a character', value: '0' }];
                             for (const character of characters[0]) {
                                 charactersKeyValues.push({ label: character.name, value: character.id.toString() });
                             }
                             characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ItemAssignmentCharacterSelector').setMinValues(1).setMaxValues(charactersKeyValues.length);
-                        } else if (characters[0].length > 25) {
+                        } else if (characters[0].length >= 25) {
                             let characters = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
                             let charactersKeyValues = [];
                             for (const character of characters) {
