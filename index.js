@@ -2768,6 +2768,7 @@ client.on('interactionCreate', async (interaction) => {
                 let quantity = interaction.options.getInteger('quantity');
                 let items = await connection.promise().query('select i.* from items i where i.guild_id = ?', [interaction.guildId]);
                 let itemSelectComponent;
+                let itemSelectRow;
                 if (items[0].length > 0) {
                     if (items[0].length <= 25) {
                         let itemsKeyValues = [];
@@ -2783,7 +2784,7 @@ client.on('interactionCreate', async (interaction) => {
                         }
                         itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemAssignmentAlphabetSelector').setMinValues(1).setMaxValues(1);
                     }
-                    const itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
+                    itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
                     let characterSelectComponent;
                     //if (!character) {
                         let characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
