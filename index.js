@@ -2799,7 +2799,7 @@ client.on('interactionCreate', async (interaction) => {
                             for (const character of characters) {
                                 charactersKeyValues.push({ label: character, value: character });
                             }
-                            characterSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemAssignmentCharacterAlphaSelector').setMinValues(1).setMaxValues(1);
+                            characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ItemAssignmentCharacterAlphaSelector').setMinValues(1).setMaxValues(1);
                         } else {
                             interaction.reply('Couldn\'t find any characters.');
                         }
