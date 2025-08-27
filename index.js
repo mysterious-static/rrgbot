@@ -2785,7 +2785,7 @@ client.on('interactionCreate', async (interaction) => {
                     }
                     const itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
                     let characterSelectComponent;
-                    if (!character) {
+                    //if (!character) {
                         let characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
                         if (characters[0].length > 0 && characters[0].length <= 25) {
                             let charactersKeyValues = [{ label: 'Select a character', value: '0' }];
@@ -2874,9 +2874,9 @@ client.on('interactionCreate', async (interaction) => {
                             });
                         }
 
-                    } else {
+                    //} else {
                         //eventual typeahead support
-                    }
+                    //}
                 } else {
                     interaction.reply({ content: 'Please create at least one item first. <3', ephemeral: true });
                 }
