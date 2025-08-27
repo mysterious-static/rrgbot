@@ -3041,10 +3041,11 @@ client.on('interactionCreate', async (interaction) => {
                                 archetypeStatSelected = interaction_second.values[0];
                                 let archetype = await connection.promise().query('select archetype_id from archetypes_archetypestats where archetypestat_id = ?', [archetypeStatSelected]);
                                 let archetype_ids = [];
+                                console.log(archetype[0]);
                                 for (const thisArchetype in archetype[0]) {
                                     archetype_ids.push(thisArchetype);
                                 }
-                                let characters = await connection.promise().query('select c.* from characters c join characters_archetypes ca on c.id = ca.character_id where guild_id = ? and ca.archetype_id in (?)', [interaction.guildId, [archetype_ids]]);
+                                let characters = await connection.promise().query('select c.* from characters c join characters_archetypes ca on c.id = ca.character_id where guild_id = ? and ca.archetype_id in ?', [interaction.guildId, [archetype_ids]]);
                                 if (characters[0].length > 0) {
                                     let charactersKeyValues = [];
                                     for (const character of characters[0]) {
