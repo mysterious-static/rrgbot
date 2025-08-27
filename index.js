@@ -1709,7 +1709,7 @@ client.on('interactionCreate', async (interaction) => {
                                         characterSelected = interaction_second.values[0];
                                     }
                                     if (locationSelected && characterSelected) {
-                                        let character = await connection.promise().query('select c.*, p.user_id from characters c join players_characters pc on c.id = pc.character_id join players p on p.id = pc.player_id where c.id = ? ', [characterSelected]);
+                                        let character = await connection.promise().query('select c.*, p.user_id from characters c join players_characters pc on c.id = pc.character_id join players p on p.id = pc.player_id where c.id = ? and c.guild_id = ?', [characterSelected, interaction.guildId]);
                                         let locations = await connection.promise().query('select * from movement_locations where id in (?, ?)', [character[0][0].location_id, locationSelected]);
                                         await connection.promise().query('update characters set location_id = ? where id = ?', [locationSelected, characterSelected]);
                                         let new_announcements;
