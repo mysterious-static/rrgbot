@@ -2857,7 +2857,7 @@ client.on('interactionCreate', async (interaction) => {
                                         await interaction_second.update({ content: 'Successfully added items to selected character or characters.', components: [] });
                                         await collector.stop();
                                     } else if (alphabetCharacterSelected && !charactersSelected) {
-                                        let characters = await connection.promise().query('select * from characters where guild_id = ? and name like ', [interaction.guildId, alphabetCharacterSelected + '%']);
+                                        let characters = await connection.promise().query('select * from characters where guild_id = ? and name like ?', [interaction.guildId, alphabetCharacterSelected + '%']);
                                         if (characters[0].length > 0 && characters[0].length <= 25) {
                                             let charactersKeyValues = [{ label: 'Select a character', value: '0' }];
                                             for (const character of characters[0]) {
