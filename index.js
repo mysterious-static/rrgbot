@@ -2787,96 +2787,98 @@ client.on('interactionCreate', async (interaction) => {
                     itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
                     let characterSelectComponent;
                     //if (!character) {
-                        let characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
-                        if (characters[0].length > 0 && characters[0].length <= 24) {
-                            let charactersKeyValues = [{ label: 'Select a character', value: '0' }];
-                            for (const character of characters[0]) {
-                                charactersKeyValues.push({ label: character.name, value: character.id.toString() });
-                            }
-                            characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ItemAssignmentCharacterSelector').setMinValues(1).setMaxValues(charactersKeyValues.length);
-                        } else if (characters[0].length >= 25) {
-                            let characters = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
-                            let charactersKeyValues = [];
-                            for (const character of characters) {
-                                charactersKeyValues.push({ label: character, value: character });
-                            }
-                            characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ItemAssignmentCharacterAlphaSelector').setMinValues(1).setMaxValues(1);
-                        } else {
-                            interaction.reply('Couldn\'t find any characters.');
+                    let characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
+                    if (characters[0].length > 0 && characters[0].length <= 24) {
+                        let charactersKeyValues = [{ label: 'Select a character', value: '0' }];
+                        for (const character of characters[0]) {
+                            charactersKeyValues.push({ label: character.name, value: character.id.toString() });
                         }
-                        if (characterSelectComponent) {
-                            let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                            let message = await interaction.reply({ content: 'Please select the following options:', components: [itemSelectRow, characterSelectRow], ephemeral: true });
-                            let collector = message.createMessageComponentCollector();
-                            let charactersSelected;
-                            let itemSelected;
-                            let alphabetSelected;
-                            let alphabetCharacterSelected;
-                            collector.on('collect', async (interaction_second) => {
-                                if (interaction.member.id === interaction_second.member.id) {
-                                    if (interaction_second.values[0]) {
-                                        if (interaction_second.customId === 'ItemAssignmentItemSelector') {
-                                            itemSelected = interaction_second.values[0];
-                                        } else if (interaction_second.customId === 'ItemAssignmentAlphabetSelector') {
-                                            alphabetSelected = interaction_second.values[0];
-                                        } else if (interaction_second.customId === 'ItemAssignmentCharacterSelector') {
-                                            charactersSelected = interaction_second.values;
-                                        } else if (interaction_second.customId === 'ItemAssignmentCharacterAlphaSelector') {
-                                            alphabetCharacterSelected = interaction_second.values;
-                                        }
-                                        if (alphabetSelected && !itemSelected) {
-                                            let items;
-                                            if (alphabetSelected.length == 1) {
-                                                items = await connection.promise().query('select * from items where guild_id = ? and name like ?', [interaction_second.guildId, alphabetSelected + '%']);
-                                            } else {
-                                                await interaction_second.update({ content: 'Something has gone really horribly wrong, can you ask Alli maybe?', components: [] });
-                                                await collector.stop();
-                                            }
-                                            let itemsKeyValues = [];
-                                            for (const item of items[0]) {
-                                                itemsKeyValues.push({ label: `${item.name}`, value: item.id.toString() });
-                                            }
-                                            itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemAssignmentItemSelector').setMinValues(1).setMaxValues(1);
-                                            itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
-                                            await interaction_second.update({ content: 'Please select the following options:', components: [itemSelectRow, characterSelectRow] });
-                                        } else if (itemSelected && charactersSelected) {
-                                            for (const characterSelected of charactersSelected) {
-                                                let exists = await connection.promise().query('select * from characters_items where character_id = ? and item_id = ?', [characterSelected, itemSelected]);
-                                                if (exists[0].length > 0) {
-                                                    if (quantity + exists[0][0].quantity <= 0) {
-                                                        await connection.promise().query('delete from characters_items where character_id = ? and item_id = ?', [characterSelected, itemSelected]);
-                                                    } else {
-                                                        await connection.promise().query('update characters_items set quantity = ? where character_id = ? and item_id = ?', [quantity + exists[0][0].quantity, characterSelected, itemSelected]);
-                                                    }
-                                                } else {
-                                                    await connection.promise().query('insert into characters_items (character_id, item_id, quantity) values (?, ?, ?)', [characterSelected, itemSelected, quantity]);
-                                                }
-                                            }
-                                            await interaction_second.update({ content: 'Successfully added items to selected character or characters.', components: [] });
-                                            await collector.stop();
-                                        } else if (alphabetCharacterSelected && !charactersSelected) {
-                                            let characters = await connection.promise().query('select * from characters where guild_id = ? and name like ', [interaction.guildId, alphabetCharacterSelected + '%']);
-                                            if (characters[0].length > 0 && characters[0].length <= 25) {
-                                                let charactersKeyValues = [{ label: 'Select a character', value: '0' }];
-                                                for (const character of characters[0]) {
-                                                    charactersKeyValues.push({ label: character.name, value: character.id.toString() });
-                                                }
-                                                characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ItemAssignmentCharacterSelector').setMinValues(1).setMaxValues(charactersKeyValues.length);
-                                                characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                                                await interaction_second.update({content: 'Please select the following options:', components: [itemSelectRow, characterSelectRow]});
-                                            }
+                        characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ItemAssignmentCharacterSelector').setMinValues(1).setMaxValues(charactersKeyValues.length);
+                    } else if (characters[0].length >= 25) {
+                        let characters = [...'ABCDEFGHIJKLMNOPQRSTUVWYZ'];
+                        let charactersKeyValues = [];
+                        for (const character of characters) {
+                            charactersKeyValues.push({ label: character, value: character });
+                        }
+                        characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ItemAssignmentCharacterAlphaSelector').setMinValues(1).setMaxValues(1);
+                    } else {
+                        interaction.reply('Couldn\'t find any characters.');
+                    }
+                    if (characterSelectComponent) {
+                        let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                        let message = await interaction.reply({ content: 'Please select the following options:', components: [itemSelectRow, characterSelectRow], ephemeral: true });
+                        let collector = message.createMessageComponentCollector();
+                        let charactersSelected;
+                        let itemSelected;
+                        let alphabetSelected;
+                        let alphabetCharacterSelected;
+                        collector.on('collect', async (interaction_second) => {
+                            if (interaction.member.id === interaction_second.member.id) {
+                                if (interaction_second.values[0]) {
+                                    if (interaction_second.customId === 'ItemAssignmentItemSelector') {
+                                        itemSelected = interaction_second.values[0];
+                                    } else if (interaction_second.customId === 'ItemAssignmentAlphabetSelector') {
+                                        alphabetSelected = interaction_second.values[0];
+                                    } else if (interaction_second.customId === 'ItemAssignmentCharacterSelector') {
+                                        charactersSelected = interaction_second.values;
+                                    } else if (interaction_second.customId === 'ItemAssignmentCharacterAlphaSelector') {
+                                        alphabetCharacterSelected = interaction_second.values;
+                                    }
+                                    if (alphabetSelected && !itemSelected) {
+                                        let items;
+                                        if (alphabetSelected.length == 1) {
+                                            items = await connection.promise().query('select * from items where guild_id = ? and name like ?', [interaction_second.guildId, alphabetSelected + '%']);
                                         } else {
-                                            await interaction_second.deferUpdate();
+                                            await interaction_second.update({ content: 'Something has gone really horribly wrong, can you ask Alli maybe?', components: [] });
+                                            await collector.stop();
+                                        }
+                                        let itemsKeyValues = [];
+                                        for (const item of items[0]) {
+                                            itemsKeyValues.push({ label: `${item.name}`, value: item.id.toString() });
+                                        }
+                                        itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemAssignmentItemSelector').setMinValues(1).setMaxValues(1);
+                                        itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
+                                        console.log(characterSelectRow);
+                                        console.log(itemSelectRow);
+                                        await interaction_second.update({ content: 'Please select the following options:', components: [itemSelectRow, characterSelectRow] });
+                                    } else if (itemSelected && charactersSelected) {
+                                        for (const characterSelected of charactersSelected) {
+                                            let exists = await connection.promise().query('select * from characters_items where character_id = ? and item_id = ?', [characterSelected, itemSelected]);
+                                            if (exists[0].length > 0) {
+                                                if (quantity + exists[0][0].quantity <= 0) {
+                                                    await connection.promise().query('delete from characters_items where character_id = ? and item_id = ?', [characterSelected, itemSelected]);
+                                                } else {
+                                                    await connection.promise().query('update characters_items set quantity = ? where character_id = ? and item_id = ?', [quantity + exists[0][0].quantity, characterSelected, itemSelected]);
+                                                }
+                                            } else {
+                                                await connection.promise().query('insert into characters_items (character_id, item_id, quantity) values (?, ?, ?)', [characterSelected, itemSelected, quantity]);
+                                            }
+                                        }
+                                        await interaction_second.update({ content: 'Successfully added items to selected character or characters.', components: [] });
+                                        await collector.stop();
+                                    } else if (alphabetCharacterSelected && !charactersSelected) {
+                                        let characters = await connection.promise().query('select * from characters where guild_id = ? and name like ', [interaction.guildId, alphabetCharacterSelected + '%']);
+                                        if (characters[0].length > 0 && characters[0].length <= 25) {
+                                            let charactersKeyValues = [{ label: 'Select a character', value: '0' }];
+                                            for (const character of characters[0]) {
+                                                charactersKeyValues.push({ label: character.name, value: character.id.toString() });
+                                            }
+                                            characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ItemAssignmentCharacterSelector').setMinValues(1).setMaxValues(charactersKeyValues.length);
+                                            characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
+                                            await interaction_second.update({ content: 'Please select the following options:', components: [itemSelectRow, characterSelectRow] });
                                         }
                                     } else {
                                         await interaction_second.deferUpdate();
                                     }
+                                } else {
+                                    await interaction_second.deferUpdate();
                                 }
-                            });
-                        }
+                            }
+                        });
+                    }
 
                     //} else {
-                        //eventual typeahead support
+                    //eventual typeahead support
                     //}
                 } else {
                     interaction.reply({ content: 'Please create at least one item first. <3', ephemeral: true });
