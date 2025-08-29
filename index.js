@@ -1958,9 +1958,9 @@ client.on('interactionCreate', async (interaction) => {
             } else if (interaction.options.getSubcommand() === 'delete') {
                 let stats = await connection.promise().query('select * from stats where guild_id = ?');
                 if (exists[0].length == 0) {
-                    interaction.reply({content: 'No stats found!'});
+                    interaction.reply({ content: 'No stats found!' });
                 } else if (exists[0].length > 25) {
-                    interaction.reply({content: 'Too many stats found, please yell at Alli to implement a typeahead.'});
+                    interaction.reply({ content: 'Too many stats found, please yell at Alli to implement a typeahead.' });
                 } else {
                     let statsKeyValues = [];
                     for (const stat of stats[0]) {
