@@ -6189,7 +6189,7 @@ client.on('interactionCreate', async (interaction) => {
                             if (sort == 'desc') {
                                 test_msg = (`**${thisSkill.name}**: ${thisSkill.description} (${thisSkill.type})\n`).concat(msg);
                             } else {
-                                test_msg = msg.concat(`**${thisSkill.name}**: ${thisSkill.description} (${thisSkill.type})\n`)
+                                test_msg = msg.concat(`**${thisSkill.name}** *(${thisSkill.type})*: ${thisSkill.description}\n`)
                             }
                             if (test_msg.length > 1989) { // 2000 characters minus "__Skills__\n"
                                 process_test_msg = false;
