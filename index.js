@@ -507,6 +507,10 @@ client.on('ready', async () => {
                     option.setName('name')
                         .setDescription('The stat for which to list values. (autocompletes)')
                         .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand.setName('delete')
+                .setDescription('Remove a stat from the game.')
+        )
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 
@@ -1950,6 +1954,33 @@ client.on('interactionCreate', async (interaction) => {
                     interaction.reply({ content: 'Stat added!', ephemeral: true });
                 } else {
                     interaction.reply({ content: 'Stat with this name already exists!', ephemeral: true });
+                }
+            } else if (interaction.options.getSubcommand() === 'delete') {
+                let stats = await connection.promise().query('select * from stats where guild_id = ?');
+                if (exists[0].length == 0) {
+                    interaction.reply({content: 'No stats found!'});
+                } else if (exists[0].length > 25) {
+                    interaction.reply({content: 'Too many stats found, please yell at Alli to implement a typeahead.'});
+                } else {
+                    let statsKeyValues = [];
+                    for (const stat of stats[0]) {
+                        statsKeyValues.push({ label: stat.name, value: stat.id.toString() });
+                    }
+                    const statSelectComponent = new StringSelectMenuBuilder().setOptions(statsKeyValues).setCustomId('StatAssignmentStatSelector').setMinValues(1).setMaxValues(1);
+                    let statSelectRow = new ActionRowBuilder().addComponents(statSelectComponent);
+                    let message = await interaction.reply({ content: 'Select a stat to delete', components: [statSelectRow], ephemeral: true });
+                    const collector = message.createMessageComponentCollector({ time: 35000 });
+                    collector.on('collect', async (interaction_second) => {
+                        if (interaction_second.member.id === interaction.member.id) {
+                            if (interaction_second.values[0]) {
+                                await connection.promise().query('delete from stats where id = ?', interaction_second.values[0]);
+                                interaction.editReply({ content: 'Deleted stat.', components: [] });
+                                await collector.stop();
+                            } else {
+                                await interaction_second.deferUpdate();
+                            }
+                        }
+                    });
                 }
             } else if (interaction.options.getSubcommand() === 'set') {
                 let value = interaction.options.getInteger('value');
