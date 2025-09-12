@@ -1104,10 +1104,10 @@ client.on('interactionCreate', async (interaction) => {
             let thisChannel = interaction.options.getChannel('channel');
             let channelexists = await connection.promise().query('select * from movement_locations where guild_id = ? and channel_id = ?', [interaction.guildId, thisChannel.id]);
             if (channelexists[0].length > 0) {
-                interaction.reply({ content: 'Looks like this channel is already set up as a location. :revolving_hearts:', ephemeral: true });
+                interaction.reply({ content: 'Looks like this channel is already set up as a location. :revolving_hearts:', flags: MessageFlags.Ephemeral });
             } else {
                 await connection.promise().query('insert into movement_locations (channel_id, guild_id, movement_allowed, global_read, friendly_name) values (?, ?, ?, ?, ?)', [thisChannel.id, interaction.guildId, 1, 0, interaction.options.getString('friendly_name')]);
-                interaction.reply({ content: 'Location added; please use `/locationannouncements` to set the announcements channel for this location.', ephemeral: true });
+                interaction.reply({ content: 'Location added; please use `/locationannouncements` to set the announcements channel for this location.', flags: MessageFlags.Ephemeral });
             }
 
         } else if (interaction.commandName === 'locationannouncements') {
@@ -1118,13 +1118,13 @@ client.on('interactionCreate', async (interaction) => {
                 if (interaction.options.getChannel('announcements_channel')) {
                     let announcements_channel = interaction.options.getChannel('announcements_channel');
                     await connection.promise().query('update movement_locations set announcements_channel = ? where channel_id = ?', [announcements_channel.id, thisChannel.id]);
-                    interaction.reply({ content: 'Should be all set! (changed announcements channel value of ' + thisChannel.toString() + ' to ' + announcements_channel.toString() + ')', ephemeral: true });
+                    interaction.reply({ content: 'Should be all set! (changed announcements channel value of ' + thisChannel.toString() + ' to ' + announcements_channel.toString() + ')', flags: MessageFlags.Ephemeral });
                 } else {
                     await connection.promise().query('update movement_locations set announcements_channel = NULL where channel_id = ?', [thisChannel.id]);
-                    interaction.reply({ content: 'Should be all set! (removed announcements for ' + thisChannel.toString() + ')', ephemeral: true });
+                    interaction.reply({ content: 'Should be all set! (removed announcements for ' + thisChannel.toString() + ')', flags: MessageFlags.Ephemeral });
                 }
             } else {
-                interaction.reply({ content: 'Looks like this channel isn\'t a valid location. Try adding it via `/addlocation`. :revolving_hearts:', ephemeral: true });
+                interaction.reply({ content: 'Looks like this channel isn\'t a valid location. Try adding it via `/addlocation`. :revolving_hearts:', flags: MessageFlags.Ephemeral });
             }
         } else if (interaction.commandName === 'allowmovement') {
             if (interaction.options.getChannel('channel')) {
@@ -1133,40 +1133,40 @@ client.on('interactionCreate', async (interaction) => {
                 if (channelexists[0].length > 0) {
                     let enabled = interaction.options.getBoolean('enabled');
                     await connection.promise().query('update movement_locations set movement_allowed = ? where channel_id = ?', [enabled, thisChannel.id]);
-                    interaction.reply({ content: 'Should be all set! (changed movement allowed value of ' + thisChannel.toString() + ' to ' + enabled + ')', ephemeral: true });
+                    interaction.reply({ content: 'Should be all set! (changed movement allowed value of ' + thisChannel.toString() + ' to ' + enabled + ')', flags: MessageFlags.Ephemeral });
                 } else {
-                    interaction.reply({ content: 'Looks like this channel isn\'t a valid location. Try adding it via `/addlocation`. :revolving_hearts:', ephemeral: true });
+                    interaction.reply({ content: 'Looks like this channel isn\'t a valid location. Try adding it via `/addlocation`. :revolving_hearts:', flags: MessageFlags.Ephemeral });
                 }
             } else {
                 let enabled = interaction.options.getBoolean('enabled');
                 await connection.promise().query('update movement_locations set movement_allowed = ? where guild_id = ? ', [enabled, interaction.guildId]);
-                interaction.reply({ content: 'Should be all set! (changed movement allowed value of ALL locations to ' + enabled + ')', ephemeral: true });
+                interaction.reply({ content: 'Should be all set! (changed movement allowed value of ALL locations to ' + enabled + ')', flags: MessageFlags.Ephemeral });
             }
         } else if (interaction.commandName === 'restrictmovement') {
             let setting_value = interaction.options.getString('restriction_type');
             if (setting_value == 'disabled' || setting_value == 'enabled' || setting_value == 'player_whitelist') {
                 await connection.promise().query('replace into game_settings (setting_name, setting_value, guild_id) values (?, ?, ?)', ['restrictmovement', setting_value, interaction.guildId]);
-                interaction.reply({ content: "Movement restriction set.", ephemeral: true });
+                interaction.reply({ content: "Movement restriction set.", flags: MessageFlags.Ephemeral });
             } else {
-                interaction.reply({ content: 'Please select a valid movement restriction type.', ephemeral: true });
+                interaction.reply({ content: 'Please select a valid movement restriction type.', flags: MessageFlags.Ephemeral });
             }
             //add to whitelist
         } else if (interaction.commandName === 'locationawareness') {
             if (interaction.options.getSubcommand() === 'trading') {
                 let setting_value = interaction.options.getBoolean('enabled');
                 await connection.promise().query('replace into game_settings (setting_name, setting_value, guild_id) values (?, ?, ?)', ['locationawaretrading', (setting_value ? 1 : 0), interaction.guildId]);
-                interaction.reply({ content: 'Location aware trading set.', ephemeral: true });
+                interaction.reply({ content: 'Location aware trading set.', flags: MessageFlags.Ephemeral });
             } else if (interaction.options.getSubcommand() === 'skilltarget') {
                 let setting_value = interaction.options.getBoolean('enabled');
                 await connection.promise().query('replace into game_settings (setting_name, setting_value, guild_id) values (?, ?, ?)', ['locationawareskills', (setting_value ? 1 : 0), interaction.guildId]);
-                interaction.reply({ content: 'Location aware skills set.', ephemeral: true });
+                interaction.reply({ content: 'Location aware skills set.', flags: MessageFlags.Ephemeral });
             }
         } else if (interaction.commandName === 'addlocationwhitelist') {
             let characters = await connection.promise().query('select * from characters c where guild_id = ?', [interaction.guildId]);
             if (characters[0].length > 0) {
 
             } else {
-                interaction.reply({ content: 'No valid characters were found in this server.', ephemeral: true });
+                interaction.reply({ content: 'No valid characters were found in this server.', flags: MessageFlags.Ephemeral });
             }
 
         } else if (interaction.commandName === 'removelocationwhitelist') {
@@ -1174,7 +1174,7 @@ client.on('interactionCreate', async (interaction) => {
             if (characters[0].length > 0) {
 
             } else {
-                interaction.reply({ content: 'No valid characters were found in this server.', ephemeral: true });
+                interaction.reply({ content: 'No valid characters were found in this server.', flags: MessageFlags.Ephemeral });
             }
 
         } else if (interaction.commandName === 'resetlocationvis') {
@@ -1206,7 +1206,7 @@ client.on('interactionCreate', async (interaction) => {
                         }
                     }
                 }
-                interaction.reply({ content: 'Reset done.', ephemeral: true });
+                interaction.reply({ content: 'Reset done.', flags: MessageFlags.Ephemeral });
             }
         } else if (interaction.commandName === 'locationvisibility') {
             let thisChannel = await interaction.options.getChannel('location');
@@ -1214,9 +1214,9 @@ client.on('interactionCreate', async (interaction) => {
             if (channelexists[0].length > 0) {
                 let enabled = interaction.options.getBoolean('enabled');
                 await connection.promise().query('update movement_locations set global_read = ? where channel_id = ?', [enabled, thisChannel.id]);
-                interaction.reply({ content: 'Should be all set! (changed global read value of ' + thisChannel.toString() + ' to ' + enabled + ')', ephemeral: true });
+                interaction.reply({ content: 'Should be all set! (changed global read value of ' + thisChannel.toString() + ' to ' + enabled + ')', flags: MessageFlags.Ephemeral });
             } else {
-                interaction.reply({ content: 'Looks like this channel isn\'t a valid location. Try adding it via `/addlocation`. :revolving_hearts:', ephemeral: true });
+                interaction.reply({ content: 'Looks like this channel isn\'t a valid location. Try adding it via `/addlocation`. :revolving_hearts:', flags: MessageFlags.Ephemeral });
             }
         } else if (interaction.commandName === 'locationglobalwrite') {
             let thisChannel = await interaction.options.getChannel('location');
@@ -1224,17 +1224,17 @@ client.on('interactionCreate', async (interaction) => {
             if (channelexists[0].length > 0) {
                 let enabled = interaction.options.getBoolean('enabled');
                 await connection.promise().query('update movement_locations set global_write = ? where channel_id = ?', [enabled, thisChannel.id]);
-                interaction.reply({ content: 'Should be all set! (changed global write value of ' + thisChannel.toString() + ' to ' + enabled + ')', ephemeral: true });
+                interaction.reply({ content: 'Should be all set! (changed global write value of ' + thisChannel.toString() + ' to ' + enabled + ')', flags: MessageFlags.Ephemeral });
             } else {
-                interaction.reply({ content: 'Looks like this channel isn\'t a valid location. Try adding it via `/addlocation`. :revolving_hearts:', ephemeral: true });
+                interaction.reply({ content: 'Looks like this channel isn\'t a valid location. Try adding it via `/addlocation`. :revolving_hearts:', flags: MessageFlags.Ephemeral });
             }
         } else if (interaction.commandName === 'whispercategory') {
             let channel = interaction.options.getChannel('category');
             if (channel.type === ChannelType.GuildCategory) {
                 await connection.promise().query('replace into game_settings (setting_name, setting_value, guild_id) values (?, ?, ?)', ['whisper_category', channel.id, interaction.guildId]);
-                interaction.reply({ content: "Set the whisper category for this game.", ephemeral: true });
+                interaction.reply({ content: "Set the whisper category for this game.", flags: MessageFlags.Ephemeral });
             } else {
-                interaction.reply({ content: 'please make sure you selected a category and not a channel', ephemeral: true });
+                interaction.reply({ content: 'please make sure you selected a category and not a channel', flags: MessageFlags.Ephemeral });
             }
 
         } else if (interaction.commandName === 'whisper') {
@@ -1254,9 +1254,9 @@ client.on('interactionCreate', async (interaction) => {
                     });
                     whisper_channel.send('Whisper created! Expires <t:' + (interaction.options.getInteger('duration') * 3600 + timest) + ':R>');
                     await connection.promise().query('insert into whispers (guild_id, channel_id, expiration) values (?, ?, ?)', [interaction.guildId, whisper_channel.id, timest + (interaction.options.getInteger('duration') * 3600)]);
-                    interaction.reply({ content: `Whisper created: ${whisper_channel}. Add characters using \`/populatewhisper\`.`, ephemeral: true });
+                    interaction.reply({ content: `Whisper created: ${whisper_channel}. Add characters using \`/populatewhisper\`.`, flags: MessageFlags.Ephemeral });
                 } else {
-                    interaction.reply({ content: "Create a whisper category first using `/whispercategory`.", ephemeral: true });
+                    interaction.reply({ content: "Create a whisper category first using `/whispercategory`.", flags: MessageFlags.Ephemeral });
                 }
             } else if (interaction.options.getSubcommand() === 'close') {
                 let whisper_data = await connection.promise().query('select * from whispers where channel_id = ?', [interaction.channel.id]);
@@ -1301,7 +1301,7 @@ client.on('interactionCreate', async (interaction) => {
                     }
 
                 } else {
-                    interaction.reply({ content: 'This channel isn\'t a whisper.', ephemeral: true });
+                    interaction.reply({ content: 'This channel isn\'t a whisper.', flags: MessageFlags.Ephemeral });
                 }
             } else if (interaction.options.getSubcommand() === 'populate') {
                 let channel = interaction.options.getChannel('whisperchannel');
@@ -1336,7 +1336,7 @@ client.on('interactionCreate', async (interaction) => {
                             characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('WhisperPopAlphabetSelector').setMinValues(1).setMaxValues(1);
                         }
                         let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                        let message = await interaction.reply({ content: 'Please select a character to add:', components: [characterSelectRow], ephemeral: true });
+                        let message = await interaction.reply({ content: 'Please select a character to add:', components: [characterSelectRow], flags: MessageFlags.Ephemeral });
                         let collector = message.createMessageComponentCollector();
                         collector.on('collect', async (interaction_second) => {
                             if (interaction_second.member.id === interaction.member.id) {
@@ -1375,10 +1375,10 @@ client.on('interactionCreate', async (interaction) => {
                             }
                         });
                     } else {
-                        await interaction.reply({ content: 'There don\'t seem to be any characters, have you made any?', ephemeral: true });
+                        await interaction.reply({ content: 'There don\'t seem to be any characters, have you made any?', flags: MessageFlags.Ephemeral });
                     }
                 } else {
-                    await interaction.reply({ content: 'This channel doesn\'t seem to be a registered whisper.', ephemeral: true });
+                    await interaction.reply({ content: 'This channel doesn\'t seem to be a registered whisper.', flags: MessageFlags.Ephemeral });
                 }
             }
         } else if (interaction.commandName === 'populatewhisper') {
@@ -1389,24 +1389,24 @@ client.on('interactionCreate', async (interaction) => {
                 let player = await connection.promise().query('select * from players where guild_id = ? and user_id = ?', [interaction.guildId, user.id]);
                 if (player[0].length == 1) {
                     await connection.promise().query('update players set notification_channel = ? where guild_id = ? and user_id = ?', [channel.id, interaction.guildId, user.id]);
-                    interaction.reply({ content: 'Notification channel set.', ephemeral: true })
+                    interaction.reply({ content: 'Notification channel set.', flags: MessageFlags.Ephemeral })
                 } else {
-                    interaction.reply({ content: 'Please make sure you\'re tagging a player in this game. If you need to, set them up with `/player create` first.', ephemeral: true });
+                    interaction.reply({ content: 'Please make sure you\'re tagging a player in this game. If you need to, set them up with `/player create` first.', flags: MessageFlags.Ephemeral });
                 }
             } else if (interaction.options.getSubcommand() === 'create') {
                 let user = interaction.options.getUser('user');
                 let playerName = interaction.options.getString('player_name');
                 let playerexists = await connection.promise().query('select * from players where user_id = ? and guild_id = ?', [user.id, interaction.guildId]); // Not using member id because it's a pain to get, and this way we could eventually let users look at all their characters in a web view maybe
                 if (playerexists[0].length > 0) {
-                    interaction.reply({ content: 'A player entry for this user/server combo already exists! Sorry about that. :purple_heart:', ephemeral: true })
+                    interaction.reply({ content: 'A player entry for this user/server combo already exists! Sorry about that. :purple_heart:', flags: MessageFlags.Ephemeral })
                 } else {
                     let inserted_player = await connection.promise().query('insert into players (user_id, guild_id, name) values (?, ?, ?)', [user.id, interaction.guildId, playerName]);
                     if (interaction.options.getBoolean('create_character')) {
                         let inserted_character = await connection.promise().query('insert into characters (name, guild_id, description) values (?, ?, ?)', [playerName, interaction.guildId, '']); // This table also has "location", because all characters are in a location.
                         await connection.promise().query('insert into players_characters (player_id, character_id, active) values (?, ?, ?)', [inserted_player[0].insertId, inserted_character[0].insertId, 1]); // Futureproofing for "multiple players can own a character".
-                        interaction.reply({ content: 'Added the player and character!', ephemeral: true });
+                        interaction.reply({ content: 'Added the player and character!', flags: MessageFlags.Ephemeral });
                     } else {
-                        interaction.reply({ content: 'Added the player!', ephemeral: true });
+                        interaction.reply({ content: 'Added the player!', flags: MessageFlags.Ephemeral });
                     }
 
 
@@ -1430,11 +1430,11 @@ client.on('interactionCreate', async (interaction) => {
                         }
                         const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('characterEditColumnSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
                         let selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                        message = await interaction.reply({ content: 'Please select a property from the dropdown to edit.', components: [selectRow], ephemeral: true });
+                        message = await interaction.reply({ content: 'Please select a property from the dropdown to edit.', components: [selectRow], flags: MessageFlags.Ephemeral });
 
                         //show dropdown for column to edit, then show modal
                     } else if (character[0].length > 25) {
-                        await interaction.reply({ content: 'Your string match returned more than 25 characters. Please try again with a more specific string match.', ephemeral: true });
+                        await interaction.reply({ content: 'Your string match returned more than 25 characters. Please try again with a more specific string match.', flags: MessageFlags.Ephemeral });
                         process = false;
                     } else if (character[0].length > 1) {
                         let keyValues = [];
@@ -1443,10 +1443,10 @@ client.on('interactionCreate', async (interaction) => {
                         }
                         const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('characterEditcharacterSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
                         let selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                        message = await interaction.reply({ content: 'Please select an character from the dropdown to edit.', components: [selectRow], ephemeral: true });
+                        message = await interaction.reply({ content: 'Please select an character from the dropdown to edit.', components: [selectRow], flags: MessageFlags.Ephemeral });
                         //show dropdown for character, then show dropdown for column, then show modal
                     } else {
-                        await interaction.reply({ content: 'Your string match didn\'t return any results, try again please', ephemeral: true });
+                        await interaction.reply({ content: 'Your string match didn\'t return any results, try again please', flags: MessageFlags.Ephemeral });
                         process = false;
                     }
                     if (process) {
@@ -1498,7 +1498,7 @@ client.on('interactionCreate', async (interaction) => {
                         });
                     }
                 } else {
-                    await interaction.reply({ content: 'No characters found matching your entry. Please double check and try again.', ephemeral: true });
+                    await interaction.reply({ content: 'No characters found matching your entry. Please double check and try again.', flags: MessageFlags.Ephemeral });
                 }
 
             }
@@ -1516,7 +1516,7 @@ client.on('interactionCreate', async (interaction) => {
                         console.log(owned);
                         const characterSelectComponent = new StringSelectMenuBuilder().setOptions(owned).setCustomId('CharacterUnassignmentSelector').setMinValues(1).setMaxValues(owned_characters[0].length);
                         let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                        let message = await interaction.reply({ content: 'Select a character or characters to unassign from this player:', components: [characterSelectRow], ephemeral: true });
+                        let message = await interaction.reply({ content: 'Select a character or characters to unassign from this player:', components: [characterSelectRow], flags: MessageFlags.Ephemeral });
                         const collector = message.createMessageComponentCollector({ time: 35000 });
                         collector.on('collect', async (interaction_second) => {
                             if (interaction_second.customId === 'CharacterUnassignmentSelector' && interaction_second.member.id === interaction.member.id) {
@@ -1528,11 +1528,11 @@ client.on('interactionCreate', async (interaction) => {
                             }
                         });
                     } else {
-                        await interaction.reply({ content: 'This player doesn\'t have any owned characters.', ephemeral: true });
+                        await interaction.reply({ content: 'This player doesn\'t have any owned characters.', flags: MessageFlags.Ephemeral });
                     }
 
                 } else {
-                    await interaction.reply({ content: 'The user that you selected isn\'t a valid player.', ephemeral: true });
+                    await interaction.reply({ content: 'The user that you selected isn\'t a valid player.', flags: MessageFlags.Ephemeral });
                 }
             } else if (interaction.options.getSubcommand() === 'assign') {
                 let user = interaction.options.getUser('user');
@@ -1568,7 +1568,7 @@ client.on('interactionCreate', async (interaction) => {
                             characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterAlphabetSelector').setMinValues(1).setMaxValues(1);
                         }
                         let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                        let message = await interaction.reply({ content: 'Select a character or characters to assign to this player:', components: [characterSelectRow], ephemeral: true });
+                        let message = await interaction.reply({ content: 'Select a character or characters to assign to this player:', components: [characterSelectRow], flags: MessageFlags.Ephemeral });
                         const collector = message.createMessageComponentCollector({ time: 35000 });
                         collector.on('collect', async (interaction_second) => {
 
@@ -1605,7 +1605,7 @@ client.on('interactionCreate', async (interaction) => {
                         await interaction.update('not enough cahracters.');
                     }
                 } else {
-                    await interaction.reply({ content: 'The user that you selected isn\'t a valid player.', ephemeral: true });
+                    await interaction.reply({ content: 'The user that you selected isn\'t a valid player.', flags: MessageFlags.Ephemeral });
                 }
             } else if (interaction.options.getSubcommand() === 'create') {
                 let characterName = interaction.options.getString('name');
@@ -1617,9 +1617,9 @@ client.on('interactionCreate', async (interaction) => {
                     } else {
                         await connection.promise().query('insert into characters (name, guild_id, description) values (?, ?, ?)', [characterName, interaction.guildId, description]);
                     }
-                    interaction.reply({ content: 'Created character!', ephemeral: true })
+                    interaction.reply({ content: 'Created character!', flags: MessageFlags.Ephemeral })
                 } else {
-                    interaction.reply({ content: 'A character with this name for this game already exists.', ephemeral: true });
+                    interaction.reply({ content: 'A character with this name for this game already exists.', flags: MessageFlags.Ephemeral });
                 }
             } else if (interaction.options.getSubcommand() === 'avatar') {
                 let characters;
@@ -1648,7 +1648,7 @@ client.on('interactionCreate', async (interaction) => {
                     }
 
                     let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                    let message = await interaction.reply({ content: 'Please select the character:', components: [characterSelectRow], ephemeral: true });
+                    let message = await interaction.reply({ content: 'Please select the character:', components: [characterSelectRow], flags: MessageFlags.Ephemeral });
                     let collector = message.createMessageComponentCollector();
                     collector.on('collect', async (interaction_second) => {
                         if (interaction.member.id === interaction_second.member.id) {
@@ -1681,7 +1681,7 @@ client.on('interactionCreate', async (interaction) => {
                         }
                     });
                 } else {
-                    interaction.reply({ content: 'no characters found!', ephemeral: true });
+                    interaction.reply({ content: 'no characters found!', flags: MessageFlags.Ephemeral });
                 }
             } else if (interaction.options.getSubcommand() === 'move') {
                 let locations = await connection.promise().query('select * from movement_locations where guild_id = ?', [interaction.guildId]);
@@ -1700,7 +1700,7 @@ client.on('interactionCreate', async (interaction) => {
                         }
                         const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterMovementSelector').setMinValues(1).setMaxValues(1);
                         let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                        let message = await interaction.reply({ content: 'Select a location and a character', components: [locationSelectRow, characterSelectRow], ephemeral: true });
+                        let message = await interaction.reply({ content: 'Select a location and a character', components: [locationSelectRow, characterSelectRow], flags: MessageFlags.Ephemeral });
                         const collector = message.createMessageComponentCollector({ time: 35000 });
                         let locationSelected;
                         let characterSelected;
@@ -1745,9 +1745,9 @@ client.on('interactionCreate', async (interaction) => {
                                                 }
                                             } else {
                                                 if (interaction.replied) {
-                                                    interaction.followUp({ content: `Couldn't find channel for ${location.name}.`, ephemeral: true });
+                                                    interaction.followUp({ content: `Couldn't find channel for ${location.name}.`, flags: MessageFlags.Ephemeral });
                                                 } else {
-                                                    interaction.reply({ content: `Couldn't find channel for ${location.name}.`, ephemeral: true });
+                                                    interaction.reply({ content: `Couldn't find channel for ${location.name}.`, flags: MessageFlags.Ephemeral });
                                                 }
                                             }
                                         }
@@ -1772,10 +1772,10 @@ client.on('interactionCreate', async (interaction) => {
                             }
                         });
                     } else {
-                        interaction.reply({ content: 'You haven\'t created any characters yet. Try creating a character first.', ephemeral: true });
+                        interaction.reply({ content: 'You haven\'t created any characters yet. Try creating a character first.', flags: MessageFlags.Ephemeral });
                     }
                 } else {
-                    interaction.reply({ content: 'You haven\'t created any locations yet. Try creating a location first.', ephemeral: true });
+                    interaction.reply({ content: 'You haven\'t created any locations yet. Try creating a location first.', flags: MessageFlags.Ephemeral });
                 }
             }
         } else if (interaction.commandName === 'active') {
@@ -1788,7 +1788,7 @@ client.on('interactionCreate', async (interaction) => {
                 }
                 const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('CharacterAssignmentSelector').setMinValues(1).setMaxValues(1);
                 let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                let message = await interaction.reply({ content: 'Select a character', components: [characterSelectRow], ephemeral: true });
+                let message = await interaction.reply({ content: 'Select a character', components: [characterSelectRow], flags: MessageFlags.Ephemeral });
                 const collector = message.createMessageComponentCollector();
                 collector.on('collect', async (interaction_second) => {
                     if (interaction_second.member.id == interaction.member.id) {
@@ -1798,7 +1798,7 @@ client.on('interactionCreate', async (interaction) => {
                     }
                 });
             } else {
-                interaction.reply({ content: "You don't have any inactive characters.", ephemeral: true });
+                interaction.reply({ content: "You don't have any inactive characters.", flags: MessageFlags.Ephemeral });
             }
         } else if (interaction.commandName === 'archetype') {
             if (interaction.options.getSubcommand() === 'add') {
@@ -1807,9 +1807,9 @@ client.on('interactionCreate', async (interaction) => {
                 let archetypeExists = await connection.promise().query('select * from archetypes where guild_id = ? and name = ?', [interaction.guildId, archetype]);
                 if (archetypeExists[0].length == 0) {
                     await connection.promise().query('insert into archetypes (name, guild_id, description) values (?, ?, ?)', [archetype, interaction.guildId, description]);
-                    interaction.reply({ content: 'Archetype added!', ephemeral: true });
+                    interaction.reply({ content: 'Archetype added!', flags: MessageFlags.Ephemeral });
                 } else {
-                    interaction.reply({ content: 'Archetype already exists for this game.', ephemeral: true });
+                    interaction.reply({ content: 'Archetype already exists for this game.', flags: MessageFlags.Ephemeral });
                 }
             } else if (interaction.options.getSubcommand() === 'assign') {
                 let archetypes = await connection.promise().query('select * from archetypes where guild_id = ?', [interaction.guildId]);
@@ -1820,7 +1820,7 @@ client.on('interactionCreate', async (interaction) => {
                     }
                     const archetypeSelectComponent = new StringSelectMenuBuilder().setOptions(archetypesKeyValues).setCustomId('ArchetypeAssignmentSelector').setMinValues(1).setMaxValues(1);
                     let archetypeSelectRow = new ActionRowBuilder().addComponents(archetypeSelectComponent);
-                    let message = await interaction.reply({ content: 'Select an archetype to manage assignments:', components: [archetypeSelectRow], ephemeral: true });
+                    let message = await interaction.reply({ content: 'Select an archetype to manage assignments:', components: [archetypeSelectRow], flags: MessageFlags.Ephemeral });
                     let collector = message.createMessageComponentCollector({ time: 35000 });
                     let selectedArchetype;
                     collector.on('collect', async (interaction_second) => {
@@ -1874,7 +1874,7 @@ client.on('interactionCreate', async (interaction) => {
 
 
                 } else {
-                    interaction.reply({ content: 'No archetypes exist.', ephemeral: true })
+                    interaction.reply({ content: 'No archetypes exist.', flags: MessageFlags.Ephemeral })
                 }
             } else if (interaction.options.getSubcommand() === 'unassign') {
                 let archetypes = await connection.promise().query('select * from archetypes where guild_id = ?', [interaction.guildId]);
@@ -1885,7 +1885,7 @@ client.on('interactionCreate', async (interaction) => {
                     }
                     const archetypeSelectComponent = new StringSelectMenuBuilder().setOptions(archetypesKeyValues).setCustomId('ArchetypeAssignmentSelector').setMinValues(1).setMaxValues(1);
                     let archetypeSelectRow = new ActionRowBuilder().addComponents(archetypeSelectComponent);
-                    let message = await interaction.reply({ content: 'Select an archetype to manage assignments:', components: [archetypeSelectRow], ephemeral: true });
+                    let message = await interaction.reply({ content: 'Select an archetype to manage assignments:', components: [archetypeSelectRow], flags: MessageFlags.Ephemeral });
                     let collector = message.createMessageComponentCollector({ time: 35000 });
                     let selectedArchetype;
                     collector.on('collect', async (interaction_second) => {
@@ -1917,7 +1917,7 @@ client.on('interactionCreate', async (interaction) => {
 
 
                 } else {
-                    interaction.reply({ content: 'No archetypes exist.', ephemeral: true })
+                    interaction.reply({ content: 'No archetypes exist.', flags: MessageFlags.Ephemeral })
                 }
             }
         } else if (interaction.commandName === 'stat') {
@@ -1938,12 +1938,12 @@ client.on('interactionCreate', async (interaction) => {
                         //await interaction.reply({ content: message });
                         //embed.setDescription(message);
                         embed.addFields({ name: 'Character Names', value: names, inline: true }, { name: 'Stat Values', value: values, inline: true });
-                        await interaction.reply({ content: '', embeds: [embed], ephemeral: true });
+                        await interaction.reply({ content: '', embeds: [embed], flags: MessageFlags.Ephemeral });
                     } else {
-                        await interaction.reply({ content: 'More than one stat was found matching your query. Try again, please.', ephemeral: true });
+                        await interaction.reply({ content: 'More than one stat was found matching your query. Try again, please.', flags: MessageFlags.Ephemeral });
                     }
                 } else {
-                    await interaction.reply({ content: 'No stats found matching your query.', ephemeral: true });
+                    await interaction.reply({ content: 'No stats found matching your query.', flags: MessageFlags.Ephemeral });
                 }
             } else if (interaction.options.getSubcommand() === 'add') {
                 let name = interaction.options.getString('stat')
@@ -1951,9 +1951,9 @@ client.on('interactionCreate', async (interaction) => {
                 let exists = await connection.promise().query('select * from stats where guild_id = ? and name = ?', [interaction.guildId, name]);
                 if (exists[0].length == 0) {
                     await connection.promise().query('insert into stats (name, default_value, guild_id) values (?, ?, ?)', [name, defaultValue, interaction.guildId]);
-                    interaction.reply({ content: 'Stat added!', ephemeral: true });
+                    interaction.reply({ content: 'Stat added!', flags: MessageFlags.Ephemeral });
                 } else {
-                    interaction.reply({ content: 'Stat with this name already exists!', ephemeral: true });
+                    interaction.reply({ content: 'Stat with this name already exists!', flags: MessageFlags.Ephemeral });
                 }
             } else if (interaction.options.getSubcommand() === 'delete') {
                 let stats = await connection.promise().query('select * from stats where guild_id = ?');
@@ -1968,7 +1968,7 @@ client.on('interactionCreate', async (interaction) => {
                     }
                     const statSelectComponent = new StringSelectMenuBuilder().setOptions(statsKeyValues).setCustomId('StatAssignmentStatSelector').setMinValues(1).setMaxValues(1);
                     let statSelectRow = new ActionRowBuilder().addComponents(statSelectComponent);
-                    let message = await interaction.reply({ content: 'Select a stat to delete', components: [statSelectRow], ephemeral: true });
+                    let message = await interaction.reply({ content: 'Select a stat to delete', components: [statSelectRow], flags: MessageFlags.Ephemeral });
                     const collector = message.createMessageComponentCollector({ time: 35000 });
                     collector.on('collect', async (interaction_second) => {
                         if (interaction_second.member.id === interaction.member.id) {
@@ -2012,7 +2012,7 @@ client.on('interactionCreate', async (interaction) => {
                             const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('StatAssignmentCharacterAlphaSelector').setMinValues(1).setMaxValues(1);
                             characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
                         }
-                        let message = await interaction.reply({ content: '', components: [statSelectRow, characterSelectRow], ephemeral: true });
+                        let message = await interaction.reply({ content: '', components: [statSelectRow, characterSelectRow], flags: MessageFlags.Ephemeral });
                         const collector = message.createMessageComponentCollector({ time: 35000 });
                         let statSelected;
                         let characterSelected;
@@ -2057,10 +2057,10 @@ client.on('interactionCreate', async (interaction) => {
                             }
                         });
                     } else {
-                        interaction.reply({ content: 'You haven\'t created any stats yet. Try creating a stat first.', ephemeral: true });
+                        interaction.reply({ content: 'You haven\'t created any stats yet. Try creating a stat first.', flags: MessageFlags.Ephemeral });
                     }
                 } else {
-                    interaction.reply({ content: 'You haven\'t created any characters yet. Try creating a character first.', ephemeral: true });
+                    interaction.reply({ content: 'You haven\'t created any characters yet. Try creating a character first.', flags: MessageFlags.Ephemeral });
                 }
             } else if (interaction.options.getSubcommand() === 'adjust') {
                 let value = interaction.options.getInteger('value');
@@ -2081,7 +2081,7 @@ client.on('interactionCreate', async (interaction) => {
                         }
                         const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('StatAssignmentCharacterSelector').setMinValues(1).setMaxValues(1);
                         let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                        let message = await interaction.reply({ content: '', components: [statSelectRow, characterSelectRow], ephemeral: true });
+                        let message = await interaction.reply({ content: '', components: [statSelectRow, characterSelectRow], flags: MessageFlags.Ephemeral });
                         const collector = message.createMessageComponentCollector({ time: 35000 });
                         let statSelected;
                         let characterSelected;
@@ -2112,10 +2112,10 @@ client.on('interactionCreate', async (interaction) => {
                             }
                         });
                     } else {
-                        interaction.reply({ content: 'You haven\'t created any stats yet. Try creating a stat first.', ephemeral: true });
+                        interaction.reply({ content: 'You haven\'t created any stats yet. Try creating a stat first.', flags: MessageFlags.Ephemeral });
                     }
                 } else {
-                    interaction.reply({ content: 'You haven\'t created any characters yet. Try creating a character first.', ephemeral: true });
+                    interaction.reply({ content: 'You haven\'t created any characters yet. Try creating a character first.', flags: MessageFlags.Ephemeral });
                 }
             }
         } else if (interaction.commandName === 'addarchetypestat') {
@@ -2134,7 +2134,7 @@ client.on('interactionCreate', async (interaction) => {
                     }
                     const archetypeSelectComponent = new StringSelectMenuBuilder().setOptions(archetypesKeyValues).setCustomId('ArchetypeStatAssignmentSelector').setMinValues(1).setMaxValues(archetypes[0].length);
                     let archetypeSelectRow = new ActionRowBuilder().addComponents(archetypeSelectComponent);
-                    let message = await interaction.reply({ content: 'Archetype stat added! Select archetype(s):', components: [archetypeSelectRow], ephemeral: true });
+                    let message = await interaction.reply({ content: 'Archetype stat added! Select archetype(s):', components: [archetypeSelectRow], flags: MessageFlags.Ephemeral });
                     let collector = message.createMessageComponentCollector({ time: 35000 });
                     collector.on('collect', async (interaction_second) => {
                         if (interaction_second.customId === 'ArchetypeStatAssignmentSelector' && interaction.member.id === interaction_second.member.id) {
@@ -2146,10 +2146,10 @@ client.on('interactionCreate', async (interaction) => {
                         }
                     });
                 } else {
-                    interaction.reply({ content: 'No archetypes exist! Please create an archetype first.', ephemeral: true });
+                    interaction.reply({ content: 'No archetypes exist! Please create an archetype first.', flags: MessageFlags.Ephemeral });
                 }
             } else {
-                interaction.reply({ content: 'Stat with this name already exists!', ephemeral: true });
+                interaction.reply({ content: 'Stat with this name already exists!', flags: MessageFlags.Ephemeral });
             }
         } else if (interaction.commandName === 'skilladmin') {
             if (interaction.options.getSubcommand() === 'edit') {
@@ -2169,11 +2169,11 @@ client.on('interactionCreate', async (interaction) => {
                         }
                         const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('SkillEditColumnSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
                         let selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                        message = await interaction.reply({ content: 'Please select a property from the dropdown to edit.', components: [selectRow], ephemeral: true });
+                        message = await interaction.reply({ content: 'Please select a property from the dropdown to edit.', components: [selectRow], flags: MessageFlags.Ephemeral });
 
                         //show dropdown for column to edit, then show modal
                     } else if (skill[0].length > 25) {
-                        await interaction.reply({ content: 'Your string match returned more than 25 skills. Please try again with a more specific string match.', ephemeral: true });
+                        await interaction.reply({ content: 'Your string match returned more than 25 skills. Please try again with a more specific string match.', flags: MessageFlags.Ephemeral });
                         process = false;
                     } else if (skill[0].length > 1) {
                         let keyValues = [];
@@ -2182,10 +2182,10 @@ client.on('interactionCreate', async (interaction) => {
                         }
                         const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('SkillEditSkillSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
                         let selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                        message = await interaction.reply({ content: 'Please select a skill from the dropdown to edit.', components: [selectRow], ephemeral: true });
+                        message = await interaction.reply({ content: 'Please select a skill from the dropdown to edit.', components: [selectRow], flags: MessageFlags.Ephemeral });
                         //show dropdown for skill, then show dropdown for column, then show modal
                     } else {
-                        await interaction.reply({ content: 'Your string match didn\'t return any results, try again please', ephemeral: true });
+                        await interaction.reply({ content: 'Your string match didn\'t return any results, try again please', flags: MessageFlags.Ephemeral });
                         process = false;
                     }
                     if (process) {
@@ -2229,7 +2229,7 @@ client.on('interactionCreate', async (interaction) => {
                         });
                     }
                 } else {
-                    await interaction.reply({ content: 'No skills found matching your entry. Please double check and try again.', ephemeral: true });
+                    await interaction.reply({ content: 'No skills found matching your entry. Please double check and try again.', flags: MessageFlags.Ephemeral });
                 }
 
 
@@ -2242,9 +2242,9 @@ client.on('interactionCreate', async (interaction) => {
                 let exists = await connection.promise().query('select * from skills where guild_id = ? and name = ?', [interaction.guildId, name]);
                 if (exists[0].length == 0) {
                     await connection.promise().query('insert into skills (name, description, type, guild_id, other_targetable, self_targetable) values (?, ?, ?, ?, ?, ?)', [name, description, type, interaction.guildId, other_targetable, self_targetable]);
-                    interaction.reply({ content: 'Skill added!', ephemeral: true });
+                    interaction.reply({ content: 'Skill added!', flags: MessageFlags.Ephemeral });
                 } else {
-                    interaction.reply({ content: 'Skill with this name already exists!', ephemeral: true });
+                    interaction.reply({ content: 'Skill with this name already exists!', flags: MessageFlags.Ephemeral });
                 }
             } else if (interaction.options.getSubcommand() === 'assign') {
                 let to_character = interaction.options.getBoolean('to_character');
@@ -2299,7 +2299,7 @@ client.on('interactionCreate', async (interaction) => {
                         }
                     }
                     if ((to_character && characters[0].length > 0) || (!to_character && archetypes[0].length > 0)) {
-                        let message = await interaction.reply({ content: 'Please select the following options:', components: [skillSelectRow, secondSelectRow], ephemeral: true });
+                        let message = await interaction.reply({ content: 'Please select the following options:', components: [skillSelectRow, secondSelectRow], flags: MessageFlags.Ephemeral });
                         let collector = message.createMessageComponentCollector();
                         let charactersSelected;
                         let archetypesSelected;
@@ -2371,10 +2371,10 @@ client.on('interactionCreate', async (interaction) => {
                             }
                         });
                     } else {
-                        interaction.reply({ content: 'Couldn\'t find any characters. Or archetypes, if you wanted to assign archetypes. I can\'t be sure because Alli is lazy.', ephemeral: true });
+                        interaction.reply({ content: 'Couldn\'t find any characters. Or archetypes, if you wanted to assign archetypes. I can\'t be sure because Alli is lazy.', flags: MessageFlags.Ephemeral });
                     }
                 } else {
-                    interaction.reply({ content: 'Please create at least one skill first. <3', ephemeral: true });
+                    interaction.reply({ content: 'Please create at least one skill first. <3', flags: MessageFlags.Ephemeral });
                 }
             } else if (interaction.options.getSubcommand() === 'unassign') {
                 let to_character = interaction.options.getBoolean('to_character');
@@ -2419,7 +2419,7 @@ client.on('interactionCreate', async (interaction) => {
                     }
                 }
                 if ((to_character && characters && characters[0].length > 0) || (archetypes && archetypes.length > 0)) {
-                    let message = await interaction.reply({ content: 'Select the archetype/character to remove skill from.', components: [unassignSkillRow], ephemeral: true });
+                    let message = await interaction.reply({ content: 'Select the archetype/character to remove skill from.', components: [unassignSkillRow], flags: MessageFlags.Ephemeral });
                     let collector = message.createMessageComponentCollector();
                     let characterSelected;
                     let archetypeSelected;
@@ -2501,7 +2501,7 @@ client.on('interactionCreate', async (interaction) => {
                         }
                     });
                 } else {
-                    await interaction.reply({ content: "Couldn't find any characters (or archetypes) to unassign skills from.", ephemeral: true });
+                    await interaction.reply({ content: "Couldn't find any characters (or archetypes) to unassign skills from.", flags: MessageFlags.Ephemeral });
                 }
             } else if (interaction.options.getSubcommand() === 'vieweffects') {
                 let selectedSkillName;
@@ -2564,7 +2564,7 @@ client.on('interactionCreate', async (interaction) => {
                             effectsString += ` to ${effect.target} (${effect.prereq_count} prereqs)\n`;
                         }
                         embed.setDescription(effectsString);
-                        await interaction.reply({ content: '', embeds: [embed], ephemeral: true });
+                        await interaction.reply({ content: '', embeds: [embed], flags: MessageFlags.Ephemeral });
                     } else {
                         let keyValues = [];
                         for (const thisSkill of skill[0]) {
@@ -2572,7 +2572,7 @@ client.on('interactionCreate', async (interaction) => {
                         }
                         const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('EffectViewSkillSelector').setMinValues(1).setMaxValues(1);
                         const selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                        message = await interaction.reply({ content: 'Please select a skill:', components: [selectRow], ephemeral: true });
+                        message = await interaction.reply({ content: 'Please select a skill:', components: [selectRow], flags: MessageFlags.Ephemeral });
 
                     }
                     if (message) {
@@ -2639,7 +2639,7 @@ client.on('interactionCreate', async (interaction) => {
                         });
                     }
                 } else {
-                    await interaction.reply({ content: 'No skill in this game matched the name you gave. Please try again.', ephemeral: true });
+                    await interaction.reply({ content: 'No skill in this game matched the name you gave. Please try again.', flags: MessageFlags.Ephemeral });
                 }
             }
         } else if (interaction.commandName === 'itemadmin') {
@@ -2660,11 +2660,11 @@ client.on('interactionCreate', async (interaction) => {
                         }
                         const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('itemEditColumnSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
                         let selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                        message = await interaction.reply({ content: 'Please select a property from the dropdown to edit.', components: [selectRow], ephemeral: true });
+                        message = await interaction.reply({ content: 'Please select a property from the dropdown to edit.', components: [selectRow], flags: MessageFlags.Ephemeral });
 
                         //show dropdown for column to edit, then show modal
                     } else if (item[0].length > 25) {
-                        await interaction.reply({ content: 'Your string match returned more than 25 items. Please try again with a more specific string match.', ephemeral: true });
+                        await interaction.reply({ content: 'Your string match returned more than 25 items. Please try again with a more specific string match.', flags: MessageFlags.Ephemeral });
                         process = false;
                     } else if (item[0].length > 1) {
                         let keyValues = [];
@@ -2673,10 +2673,10 @@ client.on('interactionCreate', async (interaction) => {
                         }
                         const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('itemEdititemSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
                         let selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                        message = await interaction.reply({ content: 'Please select an item from the dropdown to edit.', components: [selectRow], ephemeral: true });
+                        message = await interaction.reply({ content: 'Please select an item from the dropdown to edit.', components: [selectRow], flags: MessageFlags.Ephemeral });
                         //show dropdown for item, then show dropdown for column, then show modal
                     } else {
-                        await interaction.reply({ content: 'Your string match didn\'t return any results, try again please', ephemeral: true });
+                        await interaction.reply({ content: 'Your string match didn\'t return any results, try again please', flags: MessageFlags.Ephemeral });
                         process = false;
                     }
                     if (process) {
@@ -2720,7 +2720,7 @@ client.on('interactionCreate', async (interaction) => {
                         });
                     }
                 } else {
-                    await interaction.reply({ content: 'No items found matching your entry. Please double check and try again.', ephemeral: true });
+                    await interaction.reply({ content: 'No items found matching your entry. Please double check and try again.', flags: MessageFlags.Ephemeral });
                 }
 
 
@@ -2733,18 +2733,18 @@ client.on('interactionCreate', async (interaction) => {
                 let equippable = interaction.options.getBoolean('equippable');
                 await connection.promise().query('insert into items (name, description, guild_id, consumable, self_targetable, other_targetable, equippable) values (?, ?, ?, ?, ?, ?, ?)', [name, description, interaction.guildId, consumable, self_targetable, other_targetable, equippable]);
                 if (equippable) {
-                    interaction.reply({ content: 'Item added! Assign slots using `/itemadmin assignslot`', ephemeral: true });
+                    interaction.reply({ content: 'Item added! Assign slots using `/itemadmin assignslot`', flags: MessageFlags.Ephemeral });
                 } else {
-                    interaction.reply({ content: 'Item added!', ephemeral: true });
+                    interaction.reply({ content: 'Item added!', flags: MessageFlags.Ephemeral });
                 }
             } else if (interaction.options.getSubcommand() === 'slotadd') {
                 let name = interaction.options.getString('name');
                 let slots = await connection.promise().query('select * from equipslots where guild_id = ? and name = ?', [interaction.guildId, name]);
                 if (slots[0].length > 0) {
-                    await interaction.reply({ content: 'oh no! there\'s already an item slot with this name.', ephemeral: true });
+                    await interaction.reply({ content: 'oh no! there\'s already an item slot with this name.', flags: MessageFlags.Ephemeral });
                 } else {
                     await connection.promise().query('insert into equipslots (name, guild_id) values (?, ?)', [name, interaction.guildId]);
-                    await interaction.reply({ content: 'Added the equipment slot.', ephemeral: true });
+                    await interaction.reply({ content: 'Added the equipment slot.', flags: MessageFlags.Ephemeral });
                 }
             } else if (interaction.options.getSubcommand() === 'transfer') {
                 let quantity = interaction.options.getInteger('quantity'); //implement in future state
@@ -2756,7 +2756,7 @@ client.on('interactionCreate', async (interaction) => {
                     }
                     const unassignItemComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ItemUnassignmentCharacterSelector').setMinValues(1).setMaxValues(1);
                     let unassignItemRow = new ActionRowBuilder().addComponents(unassignItemComponent);
-                    let message = await interaction.reply({ content: 'Select the character to remove item from.', components: [unassignItemRow], ephemeral: true });
+                    let message = await interaction.reply({ content: 'Select the character to remove item from.', components: [unassignItemRow], flags: MessageFlags.Ephemeral });
                     let collector = message.createMessageComponentCollector();
                     let characterSelected;
                     let itemSelected;
@@ -2790,7 +2790,7 @@ client.on('interactionCreate', async (interaction) => {
                         }
                     });
                 } else {
-                    await interaction.reply({ content: "Couldn't find any characters to unassign items from.", ephemeral: true });
+                    await interaction.reply({ content: "Couldn't find any characters to unassign items from.", flags: MessageFlags.Ephemeral });
                 }
 
             } else if (interaction.options.getSubcommand() === 'assign') {
@@ -2836,7 +2836,7 @@ client.on('interactionCreate', async (interaction) => {
                     }
                     if (characterSelectComponent) {
                         let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                        let message = await interaction.reply({ content: 'Please select the following options:', components: [itemSelectRow, characterSelectRow], ephemeral: true });
+                        let message = await interaction.reply({ content: 'Please select the following options:', components: [itemSelectRow, characterSelectRow], flags: MessageFlags.Ephemeral });
                         let collector = message.createMessageComponentCollector();
                         let charactersSelected;
                         let itemSelected;
@@ -2911,7 +2911,7 @@ client.on('interactionCreate', async (interaction) => {
                     //eventual typeahead support
                     //}
                 } else {
-                    interaction.reply({ content: 'Please create at least one item first. <3', ephemeral: true });
+                    interaction.reply({ content: 'Please create at least one item first. <3', flags: MessageFlags.Ephemeral });
                 }
             } else if (interaction.options.getSubcommand() === 'vieweffects') {
                 let selectedItemName;
@@ -2971,7 +2971,7 @@ client.on('interactionCreate', async (interaction) => {
                             effectsString += ` to ${effect.target} (${effect.prereq_count} prereqs)\n`;
                         }
                         embed.setDescription(effectsString);
-                        await interaction.reply({ content: '', embeds: [embed], ephemeral: true });
+                        await interaction.reply({ content: '', embeds: [embed], flags: MessageFlags.Ephemeral });
                     } else {
                         let keyValues = [];
                         for (const thisItem of item[0]) {
@@ -2979,7 +2979,7 @@ client.on('interactionCreate', async (interaction) => {
                         }
                         const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('EffectViewItemSelector').setMinValues(1).setMaxValues(1);
                         const selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                        message = await interaction.reply({ content: 'Please select an item:', components: [selectRow], ephemeral: true });
+                        message = await interaction.reply({ content: 'Please select an item:', components: [selectRow], flags: MessageFlags.Ephemeral });
 
                     }
                     if (message) {
@@ -3046,7 +3046,7 @@ client.on('interactionCreate', async (interaction) => {
                         });
                     }
                 } else {
-                    await interaction.reply({ content: 'No item in this game matched the name you gave. Please try again.', ephemeral: true });
+                    await interaction.reply({ content: 'No item in this game matched the name you gave. Please try again.', flags: MessageFlags.Ephemeral });
                 }
             }
         } else if (interaction.commandName === 'setarchetypestat') {
@@ -3061,7 +3061,7 @@ client.on('interactionCreate', async (interaction) => {
                 const statSelectComponent = new StringSelectMenuBuilder().setOptions(statsKeyValues).setCustomId('ArchetypeStatAssignmentStatSelector').setMinValues(1).setMaxValues(1);
                 let statSelectRow = new ActionRowBuilder().addComponents(statSelectComponent);
 
-                let message = await interaction.reply({ content: 'Select a stat:', components: [statSelectRow], ephemeral: true });
+                let message = await interaction.reply({ content: 'Select a stat:', components: [statSelectRow], flags: MessageFlags.Ephemeral });
                 const collector = message.createMessageComponentCollector({ time: 35000 });
                 let archetypeStatSelected;
                 let characterSelected;
@@ -3111,7 +3111,7 @@ client.on('interactionCreate', async (interaction) => {
                     }
                 });
             } else {
-                interaction.reply({ content: 'You haven\'t created any characters yet. Try creating a character first.', ephemeral: true });
+                interaction.reply({ content: 'You haven\'t created any characters yet. Try creating a character first.', flags: MessageFlags.Ephemeral });
             }
         } else if (interaction.commandName === 'modsheet') {
             let characters = await connection.promise().query('select * from characters where guild_id = ?', [interaction.guildId]);
@@ -3135,7 +3135,7 @@ client.on('interactionCreate', async (interaction) => {
                     characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ModSheetAlphabetSelector').setMinValues(1).setMaxValues(1);
                 }
                 let characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                let message = await interaction.reply({ content: 'Please select a character:', components: [characterSelectRow], ephemeral: true });
+                let message = await interaction.reply({ content: 'Please select a character:', components: [characterSelectRow], flags: MessageFlags.Ephemeral });
                 let collector = message.createMessageComponentCollector();
                 collector.on('collect', async (interaction_second) => {
                     if (interaction.member.id === interaction_second.member.id) {
@@ -3212,7 +3212,7 @@ client.on('interactionCreate', async (interaction) => {
                     }
                 });
             } else {
-                await interaction.reply({ content: 'There don\'t seem to be any characters, have you made any?', ephemeral: true });
+                await interaction.reply({ content: 'There don\'t seem to be any characters, have you made any?', flags: MessageFlags.Ephemeral });
             }
             //dropdown for characters
             //then generate character sheet ephemeral using the sheet code EXACTLY
@@ -3231,7 +3231,7 @@ client.on('interactionCreate', async (interaction) => {
                 const typeSelectRow = new ActionRowBuilder().addComponents(typeSelectComponent);
                 const statSelectComponent = new StringSelectMenuBuilder().setOptions(statsKeyValues).setCustomId('SpecialStatStatSelector').setMinValues(1).setMaxValues(1);
                 const statSelectRow = new ActionRowBuilder().addComponents(statSelectComponent);
-                let message = await interaction.reply({ content: 'Please select the following options:', components: [typeSelectRow, statSelectRow], ephemeral: true });
+                let message = await interaction.reply({ content: 'Please select the following options:', components: [typeSelectRow, statSelectRow], flags: MessageFlags.Ephemeral });
                 let collector = message.createMessageComponentCollector();
                 let statSelected;
                 let typeSelected;
@@ -3258,20 +3258,20 @@ client.on('interactionCreate', async (interaction) => {
                     }
                 });
             } else {
-                await interaction.reply({ content: 'There aren\'t any eligible stats for this! Please double-check and ensure that you have a stat that\'s not assigned to a special function.', ephemeral: true });
+                await interaction.reply({ content: 'There aren\'t any eligible stats for this! Please double-check and ensure that you have a stat that\'s not assigned to a special function.', flags: MessageFlags.Ephemeral });
             }
         } else if (interaction.commandName === 'characterflag') {
             if (interaction.options.getSubcommand() === 'add') {
                 let name = interaction.options.getString('name');
                 await connection.promise().query('insert into characterflags (name, guild_id) values (?, ?)', [name, interaction.guildId]);
-                await interaction.reply({ content: 'Character flag added.', ephemeral: true });
+                await interaction.reply({ content: 'Character flag added.', flags: MessageFlags.Ephemeral });
             }
         } else if (interaction.commandName === 'worldflag') {
             if (interaction.options.getSubcommand() === 'add') {
                 let name = interaction.options.getString('name');
                 let visible = interaction.options.getString('visible') || false;
                 await connection.promise().query('insert into worldflags (name, guild_id, visible) values (?, ?, ?)', [name, interaction.guildId, visible]);
-                await interaction.reply({ content: 'World flag added.', ephemeral: true });
+                await interaction.reply({ content: 'World flag added.', flags: MessageFlags.Ephemeral });
             }
         } else if (interaction.commandName === 'reputation') {
             if (interaction.options.getSubcommand() === 'charactersummary') {
@@ -3306,18 +3306,18 @@ client.on('interactionCreate', async (interaction) => {
                         //await interaction.reply({ content: message });
                         //embed.setDescription(message);
                         embed.addFields({ name: 'Characters', value: names, inline: true }, { name: 'Standing', value: values, inline: true });
-                        await interaction.reply({ content: '', embeds: [embed], ephemeral: true });
+                        await interaction.reply({ content: '', embeds: [embed], flags: MessageFlags.Ephemeral });
                     } else {
-                        await interaction.reply({ content: 'More than one reputation was found matching your query. Try again, please.', ephemeral: true });
+                        await interaction.reply({ content: 'More than one reputation was found matching your query. Try again, please.', flags: MessageFlags.Ephemeral });
                     }
                 } else {
-                    await interaction.reply({ content: 'No reputations found matching your query.', ephemeral: true });
+                    await interaction.reply({ content: 'No reputations found matching your query.', flags: MessageFlags.Ephemeral });
                 }
             }
             if (interaction.options.getSubcommand() === 'enable') {
                 let enabled = interaction.options.getBoolean('enabled');
                 await connection.promise().query('replace into game_settings (setting_name, setting_value, guild_id) values (?, ?, ?)', ['reputation', enabled, interaction.guildId]);
-                interaction.reply({ content: 'Reputation system enabled set to ' + enabled, ephemeral: true });
+                interaction.reply({ content: 'Reputation system enabled set to ' + enabled, flags: MessageFlags.Ephemeral });
             }
             if (interaction.options.getSubcommand() === 'add') {
                 let name = interaction.options.getString('name');
@@ -3327,7 +3327,7 @@ client.on('interactionCreate', async (interaction) => {
                 let icon = interaction.options.getString('icon');
                 let reputations = await connection.promise().query('select * from reputations where name = ? and guild_id = ?', [name, interaction.guildId]);
                 if (reputations[0].length > 0) {
-                    await interaction.reply({ content: `You've already added a reputation with name ${name}.`, ephemeral: true });
+                    await interaction.reply({ content: `You've already added a reputation with name ${name}.`, flags: MessageFlags.Ephemeral });
                 } else {
                     let cflags;
                     let wflags;
@@ -3337,10 +3337,10 @@ client.on('interactionCreate', async (interaction) => {
                         wflags = await connection.promise().query('select * from worldflags where guild_id = ?', [interaction.guildId]);
                     }
                     if ((visibility == 'cflag' && cflags[0].length == 0) || (visibility == 'wflag' && wflags[0].length == 0)) {
-                        await interaction.reply({ mescontentsage: 'No flags of the specified type exist in this game yet.', ephemeral: true });
+                        await interaction.reply({ mescontentsage: 'No flags of the specified type exist in this game yet.', flags: MessageFlags.Ephemeral });
                     } else if (visibility == 'always' || visibility == 'never') {
                         await connection.promise().query('insert into reputations (name, guild_id, description, visibility, maximum, start_value) values (?, ?, ?, ?, ?, ?)', [name, interaction.guildId, description, visibility, maximum, 0]);
-                        await interaction.reply({ content: 'Reputation added.', ephemeral: true });
+                        await interaction.reply({ content: 'Reputation added.', flags: MessageFlags.Ephemeral });
                     } else {
                         // build modal
                         let now = Date.now();
@@ -3373,12 +3373,12 @@ client.on('interactionCreate', async (interaction) => {
                             } else {
                                 cwflags = await connection.promise().query('select * from worldflags where lower(name) like lower(?) and guild_id = ?', ['%' + cwflag_name + '%', submittedModal.guildId]);
                             }
-                            await submittedModal.reply({ content: 'Checking for flags...', ephemeral: true });
+                            await submittedModal.reply({ content: 'Checking for flags...', flags: MessageFlags.Ephemeral });
                             if (cwflags[0].length < 1) {
-                                await submittedModal.editReply({ content: "No flags with that name exist.", ephemeral: true });
+                                await submittedModal.editReply({ content: "No flags with that name exist.", flags: MessageFlags.Ephemeral });
                             } else if (cwflags[0].length == 1) {
                                 await connection.promise().query('insert into reputations (name, guild_id, description, visibility, maximum, start_value, cwflag_id, cwflag_value) values (?, ?, ?, ?, ?, ?, ?, ?)', [name, submittedModal.guildId, description, visibility, maximum, 0, cwflags[0][0].id, value]);
-                                await submittedModal.editReply({ content: "Reputation added.", ephemeral: true });
+                                await submittedModal.editReply({ content: "Reputation added.", flags: MessageFlags.Ephemeral });
                             } else {
                                 let cwflagSelectComponent;
                                 if (cwflags[0].length <= 25) {
@@ -3396,7 +3396,7 @@ client.on('interactionCreate', async (interaction) => {
                                     cwflagSelectComponent = new StringSelectMenuBuilder().setOptions(cwflagsKeyValues).setCustomId('RepVisCwAlphaSelector').setMinValues(1).setMaxValues(1);
                                 }
                                 const cwflagSelectRow = new ActionRowBuilder().addComponents(cwflagSelectComponent);
-                                let message = await submittedModal.editReply({ content: 'Please select the following options:', components: [cwflagSelectRow], ephemeral: true });
+                                let message = await submittedModal.editReply({ content: 'Please select the following options:', components: [cwflagSelectRow], flags: MessageFlags.Ephemeral });
                                 collector = message.createMessageComponentCollector();
                                 collector.on('collect', async (interaction_third) => {
                                     if (interaction_third.member.id === interaction.member.id) {
@@ -3452,7 +3452,7 @@ client.on('interactionCreate', async (interaction) => {
                     reputationSelectComponent = new StringSelectMenuBuilder().setOptions(reputationsKeyValues).setCustomId('RepAlphaSelector').setMinValues(1).setMaxValues(1);
                 }
                 const reputationSelectRow = new ActionRowBuilder().addComponents(reputationSelectComponent);
-                let message = await interaction.reply({ content: 'Please select the following options:', components: [reputationSelectRow], ephemeral: true });
+                let message = await interaction.reply({ content: 'Please select the following options:', components: [reputationSelectRow], flags: MessageFlags.Ephemeral });
                 collector = message.createMessageComponentCollector();
                 collector.on('collect', async (interaction_second) => {
                     if (interaction_second.member.id === interaction.member.id) {
@@ -3508,9 +3508,9 @@ client.on('interactionCreate', async (interaction) => {
                             }
                             const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('EffectViewTierSelector').setMinValues(1).setMaxValues(1);
                             const selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                            message = await interaction.reply({ content: 'Please select a reputation tier:', components: [selectRow], ephemeral: true });
+                            message = await interaction.reply({ content: 'Please select a reputation tier:', components: [selectRow], flags: MessageFlags.Ephemeral });
                         } else {
-                            await interaction.reply({ content: 'There is no reputation tier with an effect in this reputation. Sorry.', ephemeral: true });
+                            await interaction.reply({ content: 'There is no reputation tier with an effect in this reputation. Sorry.', flags: MessageFlags.Ephemeral });
                         }
                     } else {
                         let keyValues = [];
@@ -3519,7 +3519,7 @@ client.on('interactionCreate', async (interaction) => {
                         }
                         const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('EffectViewRepSelector').setMinValues(1).setMaxValues(1);
                         const selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                        message = await interaction.reply({ content: 'Please select a reputation:', components: [selectRow], ephemeral: true });
+                        message = await interaction.reply({ content: 'Please select a reputation:', components: [selectRow], flags: MessageFlags.Ephemeral });
 
                     }
                     if (message) {
@@ -3537,9 +3537,9 @@ client.on('interactionCreate', async (interaction) => {
                                         }
                                         const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('EffectViewTierSelector').setMinValues(1).setMaxValues(1);
                                         const selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                                        message = await interaction_second.update({ content: 'Please select a reputation tier:', components: [selectRow], ephemeral: true });
+                                        message = await interaction_second.update({ content: 'Please select a reputation tier:', components: [selectRow], flags: MessageFlags.Ephemeral });
                                     } else {
-                                        await interaction_second.update({ content: 'There is no reputation tier with an effect in this reputation. Sorry.', ephemeral: true });
+                                        await interaction_second.update({ content: 'There is no reputation tier with an effect in this reputation. Sorry.', flags: MessageFlags.Ephemeral });
                                         collector.stop();
                                     }
                                 } else if (interaction_second.customId === 'EffectViewTierSelector') {
@@ -3602,7 +3602,7 @@ client.on('interactionCreate', async (interaction) => {
                         });
                     }
                 } else {
-                    await interaction.reply({ content: 'No reputation in this game matched the name you gave. Please try again.', ephemeral: true });
+                    await interaction.reply({ content: 'No reputation in this game matched the name you gave. Please try again.', flags: MessageFlags.Ephemeral });
                 }
             }
         } else if (interaction.commandName === 'effect') {
@@ -3634,10 +3634,10 @@ client.on('interactionCreate', async (interaction) => {
                                 selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('TierAlphaSelector').setMinValues(1).setMaxValues(1);
                             }
                             const selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                            message = await interaction.reply({ content: 'Please select a reputation tier:', components: [selectRow], ephemeral: true });
+                            message = await interaction.reply({ content: 'Please select a reputation tier:', components: [selectRow], flags: MessageFlags.Ephemeral });
                             collector = message.createMessageComponentCollector();
                         } else {
-                            await interaction.reply({ content: 'No reputation tiers available for this reputation.', components: [], ephemeral: true });
+                            await interaction.reply({ content: 'No reputation tiers available for this reputation.', components: [], flags: MessageFlags.Ephemeral });
                         }
                     } else if (reputations[0].length > 1) {
                         let reputationSelectComponent;
@@ -3656,10 +3656,10 @@ client.on('interactionCreate', async (interaction) => {
                             reputationSelectComponent = new StringSelectMenuBuilder().setOptions(reputationsKeyValues).setCustomId('RepAlphaSelector').setMinValues(1).setMaxValues(1);
                         }
                         const reputationSelectRow = new ActionRowBuilder().addComponents(reputationSelectComponent);
-                        message = await interaction.reply({ content: 'Please select a reputation:', components: [reputationSelectRow], ephemeral: true });
+                        message = await interaction.reply({ content: 'Please select a reputation:', components: [reputationSelectRow], flags: MessageFlags.Ephemeral });
                         collector = message.createMessageComponentCollector();
                     } else {
-                        await interaction.reply({ content: 'No reputations matching that name.', ephemeral: true });
+                        await interaction.reply({ content: 'No reputations matching that name.', flags: MessageFlags.Ephemeral });
                     }
                 } else if (effect_type === 'skill') {
                     let skills = await connection.promise().query('select * from skills where guild_id = ? and (other_targetable = 1 or self_targetable = 1) and name like ?', [interaction.guildId, interaction.options.getString('typeahead') + '%']);
@@ -3685,7 +3685,7 @@ client.on('interactionCreate', async (interaction) => {
                             ]
                             const selectComponent = new StringSelectMenuBuilder().setOptions(types).setCustomId('TypeSelector').setMinValues(1).setMaxValues(1);
                             const selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                            message = await interaction.reply({ content: 'Please select a type of effect:', components: [selectRow], ephemeral: true });
+                            message = await interaction.reply({ content: 'Please select a type of effect:', components: [selectRow], flags: MessageFlags.Ephemeral });
                             collector = message.createMessageComponentCollector();
                         } else {
                             if (skills[0].length <= 25) {
@@ -3703,11 +3703,11 @@ client.on('interactionCreate', async (interaction) => {
                                 skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillEffectAlphabetSelector').setMinValues(1).setMaxValues(1);
                             }
                             let skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
-                            message = await interaction.reply({ content: 'Please select a skill to add an effect to:', components: [skillSelectRow], ephemeral: true });
+                            message = await interaction.reply({ content: 'Please select a skill to add an effect to:', components: [skillSelectRow], flags: MessageFlags.Ephemeral });
                             collector = message.createMessageComponentCollector();
                         }
                     } else {
-                        await interaction.reply({ content: 'No skills matching that name.', ephemeral: true });
+                        await interaction.reply({ content: 'No skills matching that name.', flags: MessageFlags.Ephemeral });
                     }
                 } else if (effect_type === 'item') {
                     let items = await connection.promise().query('select * from items where guild_id = ? and (other_targetable = 1 or self_targetable = 1) and name like ?', [interaction.guildId, interaction.options.getString('typeahead') + '%']);
@@ -3733,7 +3733,7 @@ client.on('interactionCreate', async (interaction) => {
                             ]
                             const selectComponent = new StringSelectMenuBuilder().setOptions(types).setCustomId('TypeSelector').setMinValues(1).setMaxValues(1);
                             const selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                            message = await interaction.reply({ content: 'Please select a type of effect:', components: [selectRow], ephemeral: true });
+                            message = await interaction.reply({ content: 'Please select a type of effect:', components: [selectRow], flags: MessageFlags.Ephemeral });
                             collector = message.createMessageComponentCollector();
                         } else {
                             if (items[0].length <= 25) {
@@ -3751,11 +3751,11 @@ client.on('interactionCreate', async (interaction) => {
                                 itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemEffectAlphabetSelector').setMinValues(1).setMaxValues(1);
                             }
                             let itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
-                            message = await interaction.reply({ content: 'Please select an item to add an effect to:', components: [itemSelectRow], ephemeral: true });
+                            message = await interaction.reply({ content: 'Please select an item to add an effect to:', components: [itemSelectRow], flags: MessageFlags.Ephemeral });
                             collector = message.createMessageComponentCollector();
                         }
                     } else {
-                        await interaction.reply({ content: 'No items matching that name.', ephemeral: true });
+                        await interaction.reply({ content: 'No items matching that name.', flags: MessageFlags.Ephemeral });
                     }
                 }
                 let type;
@@ -3802,9 +3802,9 @@ client.on('interactionCreate', async (interaction) => {
                                         selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('TierAlphaSelector').setMinValues(1).setMaxValues(1);
                                     }
                                     const selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                                    await interaction_second.update({ content: 'Please select a reputation tier:', components: [selectRow], ephemeral: true });
+                                    await interaction_second.update({ content: 'Please select a reputation tier:', components: [selectRow], flags: MessageFlags.Ephemeral });
                                 } else {
-                                    await interaction_second.update({ content: 'No reputation tiers available for this reputation.', components: [], ephemeral: true });
+                                    await interaction_second.update({ content: 'No reputation tiers available for this reputation.', components: [], flags: MessageFlags.Ephemeral });
                                 }
                             } else if (interaction_second.customId === 'TierSelector' || interaction_second.customId === 'SkillEffectSkillSelector' || interaction_second.customId === 'ItemEffectItemSelector') {
                                 selected_id = interaction_second.values[0];
@@ -3826,13 +3826,13 @@ client.on('interactionCreate', async (interaction) => {
                                 ]
                                 const selectComponent = new StringSelectMenuBuilder().setOptions(types).setCustomId('TypeSelector').setMinValues(1).setMaxValues(1);
                                 const selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                                await interaction_second.update({ content: 'Please select a type of effect:', components: [selectRow], ephemeral: true });
+                                await interaction_second.update({ content: 'Please select a type of effect:', components: [selectRow], flags: MessageFlags.Ephemeral });
                             } else if (interaction_second.customId === 'TypeSelector') {
                                 type = interaction_second.values[0];
                                 let visibilities = [{ label: 'Yes', value: '1' }, { label: 'No', value: '0' }];
                                 const selectComponent = new StringSelectMenuBuilder().setOptions(visibilities).setCustomId('VisibilitySelector').setMinValues(1).setMaxValues(1);
                                 const selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                                await interaction_second.update({ content: 'Do you want this effect announced to the player?', components: [selectRow], ephemeral: true });
+                                await interaction_second.update({ content: 'Do you want this effect announced to the player?', components: [selectRow], flags: MessageFlags.Ephemeral });
 
                             } else if (interaction_second.customId === 'VisibilitySelector') {
                                 visible = interaction_second.values[0];
@@ -3933,7 +3933,7 @@ client.on('interactionCreate', async (interaction) => {
                                         }
 
                                         if (typeahead_results[0].length == 0) {
-                                            await submittedModal.update({ content: 'No match was found with the autocomplete text you entered. Please try again.', components: [], ephemeral: true });
+                                            await submittedModal.update({ content: 'No match was found with the autocomplete text you entered. Please try again.', components: [], flags: MessageFlags.Ephemeral });
                                         } else if (typeahead_results[0].length == 1) {
                                             let insertedEffect;
                                             if (type_qty) {
@@ -3948,7 +3948,7 @@ client.on('interactionCreate', async (interaction) => {
                                             } else if (effect_type === 'item') {
                                                 await connection.promise().query('insert into items_effects (item_id, effect_id) values (?, ?)', [selected_id, insertedEffect[0].insertId]);
                                             }
-                                            await submittedModal.update({ content: 'Effect added.', components: [], ephemeral: true });
+                                            await submittedModal.update({ content: 'Effect added.', components: [], flags: MessageFlags.Ephemeral });
                                             collector.stop();
                                         } else {
                                             let keyValues = [];
@@ -3958,7 +3958,7 @@ client.on('interactionCreate', async (interaction) => {
                                             }
                                             selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('TypeaheadSelector').setMinValues(1).setMaxValues(1);
                                             let selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                                            await submittedModal.update({ content: 'Select an item from the list:', components: [selectRow], ephemeral: true });
+                                            await submittedModal.update({ content: 'Select an item from the list:', components: [selectRow], flags: MessageFlags.Ephemeral });
                                         }
 
                                     } else {
@@ -3972,7 +3972,7 @@ client.on('interactionCreate', async (interaction) => {
                                             } else if (effect_type === 'item') {
                                                 await connection.promise().query('insert into items_effects (item_id, effect_id) values (?, ?)', [selected_id, insertedEffect[0].insertId]);
                                             }
-                                            await submittedModal.update({ content: 'Effect added.', components: [], ephemeral: true });
+                                            await submittedModal.update({ content: 'Effect added.', components: [], flags: MessageFlags.Ephemeral });
                                             collector.stop();
                                         }
                                     }
@@ -4031,7 +4031,7 @@ client.on('interactionCreate', async (interaction) => {
                 ];
                 const selectComponent = new StringSelectMenuBuilder().setOptions(choices).setCustomId('PrereqEffectSourceSelector').setMinValues(1).setMaxValues(1);
                 const selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                let message = await interaction.reply({ content: 'Please select the effect source:', components: [selectRow], ephemeral: true });
+                let message = await interaction.reply({ content: 'Please select the effect source:', components: [selectRow], flags: MessageFlags.Ephemeral });
                 let collector = message.createMessageComponentCollector();
                 let prereq_type;
                 let logical_and_group;
@@ -4061,7 +4061,7 @@ client.on('interactionCreate', async (interaction) => {
                                     reputationSelectComponent = new StringSelectMenuBuilder().setOptions(reputationsKeyValues).setCustomId('PrereqRepAlphaSelector').setMinValues(1).setMaxValues(1);
                                 }
                                 const reputationSelectRow = new ActionRowBuilder().addComponents(reputationSelectComponent);
-                                await interaction_second.update({ content: 'Please select the following options:', components: [reputationSelectRow], ephemeral: true });
+                                await interaction_second.update({ content: 'Please select the following options:', components: [reputationSelectRow], flags: MessageFlags.Ephemeral });
                             } else if (type == 'skill') {
                                 let skills = await connection.promise().query('select distinct s.* from skills s inner join skills_effects se on s.id = se.skill_id where guild_id = ?', [interaction.guildId]);
                                 let skillSelectComponent;
@@ -4081,7 +4081,7 @@ client.on('interactionCreate', async (interaction) => {
                                         skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('PrereqSkillAlphaSelector').setMinValues(1).setMaxValues(1);
                                     }
                                     const skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
-                                    await interaction_second.update({ content: 'Please select a skill:', components: [skillSelectRow], ephemeral: true });
+                                    await interaction_second.update({ content: 'Please select a skill:', components: [skillSelectRow], flags: MessageFlags.Ephemeral });
                                 } else {
                                     await interaction_second.update({ content: 'No skills with effects were found. Please add an effect to a skill first.', components: [] });
                                     collector.stop();
@@ -4105,7 +4105,7 @@ client.on('interactionCreate', async (interaction) => {
                                         itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('PrereqItemAlphaSelector').setMinValues(1).setMaxValues(1);
                                     }
                                     const itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
-                                    await interaction_second.update({ content: 'Please select an item:', components: [itemSelectRow], ephemeral: true });
+                                    await interaction_second.update({ content: 'Please select an item:', components: [itemSelectRow], flags: MessageFlags.Ephemeral });
                                 } else {
                                     await interaction_second.update({ content: 'No items with effects were found. Please add an effect to an item first.', components: [] });
                                     collector.stop();
@@ -4120,7 +4120,7 @@ client.on('interactionCreate', async (interaction) => {
                             }
                             reputationSelectComponent = new StringSelectMenuBuilder().setOptions(reputationsKeyValues).setCustomId('PrereqRepSelector').setMinValues(1).setMaxValues(1);
                             const reputationSelectRow = new ActionRowBuilder().addComponents(reputationSelectComponent);
-                            await interaction_second.update({ content: 'Please select the following options:', components: [reputationSelectRow], ephemeral: true });
+                            await interaction_second.update({ content: 'Please select the following options:', components: [reputationSelectRow], flags: MessageFlags.Ephemeral });
                         } else if (interaction_second.customId === 'PrereqRepSelector') {
                             let reputation_id = interaction_second.values[0];
                             let result_values = await connection.promise().query('select distinct rt.* from reputations_tiers rt inner join reputations_tiers_effects rte on rt.id = rte.reputationtier_id where rt.reputation_id = ?', [reputation_id]);
@@ -4141,9 +4141,9 @@ client.on('interactionCreate', async (interaction) => {
                                     selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('PrereqRepTierAlphaSelector').setMinValues(1).setMaxValues(1);
                                 }
                                 const selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                                await interaction_second.update({ content: 'Please select a reputation tier:', components: [selectRow], ephemeral: true });
+                                await interaction_second.update({ content: 'Please select a reputation tier:', components: [selectRow], flags: MessageFlags.Ephemeral });
                             } else {
-                                await interaction_second.update({ content: 'No reputation tiers available for this reputation.', components: [], ephemeral: true });
+                                await interaction_second.update({ content: 'No reputation tiers available for this reputation.', components: [], flags: MessageFlags.Ephemeral });
                             }
 
                         } else if (interaction_second.customId === 'PrereqSkillAlphaSelector') {
@@ -4155,7 +4155,7 @@ client.on('interactionCreate', async (interaction) => {
                             }
                             const skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('PrereqSkillSelector').setMinValues(1).setMaxValues(1);
                             const skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
-                            await interaction_second.update({ content: 'Please select a skill:', components: [skillSelectRow], ephemeral: true });
+                            await interaction_second.update({ content: 'Please select a skill:', components: [skillSelectRow], flags: MessageFlags.Ephemeral });
                         } else if (interaction_second.customId === 'PrereqSkillSelector' || interaction_second.customId === 'PrereqItemSelector' || interaction_second.customId === 'PrereqRepTierSelector') {
                             let effects;
                             if (interaction_second.customId === 'PrereqSkillSelector') {
@@ -4207,7 +4207,7 @@ client.on('interactionCreate', async (interaction) => {
                             }
                             const effectSelectComponent = new StringSelectMenuBuilder().setOptions(effectsKeyValues).setCustomId('PrereqEffectSelector').setMinValues(1).setMaxValues(1);
                             const effectSelectRow = new ActionRowBuilder().addComponents(effectSelectComponent);
-                            await interaction_second.update({ content: 'Please select an effect:', components: [effectSelectRow], ephemeral: true });
+                            await interaction_second.update({ content: 'Please select an effect:', components: [effectSelectRow], flags: MessageFlags.Ephemeral });
                             // Displays PrereqEffectSelector.
                         } else if (interaction_second.customId === 'PrereqItemAlphaSelector') {
                             let items = await connection.promise().query('select distinct i.* from items i inner join items_effects ie on i.id = ie.item_id where guild_id = ? and name like ?', [interaction.guildId, interaction_second.values[0] + '%']);
@@ -4231,9 +4231,9 @@ client.on('interactionCreate', async (interaction) => {
                                 }
                                 const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('PrereqRepTierSelector').setMinValues(1).setMaxValues(1);
                                 const selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                                await interaction_second.update({ content: 'Please select a reputation tier:', components: [selectRow], ephemeral: true });
+                                await interaction_second.update({ content: 'Please select a reputation tier:', components: [selectRow], flags: MessageFlags.Ephemeral });
                             } else {
-                                await interaction_second.update({ content: 'No reputation tiers available for this reputation.', components: [], ephemeral: true });
+                                await interaction_second.update({ content: 'No reputation tiers available for this reputation.', components: [], flags: MessageFlags.Ephemeral });
                                 await collector.stop();
                             }
                         } else if (interaction_second.customId === 'PrereqEffectSelector') {
@@ -4254,7 +4254,7 @@ client.on('interactionCreate', async (interaction) => {
                             ];
                             const selectComponent = new StringSelectMenuBuilder().setOptions(types).setCustomId('PrereqTypeSelector').setMinValues(1).setMaxValues(1);
                             const selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                            await interaction_second.update({ content: 'Please select a prerequisite type:', components: [selectRow], ephemeral: true });
+                            await interaction_second.update({ content: 'Please select a prerequisite type:', components: [selectRow], flags: MessageFlags.Ephemeral });
                         } else if (interaction_second.customId === 'PrereqTypeSelector') {
                             if (interaction_second.values[0] == 'character_eq' || interaction_second.values[0] == 'character_ne') {
                                 prereq_type = 'character';
@@ -4286,7 +4286,7 @@ client.on('interactionCreate', async (interaction) => {
                             }
                             const selectComponent = new StringSelectMenuBuilder().setOptions(types).setCustomId('PrereqLogicalAndSelector').setMinValues(1).setMaxValues(1);
                             const selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                            await interaction_second.update({ content: 'Do you want to add this prerequisite to an existing logical AND group or use a new one?', components: [selectRow], ephemeral: true });
+                            await interaction_second.update({ content: 'Do you want to add this prerequisite to an existing logical AND group or use a new one?', components: [selectRow], flags: MessageFlags.Ephemeral });
                         } else if (interaction_second.customId === 'PrereqLogicalAndSelector') {
                             if (interaction_second.values[0] == 'new') {
                                 let and_groups = await connection.promise().query('select coalesce(max(logical_and_group), 0) as max_val from effects_prereqs where effect_id = ?', [effect_id]);
@@ -4348,7 +4348,7 @@ client.on('interactionCreate', async (interaction) => {
                                     }
 
                                     if (typeahead_results[0].length == 0) {
-                                        await interaction_second.update({ content: 'No match was found with the autocomplete text you entered. Please try again.', components: [], ephemeral: true });
+                                        await interaction_second.update({ content: 'No match was found with the autocomplete text you entered. Please try again.', components: [], flags: MessageFlags.Ephemeral });
                                     } else if (typeahead_results[0].length == 1) {
                                         let insertedPrereq;
                                         if (prereq_value) {
@@ -4356,7 +4356,7 @@ client.on('interactionCreate', async (interaction) => {
                                         } else {
                                             insertedPrereq = await connection.promise().query('insert into effects_prereqs (effect_id, prereq_type, prereq_id, logical_and_group, \`not\`) values (?, ?, ?, ?, ?)', [effect_id, prereq_type, typeahead_results[0][0].id, logical_and_group, not]);
                                         }
-                                        await submittedModal.update({ content: 'Prereq added.', components: [], ephemeral: true });
+                                        await submittedModal.update({ content: 'Prereq added.', components: [], flags: MessageFlags.Ephemeral });
                                     } else {
                                         let keyValues = [];
                                         for (const result_value of typeahead_results[0]) {
@@ -4364,7 +4364,7 @@ client.on('interactionCreate', async (interaction) => {
                                         }
                                         const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('PrereqTypeaheadSelector').setMinValues(1).setMaxValues(1);
                                         const selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                                        await submittedModal.update({ content: 'Select an item from the list:', components: [selectRow], ephemeral: true });
+                                        await submittedModal.update({ content: 'Select an item from the list:', components: [selectRow], flags: MessageFlags.Ephemeral });
                                     }
 
                                 }
@@ -4391,7 +4391,7 @@ client.on('interactionCreate', async (interaction) => {
                 ];
                 const selectComponent = new StringSelectMenuBuilder().setOptions(choices).setCustomId('EffectSourceSelector').setMinValues(1).setMaxValues(1);
                 const selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                let message = await interaction.reply({ content: 'Please select the effect source:', components: [selectRow], ephemeral: true });
+                let message = await interaction.reply({ content: 'Please select the effect source:', components: [selectRow], flags: MessageFlags.Ephemeral });
                 let collector = message.createMessageComponentCollector();
                 collector.on('collect', async (interaction_second) => {
                     if (interaction_second.member.id === interaction.member.id) {
@@ -4416,7 +4416,7 @@ client.on('interactionCreate', async (interaction) => {
                                     reputationSelectComponent = new StringSelectMenuBuilder().setOptions(reputationsKeyValues).setCustomId('PrereqRepAlphaSelector').setMinValues(1).setMaxValues(1);
                                 }
                                 const reputationSelectRow = new ActionRowBuilder().addComponents(reputationSelectComponent);
-                                await interaction_second.update({ content: 'Please select the following options:', components: [reputationSelectRow], ephemeral: true });
+                                await interaction_second.update({ content: 'Please select the following options:', components: [reputationSelectRow], flags: MessageFlags.Ephemeral });
                             } else if (type == 'skill') {
                                 let skills = await connection.promise().query('select distinct s.* from skills s inner join skills_effects se on s.id = se.skill_id where guild_id = ?', [interaction.guildId]);
                                 let skillSelectComponent;
@@ -4436,7 +4436,7 @@ client.on('interactionCreate', async (interaction) => {
                                         skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('PrereqSkillAlphaSelector').setMinValues(1).setMaxValues(1);
                                     }
                                     const skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
-                                    await interaction_second.update({ content: 'Please select a skill:', components: [skillSelectRow], ephemeral: true });
+                                    await interaction_second.update({ content: 'Please select a skill:', components: [skillSelectRow], flags: MessageFlags.Ephemeral });
                                 } else {
                                     await interaction_second.update({ content: 'No skills with effects were found. Please add an effect to a skill first.', components: [] });
                                     collector.stop();
@@ -4460,7 +4460,7 @@ client.on('interactionCreate', async (interaction) => {
                                         itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('PrereqItemAlphaSelector').setMinValues(1).setMaxValues(1);
                                     }
                                     const itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
-                                    await interaction_second.update({ content: 'Please select an item:', components: [itemSelectRow], ephemeral: true });
+                                    await interaction_second.update({ content: 'Please select an item:', components: [itemSelectRow], flags: MessageFlags.Ephemeral });
                                 } else {
                                     await interaction_second.update({ content: 'No items with effects were found. Please add an effect to an item first.', components: [] });
                                     collector.stop();
@@ -4475,7 +4475,7 @@ client.on('interactionCreate', async (interaction) => {
                             }
                             reputationSelectComponent = new StringSelectMenuBuilder().setOptions(reputationsKeyValues).setCustomId('PrereqRepSelector').setMinValues(1).setMaxValues(1);
                             const reputationSelectRow = new ActionRowBuilder().addComponents(reputationSelectComponent);
-                            await interaction_second.update({ content: 'Please select the following options:', components: [reputationSelectRow], ephemeral: true });
+                            await interaction_second.update({ content: 'Please select the following options:', components: [reputationSelectRow], flags: MessageFlags.Ephemeral });
                         } else if (interaction_second.customId === 'PrereqRepSelector') {
                             let reputation_id = interaction_second.values[0];
                             let result_values = await connection.promise().query('select distinct rt.* from reputations_tiers rt inner join reputations_tiers_effects rte on rt.id = rte.reputationtier_id where rt.reputation_id = ?', [reputation_id]);
@@ -4496,9 +4496,9 @@ client.on('interactionCreate', async (interaction) => {
                                     selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('PrereqRepTierAlphaSelector').setMinValues(1).setMaxValues(1);
                                 }
                                 const selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                                await interaction_second.update({ content: 'Please select a reputation tier:', components: [selectRow], ephemeral: true });
+                                await interaction_second.update({ content: 'Please select a reputation tier:', components: [selectRow], flags: MessageFlags.Ephemeral });
                             } else {
-                                await interaction_second.update({ content: 'No reputation tiers available for this reputation.', components: [], ephemeral: true });
+                                await interaction_second.update({ content: 'No reputation tiers available for this reputation.', components: [], flags: MessageFlags.Ephemeral });
                             }
 
                         } else if (interaction_second.customId === 'PrereqSkillAlphaSelector') {
@@ -4510,7 +4510,7 @@ client.on('interactionCreate', async (interaction) => {
                             }
                             const skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('PrereqSkillSelector').setMinValues(1).setMaxValues(1);
                             const skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
-                            await interaction_second.update({ content: 'Please select a skill:', components: [skillSelectRow], ephemeral: true });
+                            await interaction_second.update({ content: 'Please select a skill:', components: [skillSelectRow], flags: MessageFlags.Ephemeral });
                         } else if (interaction_second.customId === 'PrereqSkillSelector' || interaction_second.customId === 'PrereqItemSelector' || interaction_second.customId === 'PrereqRepTierSelector') {
                             let effects;
                             if (interaction_second.customId === 'PrereqSkillSelector') {
@@ -4562,7 +4562,7 @@ client.on('interactionCreate', async (interaction) => {
                             }
                             const effectSelectComponent = new StringSelectMenuBuilder().setOptions(effectsKeyValues).setCustomId('PrereqEffectSelector').setMinValues(1).setMaxValues(1);
                             const effectSelectRow = new ActionRowBuilder().addComponents(effectSelectComponent);
-                            await interaction_second.update({ content: 'Please select an effect to remove:', components: [effectSelectRow], ephemeral: true });
+                            await interaction_second.update({ content: 'Please select an effect to remove:', components: [effectSelectRow], flags: MessageFlags.Ephemeral });
                             // Displays PrereqEffectSelector.
                         } else if (interaction_second.customId === 'PrereqItemAlphaSelector') {
                             let items = await connection.promise().query('select distinct i.* from items i inner join items_effects ie on i.id = ie.item_id where guild_id = ? and name like ?', [interaction.guildId, interaction_second.values[0] + '%']);
@@ -4586,9 +4586,9 @@ client.on('interactionCreate', async (interaction) => {
                                 }
                                 const selectComponent = new StringSelectMenuBuilder().setOptions(keyValues).setCustomId('PrereqRepTierSelector').setMinValues(1).setMaxValues(1);
                                 const selectRow = new ActionRowBuilder().addComponents(selectComponent);
-                                await interaction_second.update({ content: 'Please select a reputation tier:', components: [selectRow], ephemeral: true });
+                                await interaction_second.update({ content: 'Please select a reputation tier:', components: [selectRow], flags: MessageFlags.Ephemeral });
                             } else {
-                                await interaction_second.update({ content: 'No reputation tiers available for this reputation.', components: [], ephemeral: true });
+                                await interaction_second.update({ content: 'No reputation tiers available for this reputation.', components: [], flags: MessageFlags.Ephemeral });
                                 await collector.stop();
                             }
                         } else if (interaction_second.customId === 'PrereqEffectSelector') {
@@ -4642,7 +4642,7 @@ client.on('interactionCreate', async (interaction) => {
                     }
 
                     const characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                    let message = await interaction.reply({ content: 'Please select the following options:', components: [characterSelectRow], ephemeral: true });
+                    let message = await interaction.reply({ content: 'Please select the following options:', components: [characterSelectRow], flags: MessageFlags.Ephemeral });
                     let collector = message.createMessageComponentCollector();
                     collector.on('collect', async (interaction_second) => {
                         if (interaction_second.member.id === interaction.member.id) {
@@ -4694,7 +4694,7 @@ client.on('interactionCreate', async (interaction) => {
                                         await webhook.send({ content: parrot_text, username: character_information[0][0].name, avatarURL: character_information[0][0].avatar_url });
                                     }
                                 }
-                                interaction.editReply({ content: 'Success', components: [], ephemeral: true });
+                                interaction.editReply({ content: 'Success', components: [], flags: MessageFlags.Ephemeral });
                             }
                         }
                     });
@@ -4725,10 +4725,10 @@ client.on('interactionCreate', async (interaction) => {
                             await webhook.send({ content: parrot_text, username: characters[0][0].name, avatarURL: characters[0][0].avatar_url });
                         }
                     }
-                    interaction.reply({ content: 'Success', components: [], ephemeral: true });
+                    interaction.reply({ content: 'Success', components: [], flags: MessageFlags.Ephemeral });
                 }
             } else {
-                interaction.reply({ content: "No characters appear to be available to you.", ephemeral: true });
+                interaction.reply({ content: "No characters appear to be available to you.", flags: MessageFlags.Ephemeral });
             }
         }
 
@@ -4746,14 +4746,14 @@ client.on('interactionCreate', async (interaction) => {
                         }
                         const locationSelectComponent = new StringSelectMenuBuilder().setOptions(locationsKeyValues).setCustomId('LocationMovementSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
                         const locationSelectRow = new ActionRowBuilder().addComponents(locationSelectComponent);
-                        interaction.reply({ content: 'Select a location to move to:', components: [locationSelectRow], ephemeral: true });
+                        interaction.reply({ content: 'Select a location to move to:', components: [locationSelectRow], flags: MessageFlags.Ephemeral });
                     } else {
-                        interaction.reply({ content: 'Sorry, but I can\'t find any other locations for you to move to. Try again another time, or contact the Orchestrators. :purple_heart:', ephemeral: true });
+                        interaction.reply({ content: 'Sorry, but I can\'t find any other locations for you to move to. Try again another time, or contact the Orchestrators. :purple_heart:', flags: MessageFlags.Ephemeral });
                     }
                     // retrieve any other movement-enabled locations.
                     // Create a DROPDOWN to select movement.
                 } else {
-                    interaction.reply({ content: 'Sorry, but you don\'t seem to be in a location that allows movement right now. Try again another time, or contact the Orchestrators. :purple_heart:', ephemeral: true });
+                    interaction.reply({ content: 'Sorry, but you don\'t seem to be in a location that allows movement right now. Try again another time, or contact the Orchestrators. :purple_heart:', flags: MessageFlags.Ephemeral });
                 }
             } else if (interaction.commandName === 'sheet') {
                 let current_character = await connection.promise().query('select character_id from players_characters join players p on p.id = players_characters.player_id where p.user_id = ? and players_characters.active = 1 and p.guild_id = ?', [interaction.user.id, interaction.guildId]);
@@ -4809,9 +4809,9 @@ client.on('interactionCreate', async (interaction) => {
                     if (reputation_enabled[0].length > 0 && reputation_enabled[0][0].setting_value == true) {
                         buttonActionRow.addComponents(new ButtonBuilder().setCustomId(`reputation-asc-${current_character[0][0].character_id}-1`).setLabel('Reputation').setStyle(ButtonStyle.Primary));
                     }
-                    await interaction.reply({ content: msg, components: [buttonActionRow], ephemeral: true });
+                    await interaction.reply({ content: msg, components: [buttonActionRow], flags: MessageFlags.Ephemeral });
                 } else {
-                    interaction.reply({ content: 'Somehow, you don\'t have an active character! If you\'re a player, this means something has gone HORRIBLY WRONG. Please let an Orchestrator know.', ephemeral: true });
+                    interaction.reply({ content: 'Somehow, you don\'t have an active character! If you\'re a player, this means something has gone HORRIBLY WRONG. Please let an Orchestrator know.', flags: MessageFlags.Ephemeral });
                 }
                 // If number of characters for player is 1, return one sheet. Otherwise, return a dropdown (not relevant for this game, thank god! So this is a Future Improvement).
                 // TODO: Separate command for administrators.
@@ -4822,7 +4822,7 @@ client.on('interactionCreate', async (interaction) => {
                     let queryData = [interaction.user.id, interaction.user.id, challenged.id, challenged.id];
                     let rps = await connection.promise().query('select * from rps where (challenger = ? or challenged = ? or challenger = ? or challenged = ?) and (challenger_throw is null or challenged_throw is null);', queryData);
                     if (rps[0].length > 0) {
-                        interaction.reply({ content: 'Sorry, it looks like either you or your target is already in a duel!', ephemeral: true });
+                        interaction.reply({ content: 'Sorry, it looks like either you or your target is already in a duel!', flags: MessageFlags.Ephemeral });
                     } else {
                         queryData = [interaction.user.id, challenged.id, interaction.channel.id];
                         await connection.promise().query('insert into rps (challenger, challenged, channel) values (?, ?, ?)', queryData);
@@ -4838,7 +4838,7 @@ client.on('interactionCreate', async (interaction) => {
                     let queryData = [interaction.user.id, interaction.user.id];
                     let rps = await connection.promise().query('select * from rps where (challenger = ? or challenged = ?) and (challenger_throw is null or challenged_throw is null)', queryData);
                     if (rps[0].length > 0) {
-                        interaction.reply({ content: 'Sorry, it looks like you\'re already in a duel!', ephemeral: true });
+                        interaction.reply({ content: 'Sorry, it looks like you\'re already in a duel!', flags: MessageFlags.Ephemeral });
                     } else {
                         queryData = [interaction.user.id, client.user.id, interaction.channel.id];
                         await connection.promise().query('insert into rps (challenger, challenged, channel) values (?, ?, ?)', queryData);
@@ -4921,25 +4921,25 @@ client.on('interactionCreate', async (interaction) => {
                                                 interaction_second.deferUpdate();
                                                 await collector.stop();
                                             } else {
-                                                interaction_second.reply({ content: "Throw something please.", ephemeral: true });
+                                                interaction_second.reply({ content: "Throw something please.", flags: MessageFlags.Ephemeral });
                                             }
                                         } else {
-                                            interaction_second.reply({ content: "Wait for more people to throw please.", ephemeral: true });
+                                            interaction_second.reply({ content: "Wait for more people to throw please.", flags: MessageFlags.Ephemeral });
                                         }
                                     } else {
-                                        interaction_second.reply({ content: 'Only the multirps owner can end the multirps', ephemeral: true });
+                                        interaction_second.reply({ content: 'Only the multirps owner can end the multirps', flags: MessageFlags.Ephemeral });
                                     }
                                 }
                             } else {
-                                interaction_second.reply({ content: "uhhh do you have an active character?", ephemeral: true });
+                                interaction_second.reply({ content: "uhhh do you have an active character?", flags: MessageFlags.Ephemeral });
                             }
                         });
 
                     } else {
-                        interaction.reply({ content: "you are already doing this", ephemeral: true });
+                        interaction.reply({ content: "you are already doing this", flags: MessageFlags.Ephemeral });
                     }
                 } else {
-                    interaction.reply({ content: "uhhh do you have an active character?", ephemeral: true });
+                    interaction.reply({ content: "uhhh do you have an active character?", flags: MessageFlags.Ephemeral });
                 }
             } else if (interaction.commandName === 'skill') { //TODO: Futureproof with alphabet selector.
                 let current_character = await connection.promise().query('select players_characters.character_id, c.name from players_characters join players p on p.id = players_characters.player_id join characters c on c.id = players_characters.character_id where p.user_id = ? and p.guild_id = ? and players_characters.active = 1', [interaction.user.id, interaction.guildId]);
@@ -4953,7 +4953,7 @@ client.on('interactionCreate', async (interaction) => {
                             }
                             const skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
                             const skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
-                            let message = await interaction.reply({ content: 'Select a skill to share with the channel:', components: [skillSelectRow], ephemeral: true });
+                            let message = await interaction.reply({ content: 'Select a skill to share with the channel:', components: [skillSelectRow], flags: MessageFlags.Ephemeral });
                             let collector = message.createMessageComponentCollector();
                             collector.on('collect', async (interaction_second) => {
                                 if (interaction_second.member.id === interaction.member.id) {
@@ -4965,7 +4965,7 @@ client.on('interactionCreate', async (interaction) => {
                                 }
                             });
                         } else {
-                            await interaction.reply({ content: 'You don\'t seem to have any skills. Sorry about that.', ephemeral: true });
+                            await interaction.reply({ content: 'You don\'t seem to have any skills. Sorry about that.', flags: MessageFlags.Ephemeral });
                         }
 
                         //dropdown
@@ -4994,7 +4994,7 @@ client.on('interactionCreate', async (interaction) => {
                             }
                             const skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillUseSelector').setMinValues(1).setMaxValues(1);
                             const skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
-                            let message = await interaction.reply({ content: 'Select a skill to use:', components: [skillSelectRow], ephemeral: true });
+                            let message = await interaction.reply({ content: 'Select a skill to use:', components: [skillSelectRow], flags: MessageFlags.Ephemeral });
                             let collector = message.createMessageComponentCollector();
                             collector.on('collect', async (interaction_second) => {
                                 if (interaction.member.id === interaction_second.member.id) {
@@ -5065,7 +5065,7 @@ client.on('interactionCreate', async (interaction) => {
                                                     characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('SkillUseAlphabetSelector').setMinValues(1).setMaxValues(1);
                                                 }
                                                 const characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                                                await interaction_second.update({ content: 'Select a character to target with this skill:', components: [characterSelectRow], ephemeral: true });
+                                                await interaction_second.update({ content: 'Select a character to target with this skill:', components: [characterSelectRow], flags: MessageFlags.Ephemeral });
                                             } else {
                                                 await interaction_second.update({ content: 'No valid characters found.', components: [] });
                                                 collector.stop();
@@ -5094,7 +5094,7 @@ client.on('interactionCreate', async (interaction) => {
                                             }
                                             characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('SkillUseCharacterSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
                                             const characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                                            await interaction_second.update({ content: 'Select a character to target with this skill:', components: [characterSelectRow], ephemeral: true });
+                                            await interaction_second.update({ content: 'Select a character to target with this skill:', components: [characterSelectRow], flags: MessageFlags.Ephemeral });
                                         } else {
                                             await interaction_second.update({ content: 'No valid characters found.', components: [] });
                                             collector.stop();
@@ -5117,11 +5117,11 @@ client.on('interactionCreate', async (interaction) => {
 
                             });
                         } else {
-                            interaction.reply({ content: 'You don\'t seem to have any usable skills.', ephemeral: true });
+                            interaction.reply({ content: 'You don\'t seem to have any usable skills.', flags: MessageFlags.Ephemeral });
                         }
                     }
                 } else {
-                    interaction.reply({ content: 'You don\'t seem to have an active character. Check in with the mods on this, please.', ephemeral: true });
+                    interaction.reply({ content: 'You don\'t seem to have an active character. Check in with the mods on this, please.', flags: MessageFlags.Ephemeral });
                 }
             } else if (interaction.commandName === 'item') {
                 if (interaction.options.getSubcommand() === 'display') {
@@ -5135,7 +5135,7 @@ client.on('interactionCreate', async (interaction) => {
                             }
                             const itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('DispItemSelector').setMinValues(1).setMaxValues(1);
                             const itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
-                            let message = await interaction.reply({ content: 'Select a item to share with the channel:', components: [itemSelectRow], ephemeral: true });
+                            let message = await interaction.reply({ content: 'Select a item to share with the channel:', components: [itemSelectRow], flags: MessageFlags.Ephemeral });
                             let collector = message.createMessageComponentCollector();
                             collector.on('collect', async (interaction_second) => {
                                 if (interaction_second.customId === 'DispItemSelector' && interaction.member.id === interaction_second.member.id) {
@@ -5147,10 +5147,10 @@ client.on('interactionCreate', async (interaction) => {
 
                             });
                         } else {
-                            interaction.reply({ content: 'You don\'t seem to have any items. Sorry about that.', ephemeral: true });
+                            interaction.reply({ content: 'You don\'t seem to have any items. Sorry about that.', flags: MessageFlags.Ephemeral });
                         }
                     } else {
-                        interaction.reply({ content: 'You don\'t seem to have an active character. Check in with the mods on this, please.', ephemeral: true });
+                        interaction.reply({ content: 'You don\'t seem to have an active character. Check in with the mods on this, please.', flags: MessageFlags.Ephemeral });
                     }
                     //dropdown
                     // put dropdown in thingy
@@ -5184,7 +5184,7 @@ client.on('interactionCreate', async (interaction) => {
                                     const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('GiveCharacterSelector').setMinValues(1).setMaxValues(characters[0].length);
                                     const characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
 
-                                    let message = await interaction.reply({ content: 'Select an item and a character to give it to:', components: [itemSelectRow, characterSelectRow], ephemeral: true });
+                                    let message = await interaction.reply({ content: 'Select an item and a character to give it to:', components: [itemSelectRow, characterSelectRow], flags: MessageFlags.Ephemeral });
                                     let collector = message.createMessageComponentCollector();
                                     let itemSelected;
                                     let characterSelected;
@@ -5238,16 +5238,16 @@ client.on('interactionCreate', async (interaction) => {
 
                                     // and then process the give inside the collector (update item owner in characters_items)
                                 } else {
-                                    interaction.reply({ content: 'There don\'t seem to be any other characters in this game...or maybe just in your area. You may want to double check on this.', ephemeral: true });
+                                    interaction.reply({ content: 'There don\'t seem to be any other characters in this game...or maybe just in your area. You may want to double check on this.', flags: MessageFlags.Ephemeral });
                                 }
                             } else {
-                                interaction.reply({ content: 'You don\'t seem to have any items. Sorry about that.', ephemeral: true });
+                                interaction.reply({ content: 'You don\'t seem to have any items. Sorry about that.', flags: MessageFlags.Ephemeral });
                             }
                         } else {
-                            interaction.reply({ content: 'You don\'t seem to have an active character. If you weren\'t expecting to see this message, check in with the mods.', ephemeral: true });
+                            interaction.reply({ content: 'You don\'t seem to have an active character. If you weren\'t expecting to see this message, check in with the mods.', flags: MessageFlags.Ephemeral });
                         }
                     } else {
-                        interaction.reply({ content: 'You can\'t give a negative number or zero of an item.', ephemeral: true });
+                        interaction.reply({ content: 'You can\'t give a negative number or zero of an item.', flags: MessageFlags.Ephemeral });
                     }
                 } else if (interaction.options.getSubcommand() === 'use') {
                     let current_character = await connection.promise().query('select pc.character_id, c.name from players_characters pc join players p on p.id = pc.player_id join characters c on c.id = pc.character_id where p.user_id = ? and p.guild_id = ? and pc.active = 1', [interaction.user.id, interaction.guildId]);
@@ -5262,7 +5262,7 @@ client.on('interactionCreate', async (interaction) => {
                         }
                         const itemSelectComponent = new StringSelectMenuBuilder().setOptions(itemsKeyValues).setCustomId('ItemUseSelector').setMinValues(1).setMaxValues(1);
                         const itemSelectRow = new ActionRowBuilder().addComponents(itemSelectComponent);
-                        let message = await interaction.reply({ content: 'Select an item to use:', components: [itemSelectRow], ephemeral: true });
+                        let message = await interaction.reply({ content: 'Select an item to use:', components: [itemSelectRow], flags: MessageFlags.Ephemeral });
                         let collector = message.createMessageComponentCollector();
                         collector.on('collect', async (interaction_second) => {
                             if (interaction.member.id === interaction_second.member.id) {
@@ -5342,7 +5342,7 @@ client.on('interactionCreate', async (interaction) => {
                                                 characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ItemUseAlphabetSelector').setMinValues(1).setMaxValues(1);
                                             }
                                             const characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                                            await interaction_second.update({ content: 'Select a character to target with this item:', components: [characterSelectRow], ephemeral: true });
+                                            await interaction_second.update({ content: 'Select a character to target with this item:', components: [characterSelectRow], flags: MessageFlags.Ephemeral });
                                         } else {
                                             await interaction_second.update({ content: 'No valid characters found.', components: [] });
                                             collector.stop();
@@ -5370,7 +5370,7 @@ client.on('interactionCreate', async (interaction) => {
                                         }
                                         const characterSelectComponent = new StringSelectMenuBuilder().setOptions(charactersKeyValues).setCustomId('ItemUseCharacterSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
                                         const characterSelectRow = new ActionRowBuilder().addComponents(characterSelectComponent);
-                                        await interaction_second.update({ content: 'Select a character to target with this item:', components: [characterSelectRow], ephemeral: true });
+                                        await interaction_second.update({ content: 'Select a character to target with this item:', components: [characterSelectRow], flags: MessageFlags.Ephemeral });
                                     } else {
                                         await interaction_second.update({ content: 'No valid characters found.', components: [] });
                                         collector.stop();
@@ -5396,7 +5396,7 @@ client.on('interactionCreate', async (interaction) => {
 
                         });
                     } else {
-                        interaction.reply({ content: 'You don\'t seem to have any usable items.', ephemeral: true });
+                        interaction.reply({ content: 'You don\'t seem to have any usable items.', flags: MessageFlags.Ephemeral });
                     }
                 }
             } else if (interaction.commandName === 'duel') {
@@ -5436,10 +5436,10 @@ client.on('interactionCreate', async (interaction) => {
                         let msg = interaction.reply({ embeds: [embed], components: [rpsRow] });
                         // buttons rps + skill; skill offers dropdown using interaction.followUp
                     } else {
-                        await interaction.reply({ content: 'Either you aren\'t an active character or your target isn\'t. Please double check!', ephemeral: true });
+                        await interaction.reply({ content: 'Either you aren\'t an active character or your target isn\'t. Please double check!', flags: MessageFlags.Ephemeral });
                     }
                 } else {
-                    await interaction.reply({ content: 'No health stat is set. Check with the Orchestrators, please!', ephemeral: true });
+                    await interaction.reply({ content: 'No health stat is set. Check with the Orchestrators, please!', flags: MessageFlags.Ephemeral });
                 }
             } else if (interaction.commandName === 'deck') {
                 let activeCharacter = await connection.promise().query('select c.* from characters c join players_characters pc on c.id = pc.character_id join players p on pc.player_id = p.id where pc.active = 1 and p.user_id = ? and p.guild_id = ?', [interaction.user.id, interaction.guildId]);
@@ -5453,12 +5453,12 @@ client.on('interactionCreate', async (interaction) => {
                         if (tiles[0].length >= 5) {
                             messageText += '\nRemember, you can challenge another player using `/ttchallenge`!';
                         }
-                        await interaction.reply({ content: messageText, ephemeral: true });
+                        await interaction.reply({ content: messageText, flags: MessageFlags.Ephemeral });
                     } else {
-                        await interaction.reply({ content: 'You don\'t appear to have any tiles, ' + activeCharacter[0][0].name, ephemeral: true });
+                        await interaction.reply({ content: 'You don\'t appear to have any tiles, ' + activeCharacter[0][0].name, flags: MessageFlags.Ephemeral });
                     }
                 } else {
-                    await interaction.reply({ content: 'You don\'t appear to have an active character.', ephemeral: true });
+                    await interaction.reply({ content: 'You don\'t appear to have an active character.', flags: MessageFlags.Ephemeral });
                 }
             } else if (interaction.commandName === 'roll') {
                 //dice, sides, public, fixed_add
@@ -5477,7 +5477,7 @@ client.on('interactionCreate', async (interaction) => {
                 if (interaction.options.getBoolean('public') == true) {
                     interaction.reply({ content: '`' + dice + 'd' + sides + (interaction.options.getInteger('fixed_add') ? ' + ' + interaction.options.getInteger('fixed_add').toString() : '') + ' = ' + indivDice + (interaction.options.getInteger('fixed_add') ? ' + ' + interaction.options.getInteger('fixed_add') : '') + ' = ' + total + '`' });
                 } else {
-                    interaction.reply({ content: '`' + dice + 'd' + sides + (interaction.options.getInteger('fixed_add') ? ' + ' + interaction.options.getInteger('fixed_add').toString() : '') + ' = ' + indivDice + (interaction.options.getInteger('fixed_add') ? ' + ' + interaction.options.getInteger('fixed_add') : '') + ' = ' + total + '`', ephemeral: true });
+                    interaction.reply({ content: '`' + dice + 'd' + sides + (interaction.options.getInteger('fixed_add') ? ' + ' + interaction.options.getInteger('fixed_add').toString() : '') + ' = ' + indivDice + (interaction.options.getInteger('fixed_add') ? ' + ' + interaction.options.getInteger('fixed_add') : '') + ' = ' + total + '`', flags: MessageFlags.Ephemeral });
                 }
             } else if (interaction.commandName === 'ticket') {
                 if (interaction.options.getSubcommand() === 'channel') {
@@ -5508,18 +5508,18 @@ client.on('interactionCreate', async (interaction) => {
                             const categorySelectRow = new ActionRowBuilder().addComponents(categorySelectComponent);
                             let message = await interaction.options.getChannel('channel').send({ embeds: [embeddedMessage], components: [categorySelectRow] });
                             await connection.promise().query('replace into game_settings (setting_name, guild_id, setting_value) values (?, ?, ?)', ["ticket_message", interaction.guild.id, message.id]);
-                            interaction.reply({ content: 'Assigned ticket channel and sent message.', ephemeral: true });
+                            interaction.reply({ content: 'Assigned ticket channel and sent message.', flags: MessageFlags.Ephemeral });
                         } else {
-                            interaction.reply({ content: 'Please create at least one ticket category first, using `/addticketcategory`.', ephemeral: true })
+                            interaction.reply({ content: 'Please create at least one ticket category first, using `/addticketcategory`.', flags: MessageFlags.Ephemeral })
                         }
                     } else {
-                        interaction.reply({ content: 'Please create an audit channel first, using `/auditchannel`.', ephemeral: true });
+                        interaction.reply({ content: 'Please create an audit channel first, using `/auditchannel`.', flags: MessageFlags.Ephemeral });
                     }
                 } else if (interaction.options.getSubcommand() === 'addcategory') {
                     let name = interaction.options.getString('name');
                     let categories = await connection.promise().query('select * from tickets_categories where guildid = ? and name = ?', [interaction.guild.id, name]);
                     if (categories[0].length > 0) {
-                        interaction.reply({ content: 'You already have a category with that name.', ephemeral: true });
+                        interaction.reply({ content: 'You already have a category with that name.', flags: MessageFlags.Ephemeral });
                     } else {
                         await connection.promise().query('insert into tickets_categories (guildid, name) values (?, ?)', [interaction.guild.id, name]);
                         let channel_db = await connection.promise().query('select * from game_settings where setting_name = "ticket_channel" and guild_id = ?', [interaction.guild.id]);
@@ -5528,7 +5528,7 @@ client.on('interactionCreate', async (interaction) => {
                             let categories = await connection.promise().query('select * from tickets_categories where guildid = ?', [interaction.guild.id]);
                             if (categories[0].length > 25) {
                                 await connection.promise().query('delete from tickets_categories where guildid = ? and name = ?', [interaction.guild.id, name]);
-                                interaction.reply({ content: 'You have more than 25 ticket categories. Please delete some and try adding this again.', ephemeral: true });
+                                interaction.reply({ content: 'You have more than 25 ticket categories. Please delete some and try adding this again.', flags: MessageFlags.Ephemeral });
                             } else {
                                 let channel = await client.channels.cache.get(channel_db[0][0].setting_value);
                                 let categoriesKeyValues = [];
@@ -5542,10 +5542,10 @@ client.on('interactionCreate', async (interaction) => {
                                 const categorySelectComponent = new StringSelectMenuBuilder().setOptions(categoriesKeyValues).setCustomId('TicketCategorySelector').setMinValues(1).setMaxValues(1);
                                 const categorySelectRow = new ActionRowBuilder().addComponents(categorySelectComponent);
                                 await channel.messages.fetch(message[0][0].setting_value).then(msg => msg.edit({ embeds: [embeddedMessage], components: [categorySelectRow] }));
-                                interaction.reply({ content: 'Created category.', ephemeral: true });
+                                interaction.reply({ content: 'Created category.', flags: MessageFlags.Ephemeral });
                             }
                         } else {
-                            interaction.reply({ content: 'Created category.', ephemeral: true });
+                            interaction.reply({ content: 'Created category.', flags: MessageFlags.Ephemeral });
                         }
                     }
                 } else if (interaction.options.getSubcommand() === 'close') {
@@ -5595,10 +5595,10 @@ client.on('interactionCreate', async (interaction) => {
                                 // ack the interaction silently
                                 //TODO close reason
                             } else {
-                                interaction.reply({ content: 'no admin or appropriate role', ephemeral: true });
+                                interaction.reply({ content: 'no admin or appropriate role', flags: MessageFlags.Ephemeral });
                             }
                         } else {
-                            interaction.reply({ content: 'couldn\'t find ticket with thread id', ephemeral: true });
+                            interaction.reply({ content: 'couldn\'t find ticket with thread id', flags: MessageFlags.Ephemeral });
                         }
                     }
                 } else if (interaction.options.getSubcommand() === 'categorygroup') {
@@ -5610,7 +5610,7 @@ client.on('interactionCreate', async (interaction) => {
                         }
                         const categorySelectComponent = new StringSelectMenuBuilder().setOptions(categoriesKeyValues).setCustomId('CategorySelector').setMinValues(1).setMaxValues(1);
                         const categorySelectRow = new ActionRowBuilder().addComponents(categorySelectComponent);
-                        let message = await interaction.reply({ content: 'Select a category to assign a role to.', components: [categorySelectRow], ephemeral: true });
+                        let message = await interaction.reply({ content: 'Select a category to assign a role to.', components: [categorySelectRow], flags: MessageFlags.Ephemeral });
                         const collector = message.createMessageComponentCollector();
                         let categorySelected;
                         let rolesSelected;
@@ -5642,7 +5642,7 @@ client.on('interactionCreate', async (interaction) => {
                         }
                         const categorySelectComponent = new StringSelectMenuBuilder().setOptions(categoriesKeyValues).setCustomId('CategorySelector').setMinValues(1).setMaxValues(1);
                         const categorySelectRow = new ActionRowBuilder().addComponents(categorySelectComponent);
-                        let message = await interaction.reply({ content: 'Select a category to delete.', components: [categorySelectRow], ephemeral: true });
+                        let message = await interaction.reply({ content: 'Select a category to delete.', components: [categorySelectRow], flags: MessageFlags.Ephemeral });
                         const collector = message.createMessageComponentCollector();
                         let categorySelected;
                         collector.on('collect', async (interaction_second) => {
@@ -5672,12 +5672,12 @@ client.on('interactionCreate', async (interaction) => {
                             }
                         });
                     } else {
-                        interaction.reply({ content: 'No created categories, or you have only one category, you can\'t delete your only category.', ephemeral: true });
+                        interaction.reply({ content: 'No created categories, or you have only one category, you can\'t delete your only category.', flags: MessageFlags.Ephemeral });
                     }
                 }
             } else if (interaction.commandName === 'auditchannel') {
                 await connection.promise().query('replace into game_settings (guild_id, setting_name, setting_value) values (?, ?, ?)', [interaction.guild.id, "audit_channel", interaction.options.getChannel('channel').id]);
-                interaction.reply({ content: 'Audit channel created or updated.', ephemeral: true });
+                interaction.reply({ content: 'Audit channel created or updated.', flags: MessageFlags.Ephemeral });
             }
         }
     }
@@ -5710,9 +5710,9 @@ client.on('interactionCreate', async (interaction) => {
                     queryData = ['challenger_throw', rpsthrow, rps[0][0].id];
                 } else {
                     if (interaction.replied) {
-                        await interaction.followUp({ content: 'You\'ve already thrown, sorry!`.', ephemeral: true });
+                        await interaction.followUp({ content: 'You\'ve already thrown, sorry!`.', flags: MessageFlags.Ephemeral });
                     } else {
-                        await interaction.reply({ content: 'You\'ve already thrown, sorry!`.', ephemeral: true });
+                        await interaction.reply({ content: 'You\'ve already thrown, sorry!`.', flags: MessageFlags.Ephemeral });
                     }
                     valid = 0;
                 }
@@ -5722,9 +5722,9 @@ client.on('interactionCreate', async (interaction) => {
 
                     if (rps[0][0].challenged_throw && rps[0][0].challenger_throw) {
                         if (interaction.replied) {
-                            await interaction.followUp({ content: 'You threw ' + throwfull + '.', ephemeral: true });
+                            await interaction.followUp({ content: 'You threw ' + throwfull + '.', flags: MessageFlags.Ephemeral });
                         } else {
-                            await interaction.reply({ content: 'You threw ' + throwfull + '.', ephemeral: true });
+                            await interaction.reply({ content: 'You threw ' + throwfull + '.', flags: MessageFlags.Ephemeral });
                         }
                         if ((rps[0][0].challenged_throw == 'R' && rps[0][0].challenger_throw == 'P') || (rps[0][0].challenged_throw == 'P' && rps[0][0].challenger_throw == 'S') || (rps[0][0].challenged_throw == 'S' && rps[0][0].challenger_throw == 'R')) {
                             await interaction.followUp('<@' + rps[0][0].challenger + '> has won the RPS match! (' + rps[0][0].challenger_throw + ' > ' + rps[0][0].challenged_throw + ')');
@@ -5735,7 +5735,7 @@ client.on('interactionCreate', async (interaction) => {
                         }
                         await interaction.message.edit({ content: '<@' + rps[0][0].challenger + '> has challenged <@' + rps[0][0].challenged + '> to a duel!', components: [] });
                     } else if (rps[0][0].challenged == client.user.id) {
-                        await interaction.reply({ content: 'You threw ' + throwfull + '.', ephemeral: true });
+                        await interaction.reply({ content: 'You threw ' + throwfull + '.', flags: MessageFlags.Ephemeral });
                         let options = ['R', 'P', 'S'];
                         let selection = options[Math.floor(Math.random() * options.length)];
                         let queryData = [selection, rps[0][0].id];
@@ -5750,9 +5750,9 @@ client.on('interactionCreate', async (interaction) => {
                         await interaction.message.edit({ content: '<@' + rps[0][0].challenger + '> has challenged <@' + rps[0][0].challenged + '> to a duel!', components: [] });
                     } else {
                         if (interaction.replied) {
-                            await interaction.followUp({ content: 'You threw ' + throwfull + '.', ephemeral: true });
+                            await interaction.followUp({ content: 'You threw ' + throwfull + '.', flags: MessageFlags.Ephemeral });
                         } else {
-                            await interaction.reply({ content: 'You threw ' + throwfull + '.', ephemeral: true });
+                            await interaction.reply({ content: 'You threw ' + throwfull + '.', flags: MessageFlags.Ephemeral });
                         }
                     }
                 }
@@ -5797,7 +5797,7 @@ client.on('interactionCreate', async (interaction) => {
                                 }
                                 const skillSelectComponent = new StringSelectMenuBuilder().setOptions(skillsKeyValues).setCustomId('SkillSelector' + interaction.member.id).setMinValues(1).setMaxValues(1);
                                 const skillSelectRow = new ActionRowBuilder().addComponents(skillSelectComponent);
-                                let message = await interaction.reply({ content: 'Select a skill to share with the channel:', components: [skillSelectRow], ephemeral: true });
+                                let message = await interaction.reply({ content: 'Select a skill to share with the channel:', components: [skillSelectRow], flags: MessageFlags.Ephemeral });
                                 let collector = message.createMessageComponentCollector();
                                 collector.on('collect', async (interaction_second) => {
                                     if (interaction.member.id === interaction_second.member.id) {
@@ -5813,16 +5813,16 @@ client.on('interactionCreate', async (interaction) => {
                                         await interaction.update({ content: 'Thanks!', components: [] });
                                         await collector.stop();
                                     } else {
-                                        interaction.reply({ content: 'You aren\'t eligible to click this button.', ephemeral: true });
+                                        interaction.reply({ content: 'You aren\'t eligible to click this button.', flags: MessageFlags.Ephemeral });
                                     }
                                 });
                                 // - Give a SpAtk dropdown.
                                 // - create a collector
                             } else {
-                                await interaction.reply({ content: "You don't seem to have any skills to use.", ephemeral: true });
+                                await interaction.reply({ content: "You don't seem to have any skills to use.", flags: MessageFlags.Ephemeral });
                             }
                         } else {
-                            await interaction.reply({ content: 'You didn\'t win the last round, so you can\'t use a combat skill.', ephemeral: true });
+                            await interaction.reply({ content: 'You didn\'t win the last round, so you can\'t use a combat skill.', flags: MessageFlags.Ephemeral });
                         }
 
                     } else {
@@ -5847,7 +5847,7 @@ client.on('interactionCreate', async (interaction) => {
                             const innateSelectComponent = new StringSelectMenuBuilder().setOptions(innatesKeyValues).setCustomId('DuelInnateSelector').setMinValues(1).setMaxValues(1);
                             const innateSelectRow = new ActionRowBuilder().addComponents(innateSelectComponent);
 
-                            let message = await interaction.reply({ content: 'Select an innate:', components: [innateSelectRow], ephemeral: true });
+                            let message = await interaction.reply({ content: 'Select an innate:', components: [innateSelectRow], flags: MessageFlags.Ephemeral });
                             let collector = message.createMessageComponentCollector();
                             let innateSelected;
                             collector.on('collect', async (interaction_second) => {
@@ -5975,7 +5975,7 @@ client.on('interactionCreate', async (interaction) => {
                                 }
                             });
                         } else {
-                            await interaction.reply({ content: 'You have no other available innates, sorry.', ephemeral: true });
+                            await interaction.reply({ content: 'You have no other available innates, sorry.', flags: MessageFlags.Ephemeral });
                         }
                     }
                 } else {
@@ -6142,7 +6142,7 @@ client.on('interactionCreate', async (interaction) => {
 
                 }
             } else {
-                await interaction.reply({ content: "You're not a participant in this duel!", ephemeral: true });
+                await interaction.reply({ content: "You're not a participant in this duel!", flags: MessageFlags.Ephemeral });
             }
         } else if (interaction.customId.startsWith('sheet-')) {
             let character_id = interaction.customId.split('-')[1];
@@ -6505,7 +6505,7 @@ client.on('interactionCreate', async (interaction) => {
                 if (role[0].length > 0) {
                     await thread.send('<@&' + role[0][0].role_id + '>');
                 }
-                await submitted.reply({ content: 'Ticket created, check here: <#' + thread.id + '>', ephemeral: true });
+                await submitted.reply({ content: 'Ticket created, check here: <#' + thread.id + '>', flags: MessageFlags.Ephemeral });
                 let settingvalue = await connection.promise().query('select * from game_settings where guild_id = ? and setting_name = ?', [interaction.guild.id, 'audit_channel']);
                 let audit_channel = await client.channels.cache.get(settingvalue[0][0].setting_value);
                 let embed = new EmbedBuilder()
