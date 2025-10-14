@@ -900,6 +900,15 @@ client.on('ready', async () => {
                     option.setName('name')
                         .setDescription('The name of the character (partial okay)')
                         .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand.setName('delete')
+                .setDescription('Delete a character.')
+                .addStringOption(option =>
+                    option.setName('name')
+                        .setDescription('The name of the character (partial okay)')
+                        .setRequired(true)
+                )
+        )
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
     // Characters Per Player (switching system // bot echoes) - TODO
@@ -1413,7 +1422,18 @@ client.on('interactionCreate', async (interaction) => {
                 }
             }
         } else if (interaction.commandName === 'character') {
-            if (interaction.options.getSubcommand() === 'edit') {
+            if (interaction.options.getSubcommand() === 'delete') {
+                let character_name = interaction.options.getString('name');
+                let character = await connection.promise().query('select * from characters where name like ? and guild_id = ?', ['%' + character_name + '%', interaction.guildId]);
+                if (character[0].length == 1) {
+                    await connection.promise.query('delete from characters where id = ?', character[0][0].id);
+                    message = await interaction.reply({ content: `Deleted ${character[0][0].name}.`, flags: MessageFlags.Ephemeral });
+                } else if (character[0].length == 0) {
+                    message = await interaction.reply(`No characters matching that string found.`);
+                } else {
+                    message = await interaction.reply(`Too many characters found, please be more specific.`);
+                }
+            } else if (interaction.options.getSubcommand() === 'edit') {
                 let character_name = interaction.options.getString('name');
                 let character_id;
                 let column_name;
