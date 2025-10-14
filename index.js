@@ -1426,7 +1426,7 @@ client.on('interactionCreate', async (interaction) => {
                 let character_name = interaction.options.getString('name');
                 let character = await connection.promise().query('select * from characters where name like ? and guild_id = ?', ['%' + character_name + '%', interaction.guildId]);
                 if (character[0].length == 1) {
-                    await connection.promise.query('delete from characters where id = ?', character[0][0].id);
+                    await connection.promise().query('delete from characters where id = ?', character[0][0].id);
                     message = await interaction.reply({ content: `Deleted ${character[0][0].name}.`, flags: MessageFlags.Ephemeral });
                 } else if (character[0].length == 0) {
                     message = await interaction.reply(`No characters matching that string found.`);
