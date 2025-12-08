@@ -1223,7 +1223,7 @@ client.on('interactionCreate', async (interaction) => {
 
             } else if (interaction.options.getSubcommand() === 'add') {
                 let attackName = interaction.options.getString('name');
-                await connection.promise().query('insert into duels_attacks (name, guild_id) values (?, ?, ?)', [attackName, interaction.guildId]);
+                await connection.promise().query('insert into duels_attacks (name, guild_id) values (?, ?)', [attackName, interaction.guildId]);
                 interaction.reply({ content: 'Custom attack added.', flags: MessageFlags.Ephemeral });
             } else if (interaction.options.getSubcommand() === 'relationship') {
                 let relationship = interaction.options.getString('relationship');
