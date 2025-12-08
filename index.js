@@ -1251,6 +1251,7 @@ client.on('interactionCreate', async (interaction) => {
                     let seconds;
                     let embed = new EmbedBuilder();
                     embed.setTitle(`Unmatched Attacks Found!`);
+                    console.log(unmatched);
                     for (const theseAttacks of unmatched) {
                         firsts = firsts.concat(theseAttacks.first + '\n');
                         seconds = seconds.concat(theseAttacks.second + '\n');
