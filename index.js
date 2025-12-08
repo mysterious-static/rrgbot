@@ -342,6 +342,19 @@ async function isPlayer(userid, guildid) {
     return false;
 }
 
+async function checkUnmatchedAttacks(guildid) {
+    let attacks = await connection.promise().query('select * from duels_attacks where guild_id = ?', [guildid]);
+    let unmatched = [];
+    for (const thisAttack of attacks[0]) {
+        for (const thisSecondAttack of attacks[0]) {
+            let matched = await connection.promise().query('select * from duels_attacks_relationships where (first_id = ? and second_id = ?) or (second_id = ? and first_id = ?)', [thisAttack.id, thisSecondAttack.id, thisAttack.id, thisSecondAttack.id]);
+            if (matched[0].length == 0) {
+                unmatched.push({ first: thisAttack.name, second: thisSecondAttack.name });
+            }
+        }
+    }
+    return unmatched;
+}
 
 
 client.on('ready', async () => {
@@ -451,6 +464,37 @@ client.on('ready', async () => {
                 .setDescription('either "disabled", "enabled", or "player_whitelists"')
                 .setRequired(true)
         ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+    let customattacks = new SlashCommandBuilder()
+        .setName('customattacks')
+        .addSubcommand(subcommand => subcommand.setName('toggle').setDescription('Enable or disable the custom attack type system.')
+            .addBooleanOption(option =>
+                option.setName('attacks_enabled')
+                    .setDescription('Whetjer or not the system is enabled.')
+                    .setRequired(true)
+            ))
+        .addSubcommand(subcommand =>
+            subcommand.setName('add')
+                .setDescription('Add a custom attack type.')
+                .addStringOption(option =>
+                    option.setName('name')
+                        .setRequired(true)
+                ))
+        .addSubcommand(subcommand =>
+            subcommand.setName('relationship')
+                .setDescription('Define the relationship between two custom attacks.')
+                .addStringOption(option =>
+                    option.setName('first_attack')
+                        .setDescription('Type the first few characters of the first attack type.').setRequired(true)
+                ).addStringOption(option => option.setName('second_attack').setDescription('Type the first few characters of the second attack type.').setRequired(true))
+                .addStringOption(option =>
+                    option.setName('relationship')
+                        .setDescription('Should the first attack "win", "lose", or "draw" against the second attack?')
+                        .setRequired(true)
+                )
+        )
+        .addSubcommand(subcommand => subcommand.setName('checkunmatched').setDescription('Check for unassigned attack relationships.'))
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
     let archetype = new SlashCommandBuilder().setName('archetype')
         .setDescription('Archetype administration.')
@@ -1055,6 +1099,7 @@ client.on('ready', async () => {
         locationglobalwrite.toJSON(),
         resetlocationvis.toJSON(),
         restrictmovement.toJSON(),
+        customattacks.toJSON(),
         player.toJSON(),
         rps.toJSON(),
         move.toJSON(),
@@ -1160,6 +1205,50 @@ client.on('interactionCreate', async (interaction) => {
                 interaction.reply({ content: 'Please select a valid movement restriction type.', flags: MessageFlags.Ephemeral });
             }
             //add to whitelist
+        } else if (interaction.commandName === 'customattacks') {
+            if (interaction.options.getSubcommand() === 'toggle') {
+                let setting_value = interaction.options.getBoolean('attacks_enabled');
+                await connection.promise().query('replace into game_settings (setting_name, setting_value, guild_id) values (?, ?, ?)', ['customattacks', (setting_value ? 1 : 0), interaction.guildId]);
+                interaction.reply({ content: 'Custom attacks system set.', flags: MessageFlags.Ephemeral });
+
+            } else if (interaction.options.getSubcommand() === 'add') {
+                let attackName = interaction.options.getString('name');
+                await connection.promise().query('insert into duels_attacks (name, guild_id) values (?, ?, ?)', [attackName, interaction.guildId]);
+                interaction.reply({ content: 'Custom attack added.', flags: MessageFlags.Ephemeral });
+            } else if (interaction.options.getSubcommand() === 'relationship') {
+                let relationship = interaction.options.getString('relationship');
+                let firstAttack = interaction.options.getString('first_attack');
+                let secondAttack = interaction.options.getString('second_attack');
+                let first_id = await connection.promise().query('select from duels_attacks where upper(name) like ? and guild_id = ?', [firstAttack + '%', interaction.guildId]);
+                let second_id = await connection.promise().query('select from duels_attacks where upper(name) like ? and guild_id = ?', [secondAttack + '%', interaction.guildId]);
+                first_id = first_id[0][0].id;
+                second_id = second_id[0][0].id;
+                if (first_id && second_id && first_id != second_id) {
+                    let dupeCheck = await connection.promise().query('select from duels_attacks_relationships where second_id = ? and first_id = ?', [first_id, second_id]); // check to see if there is already a reverse relationship
+                    if (dupeCheck[0].length > 0) {
+                        interaction.reply({ content: 'Already have this relationship defined the opposite direction.', flags: MessageFlags.Ephemeral });
+                    } else {
+                        await connection.promise().query('replace into duels_attacks_relationships values (first_id, second_id, relationship) values (?, ?, ?)', [first_id, second_id, relationship]);
+                        interaction.reply({ content: 'Relationship added or updated.', flags: MessageFlags.Ephemeral });
+                    }
+                }
+            } else if (interaction.options.getSubcommand() === 'checkunmatched') {
+                let unmatched = await checkUnmatchedAttacks(interaction.guildId); // array of objects
+                if (unmatched.length == 0) {
+                    interaction.reply('No unmatched found. This is good!')
+                } else {
+                    let firsts;
+                    let seconds;
+                    let embed = new EmbedBuilder();
+                    embed.setTitle(`Unmatched Attacks Found!`);
+                    for (const theseAttacks of unmatched) {
+                        firsts = firsts.concat(theseAttacks.first + '\n');
+                        seconds = seconds.concat(theseAttacks.second + '\n');
+                    }
+                    embed.addFields({ name: 'First Attack', value: firsts, inline: true }, { name: 'Second Attack', value: seconds, inline: true });
+                    interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
+                }
+            }
         } else if (interaction.commandName === 'locationawareness') {
             if (interaction.options.getSubcommand() === 'trading') {
                 let setting_value = interaction.options.getBoolean('enabled');
