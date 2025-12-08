@@ -4944,11 +4944,31 @@ client.on('interactionCreate', async (interaction) => {
                         queryData = [interaction.user.id, challenged.id, interaction.channel.id];
                         await connection.promise().query('insert into rps (challenger, challenged, channel) values (?, ?, ?)', queryData);
                         //Create buttons, tag both users.
-                        const rpsButtonR = new ButtonBuilder().setCustomId('rpsButtonR').setLabel('Rapid').setStyle('Primary');
-                        const rpsButtonP = new ButtonBuilder().setCustomId('rpsButtonP').setLabel('Precision').setStyle('Primary');
-                        const rpsButtonS = new ButtonBuilder().setCustomId('rpsButtonS').setLabel('Sweeping').setStyle('Primary');
-                        const rpsRow = new ActionRowBuilder().addComponents(rpsButtonR, rpsButtonP, rpsButtonS);
-                        await interaction.reply({ content: '<@' + interaction.user.id + '> has challenged <@' + challenged.id + '> to a duel!', components: [rpsRow] });
+                        let attacks_enabled = await connection().promise().query('select * from game_settings where setting_name = "attacks_enabled" and guild_id = ?', [interaction.guildId]);
+                        let unmatchedCheck;
+                        if (attacks_enabled[0].length > 0 && attacks_enabled[0][0].setting_value == true) {
+                            unmatchedCheck = checkUnmatchedAttacks(interaction.guildId);
+                        }
+                        if (attacks_enabled[0].length > 0 && attacks_enabled[0][0].setting_value == true && unmatchedCheck.length == 0) {
+                            let attacks = await connection().promise().query('select * from duels_attacks where guild_id = ?', [interaction.guildId]); // todo: we could filter by only buttons that both characters have access to
+                            let buttons = [];
+                            const rows = Math.ceil(buttons.length / 5);
+                            for (let i = 0; i < rows; i++) {
+                                const row = new MessageActionRow();
+                                for (let j = i * 5; j < (i + 1) * 5; j++) {
+                                    row.addComponents(new MessageButton().setCustomId('rpsButton' + attacks[0][j].id).setLabel(attacks[0][j].name).setStyle('Primary'));
+                                }
+                                buttons.push(row);
+                            }
+                            const embed = new MessageEmbed().setDescription('Combat: <@' + interaction.user.id + '> has challenged <@' + challenged.id + '> to a duel!');
+                            await interaction.reply({ embeds: [embed], components: buttons });
+                        } else { // Use default RPS (fallback).
+                            const rpsButtonR = new ButtonBuilder().setCustomId('rpsButtonR').setLabel('Rapid').setStyle('Primary');
+                            const rpsButtonP = new ButtonBuilder().setCustomId('rpsButtonP').setLabel('Precision').setStyle('Primary');
+                            const rpsButtonS = new ButtonBuilder().setCustomId('rpsButtonS').setLabel('Sweeping').setStyle('Primary');
+                            const rpsRow = new ActionRowBuilder().addComponents(rpsButtonR, rpsButtonP, rpsButtonS);
+                            await interaction.reply({ content: '<@' + interaction.user.id + '> has challenged <@' + challenged.id + '> to a duel!', components: [rpsRow] });
+                        }
                     }
                     //also make sure they're on the same location maybe?
                 } else {
@@ -4957,13 +4977,28 @@ client.on('interactionCreate', async (interaction) => {
                     if (rps[0].length > 0) {
                         interaction.reply({ content: 'Sorry, it looks like you\'re already in a duel!', flags: MessageFlags.Ephemeral });
                     } else {
-                        queryData = [interaction.user.id, client.user.id, interaction.channel.id];
-                        await connection.promise().query('insert into rps (challenger, challenged, channel) values (?, ?, ?)', queryData);
-                        const rpsButtonR = new ButtonBuilder().setCustomId('rpsButtonR').setLabel('Rapid').setStyle('Primary');
-                        const rpsButtonP = new ButtonBuilder().setCustomId('rpsButtonP').setLabel('Precision').setStyle('Primary');
-                        const rpsButtonS = new ButtonBuilder().setCustomId('rpsButtonS').setLabel('Sweeping').setStyle('Primary');
-                        const rpsRow = new ActionRowBuilder().addComponents(rpsButtonR, rpsButtonP, rpsButtonS);
-                        await interaction.reply({ content: '<@' + interaction.user + '> has challenged me to a duel!', components: [rpsRow] });
+                        if (attacks_enabled[0].length > 0 && attacks_enabled[0][0].setting_value == true && unmatchedCheck.length == 0) {
+                            let attacks = await connection().promise().query('select * from duels_attacks where guild_id = ?', [interaction.guildId]); // todo: we could filter by only buttons that both characters have access to
+                            let buttons = [];
+                            const rows = Math.ceil(buttons.length / 5);
+                            for (let i = 0; i < rows; i++) {
+                                const row = new MessageActionRow();
+                                for (let j = i * 5; j < (i + 1) * 5; j++) {
+                                    row.addComponents(new MessageButton().setCustomId('rpsButton' + attacks[0][j].id).setLabel(attacks[0][j].name).setStyle('Primary'));
+                                }
+                                buttons.push(row);
+                            }
+                            const embed = new MessageEmbed().setDescription('Combat: <@' + interaction.user.id + '> has challenged me to a duel!');
+                            await interaction.reply({ embeds: [embed], components: buttons });
+                        } else { // Use default RPS (fallback).
+                            queryData = [interaction.user.id, client.user.id, interaction.channel.id];
+                            await connection.promise().query('insert into rps (challenger, challenged, channel) values (?, ?, ?)', queryData);
+                            const rpsButtonR = new ButtonBuilder().setCustomId('rpsButtonR').setLabel('Rapid').setStyle('Primary');
+                            const rpsButtonP = new ButtonBuilder().setCustomId('rpsButtonP').setLabel('Precision').setStyle('Primary');
+                            const rpsButtonS = new ButtonBuilder().setCustomId('rpsButtonS').setLabel('Sweeping').setStyle('Primary');
+                            const rpsRow = new ActionRowBuilder().addComponents(rpsButtonR, rpsButtonP, rpsButtonS);
+                            await interaction.reply({ content: '<@' + interaction.user + '> has challenged me to a duel!', components: [rpsRow] });
+                        }
                     }
                 }
             } else if (interaction.commandName === 'rpsmulti') {
@@ -5802,64 +5837,138 @@ client.on('interactionCreate', async (interaction) => {
 
 
     if (interaction.isButton()) {
-        if (interaction.customId === 'rpsButtonR' || interaction.customId === 'rpsButtonP' || interaction.customId === 'rpsButtonS') {
+        if (interaction.customId.startsWith('rpsButton')) {
             let rpsthrow = interaction.customId.slice(-1);
-            let throwfull = '';
-            switch (rpsthrow) {
-                case 'R':
-                    throwfull = 'Rapid';
-                    break;
-                case 'P':
-                    throwfull = 'Precision';
-                    break;
-                case 'S':
-                    throwfull = 'Sweeping';
-                    break;
-            }
-            let queryData = [interaction.user.id, interaction.user.id];
-            let rps = await connection.promise().query('select * from rps where (challenger = ? or challenged = ?) and (challenger_throw IS NULL OR challenged_throw IS NULL)', queryData);
-            if (rps[0].length > 0 && (rpsthrow == "R" || rpsthrow == "P" || rpsthrow == "S")) {
-                let valid = 1;
-                let queryData;
-                if (rps[0][0].challenged == interaction.user.id && !rps[0][0].challenged_throw) {
-                    queryData = ['challenged_throw', rpsthrow, rps[0][0].id];
-                } else if (rps[0][0].challenger == interaction.user.id && !rps[0][0].challenger_throw) {
-                    queryData = ['challenger_throw', rpsthrow, rps[0][0].id];
-                } else {
-                    if (interaction.replied) {
-                        await interaction.followUp({ content: 'You\'ve already thrown, sorry!`.', flags: MessageFlags.Ephemeral });
+            if (rpsthrow.in(['R', 'P', 'S'])) { // If we're doing classic RPS
+                let throwfull = '';
+                switch (rpsthrow) {
+                    case 'R':
+                        throwfull = 'Rapid';
+                        break;
+                    case 'P':
+                        throwfull = 'Precision';
+                        break;
+                    case 'S':
+                        throwfull = 'Sweeping';
+                        break;
+                }
+                let queryData = [interaction.user.id, interaction.user.id];
+                let rps = await connection.promise().query('select * from rps where (challenger = ? or challenged = ?) and (challenger_throw IS NULL OR challenged_throw IS NULL)', queryData);
+                if (rps[0].length > 0 && (rpsthrow == "R" || rpsthrow == "P" || rpsthrow == "S")) {
+                    let valid = 1;
+                    let queryData;
+                    if (rps[0][0].challenged == interaction.user.id && !rps[0][0].challenged_throw) {
+                        queryData = ['challenged_throw', rpsthrow, rps[0][0].id];
+                    } else if (rps[0][0].challenger == interaction.user.id && !rps[0][0].challenger_throw) {
+                        queryData = ['challenger_throw', rpsthrow, rps[0][0].id];
                     } else {
-                        await interaction.reply({ content: 'You\'ve already thrown, sorry!`.', flags: MessageFlags.Ephemeral });
+                        if (interaction.replied) {
+                            await interaction.followUp({ content: 'You\'ve already thrown, sorry!`.', flags: MessageFlags.Ephemeral });
+                        } else {
+                            await interaction.reply({ content: 'You\'ve already thrown, sorry!`.', flags: MessageFlags.Ephemeral });
+                        }
+                        valid = 0;
                     }
-                    valid = 0;
+                    if (valid) {
+                        await connection.promise().query('update rps set ?? = ? where id = ?', queryData);
+                        rps = await connection.promise().query('select * from rps where id = ?', [rps[0][0].id]);
+
+                        if (rps[0][0].challenged_throw && rps[0][0].challenger_throw) {
+                            if (interaction.replied) {
+                                await interaction.followUp({ content: 'You threw ' + throwfull + '.', flags: MessageFlags.Ephemeral });
+                            } else {
+                                await interaction.reply({ content: 'You threw ' + throwfull + '.', flags: MessageFlags.Ephemeral });
+                            }
+                            if ((rps[0][0].challenged_throw == 'R' && rps[0][0].challenger_throw == 'P') || (rps[0][0].challenged_throw == 'P' && rps[0][0].challenger_throw == 'S') || (rps[0][0].challenged_throw == 'S' && rps[0][0].challenger_throw == 'R')) {
+                                await interaction.followUp('<@' + rps[0][0].challenger + '> has won the RPS match! (' + rps[0][0].challenger_throw + ' > ' + rps[0][0].challenged_throw + ')');
+                            } else if ((rps[0][0].challenger_throw == 'R' && rps[0][0].challenged_throw == 'P') || (rps[0][0].challenger_throw == 'P' && rps[0][0].challenged_throw == 'S') || (rps[0][0].challenger_throw == 'S' && rps[0][0].challenged_throw == 'R')) {
+                                await interaction.followUp('<@' + rps[0][0].challenged + '> has won the RPS match! (' + rps[0][0].challenged_throw + ' > ' + rps[0][0].challenger_throw + ')');
+                            } else {
+                                await interaction.followUp('The RPS round between <@' + rps[0][0].challenger + '> and <@' + rps[0][0].challenged + '> has ended in a draw. (' + rps[0][0].challenged_throw + ' = ' + rps[0][0].challenger_throw + ')');
+                            }
+                            await interaction.message.edit({ content: '<@' + rps[0][0].challenger + '> has challenged <@' + rps[0][0].challenged + '> to a duel!', components: [] });
+                        } else if (rps[0][0].challenged == client.user.id) {
+                            await interaction.reply({ content: 'You threw ' + throwfull + '.', flags: MessageFlags.Ephemeral });
+                            let options = ['R', 'P', 'S'];
+                            let selection = options[Math.floor(Math.random() * options.length)];
+                            let queryData = [selection, rps[0][0].id];
+                            await connection.promise().query('update rps set challenged_throw = ? where id = ?;', queryData);
+                            if ((selection == 'R' && rps[0][0].challenger_throw == 'P') || (selection == 'P' && rps[0][0].challenger_throw == 'S') || (selection == 'S' && rps[0][0].challenger_throw == 'R')) {
+                                await interaction.followUp('<@' + rps[0][0].challenger + '> has won the RPS match! (' + rps[0][0].challenger_throw + ' > ' + selection + ')');
+                            } else if ((rps[0][0].challenger_throw == 'R' && selection == 'P') || (rps[0][0].challenger_throw == 'P' && selection == 'S') || (rps[0][0].challenger_throw == 'S' && selection == 'R')) {
+                                await interaction.followUp('<@' + rps[0][0].challenged + '> has won the RPS match! (' + selection + ' > ' + rps[0][0].challenger_throw + ')');
+                            } else {
+                                await interaction.followUp('The RPS round between <@' + rps[0][0].challenger + '> and <@' + rps[0][0].challenged + '> has ended in a draw. (' + rps[0][0].challenger_throw + ' = ' + rps[0][0].challenger_throw + ')');
+                            }
+                            await interaction.message.edit({ content: '<@' + rps[0][0].challenger + '> has challenged <@' + rps[0][0].challenged + '> to a duel!', components: [] });
+                        } else {
+                            if (interaction.replied) {
+                                await interaction.followUp({ content: 'You threw ' + throwfull + '.', flags: MessageFlags.Ephemeral });
+                            } else {
+                                await interaction.reply({ content: 'You threw ' + throwfull + '.', flags: MessageFlags.Ephemeral });
+                            }
+                        }
+                    }
+                }
+            } else { //Custom RPS!
+                let rpsthrow = interaction.customId.replace('rpsButton', '');
+                let queryData = [interaction.user.id, interaction.user.id];
+                let rps = await connection.promise.query('select * from rps where (challenger = ? or challenged = ?) and (challenger_attack_id IS NULL or challenged_attack_id IS NULL)', queryData);
+                if (rps[0].length > 0) {
+                    let valid = 1;
+                    if (rps[0][0].challenged == interaction.user.id && !rps[0][0].challenged_attack_id) {
+                        queryData = ['challenged_attack_id', rpsthrow, rps[0][0].id];
+                    } else if (rps[0][0].challenger == interaction.user.id && !rps[0][0].challenger_attack_id) {
+                        queryData = ['challenger_attack_id', rpsthrow, rps[0][0].id];
+                    } else {
+                        if (interaction.replied) {
+                            await interaction.followUp({ content: 'You\'ve already thrown, sorry!`.', flags: MessageFlags.Ephemeral });
+                        } else {
+                            await interaction.reply({ content: 'You\'ve already thrown, sorry!`.', flags: MessageFlags.Ephemeral });
+                        }
+                        valid = 0;
+                    }
                 }
                 if (valid) {
                     await connection.promise().query('update rps set ?? = ? where id = ?', queryData);
-                    rps = await connection.promise().query(' select * from rps where id = ?', [rps[0][0].id]);
-
-                    if (rps[0][0].challenged_throw && rps[0][0].challenger_throw) {
+                    rps = await connection.promise().query('select * from rps where id = ?', rps[0][0].id);
+                    let throwfull = await connection.promise().query('select * from duels_attacks where id = ?', rpsthrow);
+                    throwfull = throwfull[0][0].name;
+                    if (rps[0][0].challenged_attack_id && rps[0][0].challenger_attack_id) {
                         if (interaction.replied) {
                             await interaction.followUp({ content: 'You threw ' + throwfull + '.', flags: MessageFlags.Ephemeral });
                         } else {
-                            await interaction.reply({ content: 'You threw ' + throwfull + '.', flags: MessageFlags.Ephemeral });
+                            await interaction.reply({ content: 'You threw' + throwfull + '.', flags: MessageFlags.Ephemeral });
                         }
-                        if ((rps[0][0].challenged_throw == 'R' && rps[0][0].challenger_throw == 'P') || (rps[0][0].challenged_throw == 'P' && rps[0][0].challenger_throw == 'S') || (rps[0][0].challenged_throw == 'S' && rps[0][0].challenger_throw == 'R')) {
-                            await interaction.followUp('<@' + rps[0][0].challenger + '> has won the RPS match! (' + rps[0][0].challenger_throw + ' > ' + rps[0][0].challenged_throw + ')');
-                        } else if ((rps[0][0].challenger_throw == 'R' && rps[0][0].challenged_throw == 'P') || (rps[0][0].challenger_throw == 'P' && rps[0][0].challenged_throw == 'S') || (rps[0][0].challenger_throw == 'S' && rps[0][0].challenged_throw == 'R')) {
-                            await interaction.followUp('<@' + rps[0][0].challenged + '> has won the RPS match! (' + rps[0][0].challenged_throw + ' > ' + rps[0][0].challenger_throw + ')');
+                        let challenger_attack = connection.promise().query('select * from duels_attacks where id = ?', [rps[0][0].challenger_attack_id]);
+                        challenger_attack = challenger_attack[0][0];
+                        let challenged_attack = connection.promise().query('select * from duels_attacks where id = ?', [rps[0][0].challenged_attack_id]);
+                        challenged_attack = challenged_attack[0][0];
+                        if (challenger_attack.id == challenged_attack.id) {
+                            await interaction.followUp('The RPS round between <@' + rps[0][0].challenger + '> and <@' + rps[0][0].challenged + '> has ended in a draw. (' + challenger_attack.name + ' = ' + challenged_attack.name + ')');
                         } else {
-                            await interaction.followUp('The RPS round between <@' + rps[0][0].challenger + '> and <@' + rps[0][0].challenged + '> has ended in a draw. (' + rps[0][0].challenged_throw + ' = ' + rps[0][0].challenger_throw + ')');
+                            let relationship = await connection.promise().query('select * from duels_attacks_relationships where (first_id = ? and second_id = ?) or (second_id = ? and first_id = ?)', [rps[0][0].challenger_attack_id, rps[0][0].challenged_attack_id, rps[0][0].challenger_attack_id, rps[0][0].challenged_attack_id]); // databsae and command design mean there will always be only one result
+                            if (rps[0][0].challenged == client.user.id) {
+                                if (relationship[0][0].first_id == challenged_attack.id && relationship[0][0].relationship == 'win' || relationship[0][0].second_id == challenged_attack.id && relationship[0][0].relationship == 'lose') {
+                                    await interaction.followUp('<@' + rps[0][0].challenged + '> has won the RPS match! (' + challenged_attack.name + ' > ' + challenger_attack.name + ')');
+                                } else if (relationship[0][0].first_id == challenger_attack.id && relationship[0][0].relationship == 'win' || relationship[0][0].second_id == challenger_attack.id && relationship[0][0].relationship == 'lose') {
+                                    await interaction.followUp('<@' + rps[0][0].challenger + '> has won the RPS match! (' + challenger_attack.name + ' > ' + challenged_attack.name + ')');
+                                } else {
+                                    await interaction.followUp('The RPS round between <@' + rps[0][0].challenger + '> and <@' + rps[0][0].challenged + '> has ended in a draw. (' + challenger_attack.name + ' = ' + challenged_attack.name + ')');
+                                }
+                                await interaction.message.edit({ content: '<@' + rps[0][0].challenger + '> has challenged <@' + rps[0][0].challenged + '> to a duel!', components: [] });
+                            }
                         }
-                        await interaction.message.edit({ content: '<@' + rps[0][0].challenger + '> has challenged <@' + rps[0][0].challenged + '> to a duel!', components: [] });
                     } else if (rps[0][0].challenged == client.user.id) {
                         await interaction.reply({ content: 'You threw ' + throwfull + '.', flags: MessageFlags.Ephemeral });
-                        let options = ['R', 'P', 'S'];
-                        let selection = options[Math.floor(Math.random() * options.length)];
-                        let queryData = [selection, rps[0][0].id];
-                        await connection.promise().query('update rps set challenged_throw = ? where id = ?;', queryData);
-                        if ((selection == 'R' && rps[0][0].challenger_throw == 'P') || (selection == 'P' && rps[0][0].challenger_throw == 'S') || (selection == 'S' && rps[0][0].challenger_throw == 'R')) {
+                        let options = await connection.promise().query('select * from duels_attacks where guild_id = ?', [interaction.guildId]); // todo: restrict based on enemy being fought (in duels)
+                        let selection = options[0][Math.floor(Math.random() * options[0].length)];
+                        let queryData = [selection.id, rps[0][0].id];
+                        await connection.promise().query('update rps set challenged_attack_id = ? where id = ?;', queryData);
+                        let relationship = await connection.promise().query('select * from duels_attacks_relationships where (first_id = ? and second_id = ?) or (second_id = ? and first_id = ?)', [rps[0][0].challenger_attack_id, selection.id, rps[0][0].challenger_attack_id, selection.id]); // databsae and command design mean there will always be only one result
+                        if (relationship[0][0].first_id == challenger_attack.id && relationship[0][0].relationship == 'win' || relationship[0][0].second_id == challenger_attack.id && relationship[0][0].relationship == 'lose') {
                             await interaction.followUp('<@' + rps[0][0].challenger + '> has won the RPS match! (' + rps[0][0].challenger_throw + ' > ' + selection + ')');
-                        } else if ((rps[0][0].challenger_throw == 'R' && selection == 'P') || (rps[0][0].challenger_throw == 'P' && selection == 'S') || (rps[0][0].challenger_throw == 'S' && selection == 'R')) {
+                        } else if (relationship[0][0].first_id == selection.id && relationship[0][0].relationship == 'win' || relationship[0][0].second_id == selection.id && relationship[0][0].relationship == 'lose') {
                             await interaction.followUp('<@' + rps[0][0].challenged + '> has won the RPS match! (' + selection + ' > ' + rps[0][0].challenger_throw + ')');
                         } else {
                             await interaction.followUp('The RPS round between <@' + rps[0][0].challenger + '> and <@' + rps[0][0].challenged + '> has ended in a draw. (' + rps[0][0].challenger_throw + ' = ' + rps[0][0].challenger_throw + ')');
