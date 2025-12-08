@@ -347,9 +347,11 @@ async function checkUnmatchedAttacks(guildid) {
     let unmatched = [];
     for (const thisAttack of attacks[0]) {
         for (const thisSecondAttack of attacks[0]) {
-            let matched = await connection.promise().query('select * from duels_attacks_relationships where (first_id = ? and second_id = ?) or (second_id = ? and first_id = ?)', [thisAttack.id, thisSecondAttack.id, thisAttack.id, thisSecondAttack.id]);
-            if (matched[0].length == 0) {
-                unmatched.push({ first: thisAttack.name, second: thisSecondAttack.name });
+            if (thisAttack.id != thisSecondAttack.id) {
+                let matched = await connection.promise().query('select * from duels_attacks_relationships where (first_id = ? and second_id = ?) or (second_id = ? and first_id = ?)', [thisAttack.id, thisSecondAttack.id, thisAttack.id, thisSecondAttack.id]);
+                if (matched[0].length == 0) {
+                    unmatched.push({ first: thisAttack.name, second: thisSecondAttack.name });
+                }
             }
         }
     }
