@@ -465,20 +465,22 @@ client.on('ready', async () => {
                 .setRequired(true)
         ).setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
-    let customattacks = new SlashCommandBuilder()
-        .setName('customattacks')
+    let customattacks = new SlashCommandBuilder().setName('customattacks')
         .setDescription('Manage custom attacks system.')
-        .addSubcommand(subcommand => subcommand.setName('toggle').setDescription('Enable or disable the custom attack type system.')
-            .addBooleanOption(option =>
-                option.setName('attacks_enabled')
-                    .setDescription('Whetjer or not the system is enabled.')
-                    .setRequired(true)
-            ))
+        .addSubcommand(subcommand =>
+            subcommand.setName('toggle')
+                .setDescription('Enable or disable the custom attack type system.')
+                .addBooleanOption(option =>
+                    option.setName('attacks_enabled')
+                        .setDescription('Whetjer or not the system is enabled.')
+                        .setRequired(true)
+                ))
         .addSubcommand(subcommand =>
             subcommand.setName('add')
                 .setDescription('Add a custom attack type.')
                 .addStringOption(option =>
                     option.setName('name')
+                        .setDescription('Name of the custom attack.')
                         .setRequired(true)
                 ))
         .addSubcommand(subcommand =>
@@ -486,15 +488,20 @@ client.on('ready', async () => {
                 .setDescription('Define the relationship between two custom attacks.')
                 .addStringOption(option =>
                     option.setName('first_attack')
-                        .setDescription('Type the first few characters of the first attack type.').setRequired(true)
-                ).addStringOption(option => option.setName('second_attack').setDescription('Type the first few characters of the second attack type.').setRequired(true))
+                        .setDescription('Type the first few characters of the first attack type.')
+                        .setRequired(true))
+                .addStringOption(option =>
+                    option.setName('second_attack')
+                        .setDescription('Type the first few characters of the second attack type.')
+                        .setRequired(true))
                 .addStringOption(option =>
                     option.setName('relationship')
                         .setDescription('Should the first attack "win", "lose", or "draw" against the second attack?')
-                        .setRequired(true)
-                )
+                        .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand.setName('checkunmatched')
+                .setDescription('Check for unassigned attack relationships.')
         )
-        .addSubcommand(subcommand => subcommand.setName('checkunmatched').setDescription('Check for unassigned attack relationships.'))
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
     let archetype = new SlashCommandBuilder().setName('archetype')
