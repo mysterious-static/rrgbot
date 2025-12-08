@@ -467,6 +467,7 @@ client.on('ready', async () => {
 
     let customattacks = new SlashCommandBuilder()
         .setName('customattacks')
+        .setDescription('Manage custom attacks system.')
         .addSubcommand(subcommand => subcommand.setName('toggle').setDescription('Enable or disable the custom attack type system.')
             .addBooleanOption(option =>
                 option.setName('attacks_enabled')
