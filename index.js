@@ -1247,8 +1247,8 @@ client.on('interactionCreate', async (interaction) => {
                 if (unmatched.length == 0) {
                     interaction.reply('No unmatched found. This is good!')
                 } else {
-                    let firsts;
-                    let seconds;
+                    let firsts = '';
+                    let seconds = '';
                     let embed = new EmbedBuilder();
                     embed.setTitle(`Unmatched Attacks Found!`);
                     console.log(unmatched);
