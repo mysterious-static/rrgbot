@@ -4957,7 +4957,7 @@ client.on('interactionCreate', async (interaction) => {
 
             } else if (interaction.commandName === 'rps') {
                 let attacks_enabled = await connection.promise().query('select * from game_settings where setting_name = "customattacks" and guild_id = ?', [interaction.guildId]);
-                let unmatchedCheck;
+                let unmatchedCheck = [];
                 if (attacks_enabled[0].length > 0) {
                     unmatchedCheck = await checkUnmatchedAttacks(interaction.guildId);
                 }
@@ -5032,7 +5032,7 @@ client.on('interactionCreate', async (interaction) => {
                         }
                     }
                 }
-            } else if (interaction.commandName === 'rpsmulti') {
+            } else if (interaction.commandName === 'rpsmulti') { // TODO add custom attacks system
                 let current_character = await connection.promise().query('select pc.character_id, c.name from players_characters pc join players p on p.id = pc.player_id join characters c on c.id = pc.character_id where p.user_id = ? and p.guild_id = ? and pc.active = 1', [interaction.user.id, interaction.guildId]);
                 if (current_character[0].length > 0) {
                     let openMultiRPS = await connection.promise().query('select * from multirps where character_id = ? and open = 1', [current_character[0][0].character_id]);
