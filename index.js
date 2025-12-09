@@ -4937,7 +4937,7 @@ client.on('interactionCreate', async (interaction) => {
                 // TODO: Separate command for administrators.
 
             } else if (interaction.commandName === 'rps') {
-                let attacks_enabled = await connection().promise().query('select * from game_settings where setting_name = "attacks_enabled" and guild_id = ?', [interaction.guildId]);
+                let attacks_enabled = await connection.promise().query('select * from game_settings where setting_name = "attacks_enabled" and guild_id = ?', [interaction.guildId]);
                 if (interaction.options.getUser('challengee')) {
                     let challenged = interaction.options.getUser('challengee');
                     let queryData = [interaction.user.id, interaction.user.id, challenged.id, challenged.id];
@@ -4981,7 +4981,7 @@ client.on('interactionCreate', async (interaction) => {
                         interaction.reply({ content: 'Sorry, it looks like you\'re already in a duel!', flags: MessageFlags.Ephemeral });
                     } else {
                         if (attacks_enabled[0].length > 0 && attacks_enabled[0][0].setting_value == true && unmatchedCheck.length == 0) {
-                            let attacks = await connection().promise().query('select * from duels_attacks where guild_id = ?', [interaction.guildId]); // todo: we could filter by only buttons that both characters have access to
+                            let attacks = await connection.promise().query('select * from duels_attacks where guild_id = ?', [interaction.guildId]); // todo: we could filter by only buttons that both characters have access to
                             let buttons = [];
                             const rows = Math.ceil(buttons.length / 5);
                             for (let i = 0; i < rows; i++) {
