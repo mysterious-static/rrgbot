@@ -1229,8 +1229,8 @@ client.on('interactionCreate', async (interaction) => {
                 let relationship = interaction.options.getString('relationship');
                 let firstAttack = interaction.options.getString('first_attack');
                 let secondAttack = interaction.options.getString('second_attack');
-                let first_id = await connection.promise().query('select from duels_attacks where upper(name) like ? and guild_id = ?', [firstAttack + '%', interaction.guildId]);
-                let second_id = await connection.promise().query('select from duels_attacks where upper(name) like ? and guild_id = ?', [secondAttack + '%', interaction.guildId]);
+                let first_id = await connection.promise().query('select * from duels_attacks where upper(name) like ? and guild_id = ?', [firstAttack + '%', interaction.guildId]);
+                let second_id = await connection.promise().query('select * from duels_attacks where upper(name) like ? and guild_id = ?', [secondAttack + '%', interaction.guildId]);
                 first_id = first_id[0][0].id;
                 second_id = second_id[0][0].id;
                 if (first_id && second_id && first_id != second_id) {
