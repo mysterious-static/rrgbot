@@ -4937,7 +4937,7 @@ client.on('interactionCreate', async (interaction) => {
                 // TODO: Separate command for administrators.
 
             } else if (interaction.commandName === 'rps') {
-                let attacks_enabled = await connection.promise().query('select * from game_settings where setting_name = "attacks_enabled" and guild_id = ?', [interaction.guildId]);
+                let attacks_enabled = await connection.promise().query('select * from game_settings where setting_name = "customattacks" and guild_id = ?', [interaction.guildId]);
                 if (interaction.options.getUser('challengee')) {
                     let challenged = interaction.options.getUser('challengee');
                     let queryData = [interaction.user.id, interaction.user.id, challenged.id, challenged.id];
