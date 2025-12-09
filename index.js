@@ -4982,6 +4982,7 @@ client.on('interactionCreate', async (interaction) => {
                         interaction.reply({ content: 'Sorry, it looks like you\'re already in a duel!', flags: MessageFlags.Ephemeral });
                     } else {
                         if (attacks_enabled[0].length > 0 && attacks_enabled[0][0].setting_value == true && unmatchedCheck.length == 0) {
+                            await connection.promise().query('insert into rps (challenger, challenged, channel) values (?, ?, ?)', queryData);
                             let attacks = await connection.promise().query('select * from duels_attacks where guild_id = ?', [interaction.guildId]); // todo: we could filter by only buttons that both characters have access to\
                             console.log(attacks[0]);
                             let buttons = [];
