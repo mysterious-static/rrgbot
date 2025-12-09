@@ -5842,7 +5842,7 @@ client.on('interactionCreate', async (interaction) => {
     if (interaction.isButton()) {
         if (interaction.customId.startsWith('rpsButton')) {
             let rpsthrow = interaction.customId.slice(-1);
-            if (rpsthrow.in(['R', 'P', 'S'])) { // If we're doing classic RPS
+            if (['R', 'P', 'S'].contains(rpsthrow)) { // If we're doing classic RPS
                 let throwfull = '';
                 switch (rpsthrow) {
                     case 'R':
