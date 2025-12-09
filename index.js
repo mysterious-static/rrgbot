@@ -1,6 +1,6 @@
 /*jslint es6*/
 const Discord = require('discord.js');
-const { ChannelType, ModalBuilder, TextInputBuilder, ActionRowBuilder, ButtonBuilder, EmbedBuilder, TextInputComponent, StringSelectMenuBuilder, RoleSelectMenuBuilder, TextInputStyle, PermissionFlagsBits, PermissionsBitField, GatewayIntentBits, SlashCommandBuilder, ButtonStyle, MessageFlags, MessageActionRow, MessageButton, MessageEmbed } = require('discord.js')
+const { ChannelType, ModalBuilder, TextInputBuilder, ActionRowBuilder, ButtonBuilder, EmbedBuilder, TextInputComponent, StringSelectMenuBuilder, RoleSelectMenuBuilder, TextInputStyle, PermissionFlagsBits, PermissionsBitField, GatewayIntentBits, SlashCommandBuilder, ButtonStyle, MessageFlags, MessageActionRow, MessageButton } = require('discord.js')
 const client = new Discord.Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildWebhooks, GatewayIntentBits.GuildMessageReactions, GatewayIntentBits.GuildEmojisAndStickers, GatewayIntentBits.GuildMembers] });
 const mysql = require('mysql2');
 const connection = mysql.createConnection({
@@ -4964,7 +4964,7 @@ client.on('interactionCreate', async (interaction) => {
                                 }
                                 buttons.push(row);
                             }
-                            const embed = new MessageEmbed().setDescription('Combat: <@' + interaction.user.id + '> has challenged <@' + challenged.id + '> to a duel!');
+                            const embed = new EmbedBuilder().setDescription('Combat: <@' + interaction.user.id + '> has challenged <@' + challenged.id + '> to a duel!');
                             await interaction.reply({ embeds: [embed], components: buttons });
                         } else { // Use default RPS (fallback).
                             const rpsButtonR = new ButtonBuilder().setCustomId('rpsButtonR').setLabel('Rapid').setStyle('Primary');
@@ -4992,7 +4992,7 @@ client.on('interactionCreate', async (interaction) => {
                                 }
                                 buttons.push(row);
                             }
-                            const embed = new MessageEmbed().setDescription('Combat: <@' + interaction.user.id + '> has challenged me to a duel!');
+                            const embed = new EmbedBuilder().setDescription('Combat: <@' + interaction.user.id + '> has challenged me to a duel!');
                             await interaction.reply({ embeds: [embed], components: buttons });
                         } else { // Use default RPS (fallback).
                             queryData = [interaction.user.id, client.user.id, interaction.channel.id];
