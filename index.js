@@ -486,6 +486,14 @@ client.on('ready', async () => {
                         .setRequired(true)
                 ))
         .addSubcommand(subcommand =>
+            subcommand.setName('remove')
+                .setDescription('Remove a custom attack type.')
+                .addStringOption(option =>
+                    option.setName('name')
+                        .setDescription('The first few characters of the attack name.')
+                        .setRequired(true)
+                ))
+        .addSubcommand(subcommand =>
             subcommand.setName('relationship')
                 .setDescription('Define the relationship between two custom attacks.')
                 .addStringOption(option =>
@@ -1225,6 +1233,17 @@ client.on('interactionCreate', async (interaction) => {
                 let attackName = interaction.options.getString('name');
                 await connection.promise().query('insert into duels_attacks (name, guild_id) values (?, ?)', [attackName, interaction.guildId]);
                 interaction.reply({ content: 'Custom attack added.', flags: MessageFlags.Ephemeral });
+            } else if (interaction.options.getSubcommand() === 'remove') {
+                let attackName = interaction.options.getString('name');
+                let existing = await connection.promise().query('select * from duels_attacks where guild_id = ? and upper(name) like ?', [interaction.guildId, attackName + '%']);
+                if (existing[0].length == 0) {
+                    interaction.reply({message: 'No attack found matching that name.', flags: MessageFlags.Ephemeral});
+                } else if (existing[0].length == 1) {
+                    await connection.promise().query('delete from duels_attacks where id = ?', existing[0][0].id);
+                    interaction.reply({message: 'Attack removed.', flags: MessageFlags.Ephemeral});
+                } else {
+                    interaction.reply({message: 'More than one matching attack found.', flags: MessageFlags.Ephemeral});
+                }
             } else if (interaction.options.getSubcommand() === 'relationship') {
                 let relationship = interaction.options.getString('relationship');
                 let firstAttack = interaction.options.getString('first_attack');
