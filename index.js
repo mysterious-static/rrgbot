@@ -1234,7 +1234,7 @@ client.on('interactionCreate', async (interaction) => {
                 first_id = first_id[0][0].id;
                 second_id = second_id[0][0].id;
                 if (first_id && second_id && first_id != second_id) {
-                    let dupeCheck = await connection.promise().query('select from duels_attacks_relationships where second_id = ? and first_id = ?', [first_id, second_id]); // check to see if there is already a reverse relationship
+                    let dupeCheck = await connection.promise().query('select * from duels_attacks_relationships where second_id = ? and first_id = ?', [first_id, second_id]); // check to see if there is already a reverse relationship
                     if (dupeCheck[0].length > 0) {
                         interaction.reply({ content: 'Already have this relationship defined the opposite direction.', flags: MessageFlags.Ephemeral });
                     } else {
