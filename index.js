@@ -5929,9 +5929,9 @@ client.on('interactionCreate', async (interaction) => {
                 let valid = 1;
                 if (rps[0].length > 0) {
                     console.log(rps[0][0]);
-                    if (rps[0][0].challenged == interaction.user.id && rps[0][0].challenged_attack_id == false) {
+                    if (rps[0][0].challenged == interaction.user.id && rps[0][0].challenged_attack_id == null) {
                         queryData = ['challenged_attack_id', rpsthrow, rps[0][0].id];
-                    } else if (rps[0][0].challenger == interaction.user.id && rps[0][0].challenger_attack_id == false) {
+                    } else if (rps[0][0].challenger == interaction.user.id && rps[0][0].challenger_attack_id == null) {
                         queryData = ['challenger_attack_id', rpsthrow, rps[0][0].id];
                     } else {
                         if (interaction.replied) {
