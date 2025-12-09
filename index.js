@@ -4941,13 +4941,13 @@ client.on('interactionCreate', async (interaction) => {
                     let challenged = interaction.options.getUser('challengee');
                     let queryData = [interaction.user.id, interaction.user.id, challenged.id, challenged.id];
                     let rps = await connection.promise().query('select * from rps where (challenger = ? or challenged = ? or challenger = ? or challenged = ?) and (challenger_throw is null or challenged_throw is null);', queryData);
+                    let attacks_enabled = await connection().promise().query('select * from game_settings where setting_name = "attacks_enabled" and guild_id = ?', [interaction.guildId]);
                     if (rps[0].length > 0) {
                         interaction.reply({ content: 'Sorry, it looks like either you or your target is already in a duel!', flags: MessageFlags.Ephemeral });
                     } else {
                         queryData = [interaction.user.id, challenged.id, interaction.channel.id];
                         await connection.promise().query('insert into rps (challenger, challenged, channel) values (?, ?, ?)', queryData);
                         //Create buttons, tag both users.
-                        let attacks_enabled = await connection().promise().query('select * from game_settings where setting_name = "attacks_enabled" and guild_id = ?', [interaction.guildId]);
                         let unmatchedCheck;
                         if (attacks_enabled[0].length > 0 && attacks_enabled[0][0].setting_value == true) {
                             unmatchedCheck = checkUnmatchedAttacks(interaction.guildId);
