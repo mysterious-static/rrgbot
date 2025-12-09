@@ -4937,11 +4937,11 @@ client.on('interactionCreate', async (interaction) => {
                 // TODO: Separate command for administrators.
 
             } else if (interaction.commandName === 'rps') {
+                let attacks_enabled = await connection().promise().query('select * from game_settings where setting_name = "attacks_enabled" and guild_id = ?', [interaction.guildId]);
                 if (interaction.options.getUser('challengee')) {
                     let challenged = interaction.options.getUser('challengee');
                     let queryData = [interaction.user.id, interaction.user.id, challenged.id, challenged.id];
                     let rps = await connection.promise().query('select * from rps where (challenger = ? or challenged = ? or challenger = ? or challenged = ?) and (challenger_throw is null or challenged_throw is null);', queryData);
-                    let attacks_enabled = await connection().promise().query('select * from game_settings where setting_name = "attacks_enabled" and guild_id = ?', [interaction.guildId]);
                     if (rps[0].length > 0) {
                         interaction.reply({ content: 'Sorry, it looks like either you or your target is already in a duel!', flags: MessageFlags.Ephemeral });
                     } else {
