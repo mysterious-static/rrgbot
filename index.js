@@ -5873,9 +5873,9 @@ client.on('interactionCreate', async (interaction) => {
                         queryData = ['challenger_throw', rpsthrow, rps[0][0].id];
                     } else {
                         if (interaction.replied) {
-                            await interaction.followUp({ content: 'You\'ve already thrown, sorry!`.', flags: MessageFlags.Ephemeral });
+                            await interaction.followUp({ content: 'You\'ve already thrown, sorry!.', flags: MessageFlags.Ephemeral });
                         } else {
-                            await interaction.reply({ content: 'You\'ve already thrown, sorry!`.', flags: MessageFlags.Ephemeral });
+                            await interaction.reply({ content: 'You\'ve already thrown, sorry!.', flags: MessageFlags.Ephemeral });
                         }
                         valid = 0;
                     }
@@ -5926,15 +5926,15 @@ client.on('interactionCreate', async (interaction) => {
                 let rps = await connection.promise().query('select * from rps where (challenger = ? or challenged = ?) and (challenger_attack_id IS NULL or challenged_attack_id IS NULL)', queryData);
                 let valid = 1;
                 if (rps[0].length > 0) {
-                    if (rps[0][0].challenged == interaction.user.id && !rps[0][0].challenged_attack_id) {
+                    if (rps[0][0].challenged == interaction.user.id && rps[0][0].challenged_attack_id == false) {
                         queryData = ['challenged_attack_id', rpsthrow, rps[0][0].id];
-                    } else if (rps[0][0].challenger == interaction.user.id && !rps[0][0].challenger_attack_id) {
+                    } else if (rps[0][0].challenger == interaction.user.id && rps[0][0].challenger_attack_id == false) {
                         queryData = ['challenger_attack_id', rpsthrow, rps[0][0].id];
                     } else {
                         if (interaction.replied) {
-                            await interaction.followUp({ content: 'You\'ve already thrown, sorry!`.', flags: MessageFlags.Ephemeral });
+                            await interaction.followUp({ content: 'You\'ve already thrown, sorry!.', flags: MessageFlags.Ephemeral });
                         } else {
-                            await interaction.reply({ content: 'You\'ve already thrown, sorry!`.', flags: MessageFlags.Ephemeral });
+                            await interaction.reply({ content: 'You\'ve already thrown, sorry!.', flags: MessageFlags.Ephemeral });
                         }
                         valid = 0;
                     }
