@@ -4938,6 +4938,10 @@ client.on('interactionCreate', async (interaction) => {
 
             } else if (interaction.commandName === 'rps') {
                 let attacks_enabled = await connection.promise().query('select * from game_settings where setting_name = "customattacks" and guild_id = ?', [interaction.guildId]);
+                let unmatchedCheck;
+                if (attacks_enabled[0].length > 0) {
+                    unmatchedCheck = await checkUnmatchedAttacks(interaction.guildId);
+                }
                 if (interaction.options.getUser('challengee')) {
                     let challenged = interaction.options.getUser('challengee');
                     let queryData = [interaction.user.id, interaction.user.id, challenged.id, challenged.id];
@@ -4949,9 +4953,6 @@ client.on('interactionCreate', async (interaction) => {
                         await connection.promise().query('insert into rps (challenger, challenged, channel) values (?, ?, ?)', queryData);
                         //Create buttons, tag both users.
                         let unmatchedCheck;
-                        if (attacks_enabled[0].length > 0 && attacks_enabled[0][0].setting_value == true) {
-                            unmatchedCheck = checkUnmatchedAttacks(interaction.guildId);
-                        }
                         if (attacks_enabled[0].length > 0 && attacks_enabled[0][0].setting_value == true && unmatchedCheck.length == 0) {
                             let attacks = await connection().promise().query('select * from duels_attacks where guild_id = ?', [interaction.guildId]); // todo: we could filter by only buttons that both characters have access to
                             let buttons = [];
