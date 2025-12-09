@@ -5865,7 +5865,7 @@ client.on('interactionCreate', async (interaction) => {
                         break;
                 }
                 let queryData = [interaction.user.id, interaction.user.id];
-                let rps = await connection.promise().query('select * from rps where (challenger = ? or challenged = ?) and (challenger_throw IS NULL OR challenged_throw IS NULL)', queryData);
+                let rps = await connection.promise().query('select * from rps where (challenger = ? or challenged = ?) and (challenger_throw IS NULL OR challenged_throw IS NULL) and challenger_attack_id IS NULL', queryData);
                 if (rps[0].length > 0 && (rpsthrow == "R" || rpsthrow == "P" || rpsthrow == "S")) {
                     let valid = 1;
                     let queryData;
@@ -5925,7 +5925,7 @@ client.on('interactionCreate', async (interaction) => {
             } else { //Custom RPS!
                 let rpsthrow = interaction.customId.replace('rpsButton', '');
                 let queryData = [interaction.user.id, interaction.user.id];
-                let rps = await connection.promise().query('select * from rps where (challenger = ? or challenged = ?) and (challenger_attack_id IS NULL or challenged_attack_id IS NULL)', queryData);
+                let rps = await connection.promise().query('select * from rps where (challenger = ? or challenged = ?) and (challenger_attack_id IS NULL or challenged_attack_id IS NULL) and challenger_throw IS NULL ', queryData);
                 let valid = 1;
                 if (rps[0].length > 0) {
                     if (rps[0][0].challenged == interaction.user.id && rps[0][0].challenged_attack_id == false) {
