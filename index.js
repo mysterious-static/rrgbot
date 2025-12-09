@@ -4982,7 +4982,8 @@ client.on('interactionCreate', async (interaction) => {
                         interaction.reply({ content: 'Sorry, it looks like you\'re already in a duel!', flags: MessageFlags.Ephemeral });
                     } else {
                         if (attacks_enabled[0].length > 0 && attacks_enabled[0][0].setting_value == true && unmatchedCheck.length == 0) {
-                            let attacks = await connection.promise().query('select * from duels_attacks where guild_id = ?', [interaction.guildId]); // todo: we could filter by only buttons that both characters have access to
+                            let attacks = await connection.promise().query('select * from duels_attacks where guild_id = ?', [interaction.guildId]); // todo: we could filter by only buttons that both characters have access to\
+                            console.log(attacks);
                             let buttons = [];
                             const rows = Math.ceil(buttons.length / 5);
                             for (let i = 0; i < rows; i++) {
@@ -4994,6 +4995,7 @@ client.on('interactionCreate', async (interaction) => {
                                 }
                                 buttons.push(row);
                             }
+                            console.log(buttons);
                             const embed = new EmbedBuilder().setDescription('Combat: <@' + interaction.user.id + '> has challenged me to a duel!');
                             await interaction.reply({ embeds: [embed], components: buttons });
                         } else { // Use default RPS (fallback).
