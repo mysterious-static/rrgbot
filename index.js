@@ -1238,7 +1238,7 @@ client.on('interactionCreate', async (interaction) => {
                     if (dupeCheck[0].length > 0) {
                         interaction.reply({ content: 'Already have this relationship defined the opposite direction.', flags: MessageFlags.Ephemeral });
                     } else {
-                        await connection.promise().query('replace into duels_attacks_relationships values (first_id, second_id, relationship) values (?, ?, ?)', [first_id, second_id, relationship]);
+                        await connection.promise().query('replace into duels_attacks_relationships (first_id, second_id, relationship) values (?, ?, ?)', [first_id, second_id, relationship]);
                         interaction.reply({ content: 'Relationship added or updated.', flags: MessageFlags.Ephemeral });
                     }
                 }
