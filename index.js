@@ -5974,6 +5974,8 @@ client.on('interactionCreate', async (interaction) => {
                         let options = await connection.promise().query('select * from duels_attacks where guild_id = ?', [interaction.guildId]); // todo: restrict based on enemy being fought (in duels)
                         let selection = options[0][Math.floor(Math.random() * options[0].length)];
                         let queryData = [selection.id, rps[0][0].id];
+                        let challenger_attack = connection.promise().query('select * from duels_attacks where id = ?', [rps[0][0].challenger_attack_id]);
+                        challenger_attack = challenger_attack[0][0];
                         await connection.promise().query('update rps set challenged_attack_id = ? where id = ?;', queryData);
                         let relationship = await connection.promise().query('select * from duels_attacks_relationships where (first_id = ? and second_id = ?) or (second_id = ? and first_id = ?)', [rps[0][0].challenger_attack_id, selection.id, rps[0][0].challenger_attack_id, selection.id]); // databsae and command design mean there will always be only one result
                         console.log(relationship[0]);
