@@ -5983,9 +5983,9 @@ client.on('interactionCreate', async (interaction) => {
                         let relationship = await connection.promise().query('select * from duels_attacks_relationships where (first_id = ? and second_id = ?) or (second_id = ? and first_id = ?)', [rps[0][0].challenger_attack_id, selection.id, rps[0][0].challenger_attack_id, selection.id]); // databsae and command design mean there will always be only one result
                         console.log(relationship[0]);
                         if (relationship[0][0].first_id == challenger_attack.id && relationship[0][0].relationship == 'win' || relationship[0][0].second_id == challenger_attack.id && relationship[0][0].relationship == 'lose') {
-                            await interaction.followUp('<@' + rps[0][0].challenger + '> has won the RPS match! (' + rps[0][0].challenger_throw + ' > ' + selection + ')');
+                            await interaction.followUp('<@' + rps[0][0].challenger + '> has won the RPS match! (' + challenger_attack.name + ' > ' + selection.name + ')');
                         } else if (relationship[0][0].first_id == selection.id && relationship[0][0].relationship == 'win' || relationship[0][0].second_id == selection.id && relationship[0][0].relationship == 'lose') {
-                            await interaction.followUp('<@' + rps[0][0].challenged + '> has won the RPS match! (' + selection + ' > ' + rps[0][0].challenger_throw + ')');
+                            await interaction.followUp('<@' + rps[0][0].challenged + '> has won the RPS match! (' + selection.name + ' > ' + challenger_attack.name + ')');
                         } else {
                             await interaction.followUp('The RPS round between <@' + rps[0][0].challenger + '> and <@' + rps[0][0].challenged + '> has ended in a draw. (' + rps[0][0].challenger_throw + ' = ' + rps[0][0].challenger_throw + ')');
                         }
