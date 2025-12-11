@@ -4972,7 +4972,7 @@ client.on('interactionCreate', async (interaction) => {
                         await connection.promise().query('insert into rps (challenger, challenged, channel) values (?, ?, ?)', queryData);
                         //Create buttons, tag both users.
                         if (attacks_enabled[0].length > 0 && attacks_enabled[0][0].setting_value == true && unmatchedCheck.length == 0) {
-                            let attacks = await connection().promise().query('select * from duels_attacks where guild_id = ?', [interaction.guildId]); // todo: we could filter by only buttons that both characters have access to
+                            let attacks = await connection.promise().query('select * from duels_attacks where guild_id = ?', [interaction.guildId]); // todo: we could filter by only buttons that both characters have access to
                             let buttons = [];
                             const rows = Math.ceil(buttons.length / 5);
                             for (let i = 0; i < rows; i++) {
