@@ -5942,8 +5942,8 @@ client.on('interactionCreate', async (interaction) => {
                 }
             } else { //Custom RPS!
                 let rpsthrow = interaction.customId.replace('rpsButton', '');
-                let queryData = [interaction.user.id, interaction.user.id];
-                let rps = await connection.promise().query('select * from rps where (challenger = ? or challenged = ?) and (challenger_attack_id IS NULL or challenged_attack_id IS NULL) and challenger_throw IS NULL ', queryData);
+                let queryData;
+                let rps = await connection.promise().query('select * from rps where (challenger = ? or challenged = ?) and (challenger_attack_id IS NULL or challenged_attack_id IS NULL) and challenger_throw IS NULL ', [interaction.user.id, interaction.user.id]);
                 let valid = 1;
                 if (rps[0].length > 0) {
                     console.log(rps[0][0]);
