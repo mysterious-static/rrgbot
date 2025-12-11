@@ -4974,7 +4974,7 @@ client.on('interactionCreate', async (interaction) => {
                         if (attacks_enabled[0].length > 0 && attacks_enabled[0][0].setting_value == true && unmatchedCheck.length == 0) {
                             let attacks = await connection.promise().query('select * from duels_attacks where guild_id = ?', [interaction.guildId]); // todo: we could filter by only buttons that both characters have access to
                             let buttons = [];
-                            const rows = Math.ceil(buttons.length / 5);
+                            const rows = Math.ceil(attacks.length / 5);
                             for (let i = 0; i < rows; i++) {
                                 const row = new ActionRowBuilder();
                                 for (let j = i * 5; j < (i + 1) * 5; j++) {
