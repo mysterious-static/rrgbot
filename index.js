@@ -5976,9 +5976,9 @@ client.on('interactionCreate', async (interaction) => {
                         } else {
                             await interaction.reply({ content: 'You threw ' + throwfull + '.', flags: MessageFlags.Ephemeral });
                         }
-                        let challenger_attack = connection.promise().query('select * from duels_attacks where id = ?', [rps[0][0].challenger_attack_id]);
+                        let challenger_attack = await connection.promise().query('select * from duels_attacks where id = ?', [rps[0][0].challenger_attack_id]);
                         challenger_attack = challenger_attack[0][0];
-                        let challenged_attack = connection.promise().query('select * from duels_attacks where id = ?', [rps[0][0].challenged_attack_id]);
+                        let challenged_attack = await connection.promise().query('select * from duels_attacks where id = ?', [rps[0][0].challenged_attack_id]);
                         challenged_attack = challenged_attack[0][0];
                         if (challenger_attack.id == challenged_attack.id) {
                             await interaction.followUp('The RPS round between <@' + rps[0][0].challenger + '> and <@' + rps[0][0].challenged + '> has ended in a draw. (' + challenger_attack.name + ' = ' + challenged_attack.name + ')');
