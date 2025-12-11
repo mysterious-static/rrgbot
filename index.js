@@ -5987,6 +5987,7 @@ client.on('interactionCreate', async (interaction) => {
                         } else {
                             console.log('relationship check');
                             let relationship = await connection.promise().query('select * from duels_attacks_relationships where (first_id = ? and second_id = ?) or (second_id = ? and first_id = ?)', [challenger_attack.id, challenged_attack.id, challenger_attack.id, challenged_attack.id]); // databsae and command design mean there will always be only one result
+                            console.log(relationship[0][0]);
                             if (rps[0][0].challenged == client.user.id) {
                                 if (relationship[0].length > 0 && (relationship[0][0].first_id == challenged_attack.id && relationship[0][0].relationship == 'win' || relationship[0][0].second_id == challenged_attack.id && relationship[0][0].relationship == 'lose')) {
                                     await interaction.followUp('<@' + rps[0][0].challenged + '> has won the RPS match! (' + challenged_attack.name + ' > ' + challenger_attack.name + ')');
