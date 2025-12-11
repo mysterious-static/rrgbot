@@ -6008,7 +6008,7 @@ client.on('interactionCreate', async (interaction) => {
                         } else if (relationship[0].length > 0 && (relationship[0][0].first_id == selection.id && relationship[0][0].relationship == 'win' || relationship[0][0].second_id == selection.id && relationship[0][0].relationship == 'lose')) {
                             await interaction.followUp('<@' + rps[0][0].challenged + '> has won the RPS match! (' + selection.name + ' > ' + challenger_attack.name + ')');
                         } else {
-                            await interaction.followUp('The RPS round between <@' + rps[0][0].challenger + '> and <@' + rps[0][0].challenged + '> has ended in a draw. (' + rps[0][0].challenger_throw + ' = ' + rps[0][0].challenger_throw + ')');
+                            await interaction.followUp('The RPS round between <@' + rps[0][0].challenger + '> and <@' + rps[0][0].challenged + '> has ended in a draw. (' + challenger_attack.name + ' = ' + challenger_attack.name + ')');
                         }
                         await interaction.message.edit({ content: '<@' + rps[0][0].challenger + '> has challenged <@' + rps[0][0].challenged + '> to a duel!', components: [] });
                     } else {
