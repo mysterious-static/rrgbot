@@ -1237,12 +1237,12 @@ client.on('interactionCreate', async (interaction) => {
                 let attackName = interaction.options.getString('name');
                 let existing = await connection.promise().query('select * from duels_attacks where guild_id = ? and upper(name) like ?', [interaction.guildId, attackName + '%']);
                 if (existing[0].length == 0) {
-                    interaction.reply({message: 'No attack found matching that name.', flags: MessageFlags.Ephemeral});
+                    interaction.reply({ message: 'No attack found matching that name.', flags: MessageFlags.Ephemeral });
                 } else if (existing[0].length == 1) {
                     await connection.promise().query('delete from duels_attacks where id = ?', existing[0][0].id);
-                    interaction.reply({message: 'Attack removed.', flags: MessageFlags.Ephemeral});
+                    interaction.reply({ message: 'Attack removed.', flags: MessageFlags.Ephemeral });
                 } else {
-                    interaction.reply({message: 'More than one matching attack found.', flags: MessageFlags.Ephemeral});
+                    interaction.reply({ message: 'More than one matching attack found.', flags: MessageFlags.Ephemeral });
                 }
             } else if (interaction.options.getSubcommand() === 'relationship') {
                 let relationship = interaction.options.getString('relationship');
@@ -4980,7 +4980,8 @@ client.on('interactionCreate', async (interaction) => {
                                 const row = new ActionRowBuilder();
                                 for (let j = i * 5; j < (i + 1) * 5; j++) {
                                     console.log(attacks[0][j]);
-                                    row.addComponents(new ButtonBuilder().setCustomId('rpsButton' + attacks[0][j].id).setLabel(attacks[0][j].name).setStyle('Primary'));
+                                    if (attacks[0][j] != undefined)
+                                        row.addComponents(new ButtonBuilder().setCustomId('rpsButton' + attacks[0][j].id).setLabel(attacks[0][j].name).setStyle('Primary'));
                                 }
                                 buttons.push(row);
                             }
@@ -5014,7 +5015,8 @@ client.on('interactionCreate', async (interaction) => {
                                     console.log(j);
                                     if (attacks[0][j]) {
                                         console.log(attacks[0][j]);
-                                        row.addComponents(new ButtonBuilder().setCustomId('rpsButton' + attacks[0][j].id).setLabel(attacks[0][j].name).setStyle('Primary'));
+                                        if (attacks[0][j] != undefined)
+                                            row.addComponents(new ButtonBuilder().setCustomId('rpsButton' + attacks[0][j].id).setLabel(attacks[0][j].name).setStyle('Primary'));
                                     }
                                 }
                                 buttons.push(row);
