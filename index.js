@@ -5968,14 +5968,13 @@ client.on('interactionCreate', async (interaction) => {
                 if (valid == 1) {
                     await connection.promise().query('update rps set ?? = ? where id = ?', queryData);
                     rps = await connection.promise().query('select * from rps where id = ?', rps[0][0].id);
-                    console.log
                     let throwfull = await connection.promise().query('select * from duels_attacks where id = ?', rpsthrow);
                     throwfull = throwfull[0][0].name;
                     if (rps[0][0].challenged_attack_id && rps[0][0].challenger_attack_id) {
                         if (interaction.replied) {
                             await interaction.followUp({ content: 'You threw ' + throwfull + '.', flags: MessageFlags.Ephemeral });
                         } else {
-                            await interaction.reply({ content: 'You threw' + throwfull + '.', flags: MessageFlags.Ephemeral });
+                            await interaction.reply({ content: 'You threw ' + throwfull + '.', flags: MessageFlags.Ephemeral });
                         }
                         let challenger_attack = connection.promise().query('select * from duels_attacks where id = ?', [rps[0][0].challenger_attack_id]);
                         challenger_attack = challenger_attack[0][0];
