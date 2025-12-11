@@ -4976,7 +4976,7 @@ client.on('interactionCreate', async (interaction) => {
                             let buttons = [];
                             const rows = Math.ceil(buttons.length / 5);
                             for (let i = 0; i < rows; i++) {
-                                const row = new MessageActionRow();
+                                const row = new ActionRowBuilder();
                                 for (let j = i * 5; j < (i + 1) * 5; j++) {
                                     row.addComponents(new MessageButton().setCustomId('rpsButton' + attacks[0][j].id).setLabel(attacks[0][j].name).setStyle('Primary'));
                                 }
