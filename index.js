@@ -5994,7 +5994,7 @@ client.on('interactionCreate', async (interaction) => {
                                 } else {
                                     await interaction.followUp('The RPS round between <@' + rps[0][0].challenger + '> and <@' + rps[0][0].challenged + '> has ended in a draw. (' + challenger_attack.name + ' = ' + challenged_attack.name + ')');
                                 }
-                                await interaction.message.edit({ content: '<@' + rps[0][0].challenger + '> has challenged <@' + rps[0][0].challenged + '> to a duel!', components: [] });
+                                await interaction.message.edit({components: [] });
                             }
                         }
                     } else if (rps[0][0].challenged == client.user.id) {
@@ -6016,7 +6016,7 @@ client.on('interactionCreate', async (interaction) => {
                         } else {
                             await interaction.followUp('The RPS round between <@' + rps[0][0].challenger + '> and <@' + rps[0][0].challenged + '> has ended in a draw. (' + challenger_attack.name + ' = ' + challenger_attack.name + ')');
                         }
-                        await interaction.message.edit({ content: '<@' + rps[0][0].challenger + '> has challenged <@' + rps[0][0].challenged + '> to a duel!', components: [] });
+                        await interaction.message.edit({components: [] });
                     } else {
                         if (interaction.replied) {
                             await interaction.followUp({ content: 'You threw ' + throwfull + '.', flags: MessageFlags.Ephemeral });
