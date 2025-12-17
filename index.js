@@ -4986,7 +4986,7 @@ client.on('interactionCreate', async (interaction) => {
                                 buttons.push(row);
                             }
                             const embed = new EmbedBuilder().setDescription('Combat: <@' + interaction.user.id + '> has challenged <@' + challenged.id + '> to a duel!');
-                            await interaction.reply({ embeds: [embed], components: buttons });
+                            await interaction.reply({ content: '<@' + interaction.user.id + '> <@' + challenged.id + '>', embeds: [embed], components: buttons });
                         } else { // Use default RPS (fallback).
                             const rpsButtonR = new ButtonBuilder().setCustomId('rpsButtonR').setLabel('Rapid').setStyle('Primary');
                             const rpsButtonP = new ButtonBuilder().setCustomId('rpsButtonP').setLabel('Precision').setStyle('Primary');
