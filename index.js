@@ -5949,7 +5949,6 @@ client.on('interactionCreate', async (interaction) => {
                 let rpsthrow = interaction.customId.replace('rpsButton', '');
                 let queryData;
                 let rps = await connection.promise().query('select * from rps where (challenger = ? or challenged = ?) and (challenger_attack_id IS NULL or challenged_attack_id IS NULL) and challenger_throw IS NULL ', [interaction.user.id, interaction.user.id]);
-                let valid = 1;
                 if (rps[0].length > 0) {
                     console.log(rps[0][0]);
                     if (rps[0][0].challenged == interaction.user.id && rps[0][0].challenged_attack_id == null) {
@@ -5962,10 +5961,9 @@ client.on('interactionCreate', async (interaction) => {
                         } else {
                             await interaction.reply({ content: 'You\'ve already thrown, sorry!.', flags: MessageFlags.Ephemeral });
                         }
-                        valid = 0;
                     }
                 }
-                if (valid == 1) {
+                if (Array.isArray(queryData)) {
                     console.log('pvp enabled - logging');
                     await connection.promise().query('update rps set ?? = ? where id = ?', queryData);
                     rps = await connection.promise().query('select * from rps where id = ?', rps[0][0].id);
