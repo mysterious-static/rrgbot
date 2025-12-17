@@ -4963,8 +4963,8 @@ client.on('interactionCreate', async (interaction) => {
                 }
                 if (interaction.options.getUser('challengee')) {
                     let challenged = interaction.options.getUser('challengee');
-                    let queryData = [interaction.user.id, interaction.user.id, challenged.id, challenged.id];
-                    let rps = await connection.promise().query('select * from rps where (challenger = ? or challenged = ? or challenger = ? or challenged = ?) and ((challenger_throw is null or challenged_throw is null) and (challenged_attack_id is null or challenger_attack_id is null))', queryData);
+                    let queryData = [interaction.user.id, interaction.user.id, challenged.id, challenged.id, interaction.channel.id];
+                    let rps = await connection.promise().query('select * from rps where (challenger = ? or challenged = ? or challenger = ? or challenged = ?) and ((challenger_throw is null or challenged_throw is null) and (challenged_attack_id is null or challenger_attack_id is null)) and channel = ?', queryData); // and filter by interaction.channel.id
                     if (rps[0].length > 0) {
                         interaction.reply({ content: 'Sorry, it looks like either you or your target is already in a duel!', flags: MessageFlags.Ephemeral });
                     } else {
@@ -4997,8 +4997,8 @@ client.on('interactionCreate', async (interaction) => {
                     }
                     //also make sure they're on the same location maybe?
                 } else {
-                    let queryData = [interaction.user.id, interaction.user.id];
-                    let rps = await connection.promise().query('select * from rps where (challenger = ? or challenged = ?) and ((challenger_throw is null or challenged_throw is null) and (challenged_attack_id is null or challenger_attack_id is null))', queryData);
+                    let queryData = [interaction.user.id, interaction.user.id, interaction.channel.id];
+                    let rps = await connection.promise().query('select * from rps where (challenger = ? or challenged = ?) and ((challenger_throw is null or challenged_throw is null) and (challenged_attack_id is null or challenger_attack_id is null)) and channel = ?', queryData);
                     if (rps[0].length > 0) {
                         interaction.reply({ content: 'Sorry, it looks like you\'re already in a duel!', flags: MessageFlags.Ephemeral });
                     } else {
@@ -5886,8 +5886,8 @@ client.on('interactionCreate', async (interaction) => {
                         throwfull = 'Sweeping';
                         break;
                 }
-                let queryData = [interaction.user.id, interaction.user.id];
-                let rps = await connection.promise().query('select * from rps where (challenger = ? or challenged = ?) and (challenger_throw IS NULL OR challenged_throw IS NULL) and challenger_attack_id IS NULL', queryData);
+                let queryData = [interaction.user.id, interaction.user.id, interaction.channel.id];
+                let rps = await connection.promise().query('select * from rps where (challenger = ? or challenged = ?) and (challenger_throw IS NULL OR challenged_throw IS NULL) and challenger_attack_id IS NULL and channel = ?', queryData);
                 if (rps[0].length > 0 && (rpsthrow == "R" || rpsthrow == "P" || rpsthrow == "S")) {
                     let valid = 1;
                     let queryData;
@@ -5904,7 +5904,6 @@ client.on('interactionCreate', async (interaction) => {
                         valid = 0;
                     }
                     if (valid == 1) {
-                        console.log('trip');
                         await connection.promise().query('update rps set ?? = ? where id = ?', queryData);
                         rps = await connection.promise().query('select * from rps where id = ?', [rps[0][0].id]);
 
@@ -5948,7 +5947,7 @@ client.on('interactionCreate', async (interaction) => {
             } else { //Custom RPS!
                 let rpsthrow = interaction.customId.replace('rpsButton', '');
                 let queryData;
-                let rps = await connection.promise().query('select * from rps where (challenger = ? or challenged = ?) and (challenger_attack_id IS NULL or challenged_attack_id IS NULL) and challenger_throw IS NULL ', [interaction.user.id, interaction.user.id]);
+                let rps = await connection.promise().query('select * from rps where (challenger = ? or challenged = ?) and (challenger_attack_id IS NULL or challenged_attack_id IS NULL) and challenger_throw IS NULL and channel = ?', [interaction.user.id, interaction.user.id, interaction.channel.id]);
                 if (rps[0].length > 0) {
                     console.log(rps[0][0]);
                     if (rps[0][0].challenged == interaction.user.id && rps[0][0].challenged_attack_id == null) {
