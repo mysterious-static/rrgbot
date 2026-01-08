@@ -2390,7 +2390,7 @@ client.on('interactionCreate', async (interaction) => {
                 let skills = await connection.promise().query('select * from skills where guild_id = ?', [interaction.guildId]);
                 let skillSelectComponent;
                 if (skills[0].length > 0) {
-                    if (skills[0].length <= 25) {
+                    if (skills[0].length < 25) {
                         let skillsKeyValues = [{ label: 'Select a skill', value: '0' }];
                         for (const skill of skills[0]) {
                             skillsKeyValues.push({ label: skill.name, value: skill.id.toString() });
